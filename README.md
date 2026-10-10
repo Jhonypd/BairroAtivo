@@ -1,0 +1,64 @@
+# BairroAtivo
+
+Aplicativo mobile em React Native, Expo e TypeScript para apoiar o registro de problemas comunitários. Esta entrega configura a base do projeto e uma tela inicial; as funcionalidades do produto serão desenvolvidas em etapas futuras.
+
+## Requisitos
+
+- Node.js 22.13 ou superior (linha LTS recomendada pelo Expo SDK 57).
+- npm 10 ou superior.
+- Expo Go em um dispositivo Android/iOS ou um emulador configurado. Para iOS Simulator é necessário macOS.
+
+## Instalação
+
+Clone o repositório e instale as dependências:
+
+```bash
+git clone https://github.com/Jhonypd/BairroAtivo.git
+cd BairroAtivo
+npm install
+```
+
+## Executar
+
+Inicie o servidor de desenvolvimento:
+
+```bash
+npm start
+```
+
+Leia o QR code com o Expo Go ou use os atalhos exibidos no terminal. Também é possível executar diretamente:
+
+```bash
+npm run android
+npm run ios
+npm run web
+```
+
+Os comandos Android e iOS precisam de um dispositivo ou emulador configurado; o simulador iOS requer macOS.
+
+## Verificações
+
+```bash
+npm run typecheck
+npm run lint
+npx expo-doctor
+```
+
+## Organização
+
+- `src/app/`: rotas e layouts do Expo Router.
+- `src/components/`: componentes visuais reutilizáveis.
+- `src/services/`: integrações e serviços futuros.
+- `src/types/`: tipos compartilhados.
+- `src/domain/`: regras de negócio.
+- `tests/`: testes futuros.
+
+As pastas sem código funcional contêm apenas marcadores para preservar a estrutura no Git. Nenhum serviço externo está conectado nesta etapa.
+
+## Tecnologias
+
+- Expo SDK 57 e React Native 0.86.
+- React 19 e TypeScript em modo estrito.
+- Expo Router para navegação baseada em arquivos.
+
+Não adicione credenciais ao repositório. Arquivos locais `.env` são ignorados pelo Git.
