@@ -2,26 +2,28 @@
 
 **Versão:** 0.1 — preliminar  
 **Disciplina:** Hands On Work VIII — UNIVALI  
-**Situação:** proposta de escopo, sujeita a ajustes após pesquisa comunitária (PB01).  
-**Decisão de acesso:** modo misto — consulta pública; login obrigatório para criar e gerenciar ocorrências.
+**Situação:** versão inicial. Alguns pontos serão ajustados depois de analisar as respostas da pesquisa.  
+**Acesso:** qualquer pessoa pode consultar ocorrências. Para cadastrar ou gerenciar registros, será necessário login.
 
 ## 1. Problema e justificativa
 
-O projeto parte da **hipótese**, ainda em validação por pesquisa com moradores, de que informações sobre problemas de infraestrutura dos bairros são difíceis de registrar, localizar e acompanhar de forma organizada. O BairroAtivo pretende oferecer uma ferramenta comunitária de consulta e registro. Não é canal oficial de prefeitura e não garante atendimento por órgãos públicos.
+A ideia do BairroAtivo é reunir em um aplicativo problemas encontrados nos bairros, como buracos nas ruas, iluminação danificada e descarte irregular de lixo. Preparei uma pesquisa para entender melhor as dificuldades dos moradores e ainda estou aguardando as respostas.
+
+O aplicativo vai permitir cadastrar e consultar ocorrências. Ele não será um canal oficial da prefeitura e não vai garantir que os problemas sejam resolvidos.
 
 ## 2. Objetivos
 
-**Geral:** desenvolver e validar um aplicativo mobile para registro, consulta geográfica e acompanhamento comunitário de ocorrências urbanas, com desenvolvimento orientado a testes (TDD).
+**Geral:** desenvolver e testar um aplicativo mobile para registrar e acompanhar problemas encontrados nos bairros.
 
-**Específicos:** (a) consultar ocorrências sem autenticação; (b) permitir cadastro e gestão por usuários autenticados; (c) anexar foto e localização; (d) exibir registros em mapa; (e) disponibilizar filtros e status; (f) implementar notificações viáveis; (g) testar regras de negócio e validar o MVP com usuários reais.
+**Específicos:** permitir consultas sem login; exigir conta para criar e gerenciar registros; incluir fotos, mapa, filtros e notificações; testar as principais funcionalidades e avaliar o aplicativo com moradores.
 
 ## 3. Stakeholders
 
 - **Moradores visitantes:** visualizam ocorrências públicas sem login.
 - **Moradores cadastrados:** criam e gerenciam suas ocorrências.
-- **Equipe responsável pelo protótipo:** desenvolve, testa, documenta e administra o ambiente de demonstração.
+- **Responsável pelo desenvolvimento:** cuida da programação, dos testes e da documentação do projeto.
 - **Representantes comunitários:** potenciais participantes da validação.
-- **Órgãos públicos:** partes interessadas indiretas, **sem vínculo, integração ou responsabilidade operacional assumida**.
+- **Órgãos públicos:** podem ter interesse nas informações, mas não participam do projeto e não recebem registros automaticamente.
 
 ## 4. Requisitos funcionais
 
@@ -70,7 +72,7 @@ O projeto parte da **hipótese**, ainda em validação por pesquisa com moradore
 
 **Fora do escopo:** integração com prefeitura, encaminhamento oficial, garantia de resolução, chat, avaliações públicas de moradores, pagamentos, moderação avançada, painel administrativo complexo e push remoto em produção.
 
-**Dependências e decisões abertas:** política definitiva de atualização de status; política de publicação/moderação e retenção de fotos; disponibilidade e custo dos serviços; necessidades reais identificadas no PB01. Essas decisões devem ser resolvidas antes de publicação para usuários externos.
+**Pontos pendentes:** definir quem pode alterar o status das ocorrências, como será feita a publicação e por quanto tempo as fotos serão guardadas. Também vou conferir os limites dos serviços e considerar as respostas da pesquisa.
 
 ## 7. Critérios de aceitação essenciais
 
@@ -85,7 +87,7 @@ O projeto parte da **hipótese**, ainda em validação por pesquisa com moradore
 9. Testes automatizados das regras essenciais passam; há registro de ciclos TDD.
 10. Resultados de validação com moradores são documentados com método, amostra real e limitações.
 
-## 8. Métricas de sucesso (metas propostas, ainda não resultados)
+## 8. Métricas de sucesso
 
 - Cobrir automaticamente as regras de autenticação/autorização, validação de cadastro e filtragem.
 - Obter execução bem-sucedida dos cenários de aceitação essenciais no ambiente de testes.
@@ -98,12 +100,12 @@ O projeto parte da **hipótese**, ainda em validação por pesquisa com moradore
 - **Release 0.1 — 25/10/2026:** estrutura Expo, navegação/protótipo inicial, escopo, Scrum e primeiros testes demonstráveis; relatório e vídeo da Etapa 1.
 - **Release 1.0 — 30/11/2026:** MVP funcional, testes, validação comunitária, relatório final e vídeo da Etapa 2.
 
-## 10. Rastreabilidade
+## 10. Organização do projeto
 
-Este documento é o artefato do **PB02** e deverá ser refinado com resultados do **PB01**. As funcionalidades serão executadas nos cartões técnicos PB05–PB21 do Trello. A documentação acadêmica deverá manter os títulos e a formatação do template oficial da disciplina.
+Estou usando o Trello para acompanhar as tarefas e o GitHub para guardar o código e a documentação. Este arquivo reúne o escopo e os requisitos do PB02. Depois da pesquisa com moradores (PB01), vou revisar o que for necessário. O relatório seguirá o modelo fornecido pelo professor.
 
 ## 11. Pendências
 
 - Consolidar resultados reais da pesquisa: https://forms.cloud.microsoft/r/E0ed0xag4N
 - Confirmar com o professor autorização excepcional para entrega individual, pois o enunciado exige grupo.
-- Revisar com o orientador a política de atualização de status e a validação extensionista.
+- Definir as regras de atualização de status e publicação das ocorrências.
