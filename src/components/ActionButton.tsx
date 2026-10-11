@@ -1,4 +1,4 @@
-import { Link } from "expo-router";
+import { router } from "expo-router";
 import { StyleSheet, Text, Pressable, type StyleProp, type ViewStyle } from "react-native";
 
 type Props = {
@@ -10,19 +10,18 @@ type Props = {
 
 export function ActionButton({ label, href, secondary = false, style }: Props) {
   return (
-    <Link href={href} asChild>
-      <Pressable
-        accessibilityRole="button"
-        style={({ pressed }) => [
-          styles.button,
-          secondary && styles.secondary,
-          pressed && styles.pressed,
-          style,
-        ]}
-      >
-        <Text style={[styles.label, secondary && styles.secondaryLabel]}>{label}</Text>
-      </Pressable>
-    </Link>
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push(href)}
+      style={({ pressed }) => [
+        styles.button,
+        secondary && styles.secondary,
+        pressed && styles.pressed,
+        style,
+      ]}
+    >
+      <Text style={[styles.label, secondary && styles.secondaryLabel]}>{label}</Text>
+    </Pressable>
   );
 }
 
