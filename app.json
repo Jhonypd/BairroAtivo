@@ -14,6 +14,7 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "package": "com.seunome.bairroativo",
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -25,15 +26,22 @@
       [
         "expo-splash-screen",
         {
-          "backgroundColor": "#208AEF",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 76
+          "backgroundColor": "#F2F8EE",
+          "image": "./assets/images/logo_.png",
+          "imageWidth": 260,
+          "resizeMode": "contain"
         }
       ]
     ],
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ff0da38f-ee5e-41f6-b7a7-4de7728ebca9"
+      }
     }
   }
 }
