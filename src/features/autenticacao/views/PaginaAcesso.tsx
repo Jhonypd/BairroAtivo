@@ -66,10 +66,16 @@ export default function PaginaAcesso() {
 
           <Botao
             label="Explorar sem login"
-            href="/inicio"
+            href="/ocorrencias"
             variant="secondary"
             fullWidth
             style={styles.botaoExplorar}
+          />
+          <Botao
+            label="Pré-visualizar formulário de ocorrência"
+            href="/ocorrencias/nova"
+            variant="ghost"
+            fullWidth
           />
           <Text style={styles.helper}>
             Você poderá consultar ocorrências de forma pública. Para registrar,

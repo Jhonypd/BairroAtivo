@@ -24,14 +24,6 @@
     "plugins": [
       "expo-router",
       [
-        "expo-image-picker",
-        {
-          "photosPermission": "O BairroAtivo precisa acessar suas fotos para anexar imagens às ocorrências.",
-          "cameraPermission": "O BairroAtivo precisa acessar a câmera para fotografar ocorrências.",
-          "microphonePermission": false
-        }
-      ],
-      [
         "expo-splash-screen",
         {
           "backgroundColor": "#F2F8EE",

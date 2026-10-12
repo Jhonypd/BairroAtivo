@@ -33,7 +33,7 @@ const itens: {
     chave: "registrar",
     rotulo: "Registrar",
     Icone: IconeAdicionar,
-    rota: "/ocorrencias/nova",
+    rota: "/login",
   },
   {
     chave: "perfil",

@@ -109,7 +109,7 @@ export default function PaginaOcorrencias() {
       />
 
       <View style={styles.rodapeConteudo}>
-        <Botao label="Registrar ocorrência" href="/ocorrencias/nova" size="lg" fullWidth />
+        <Botao label="Registrar ocorrência" href="/login" size="lg" fullWidth />
         <Text style={styles.disclaimer}>
           Os registros são fictícios. O BairroAtivo não é um serviço oficial da
           prefeitura.

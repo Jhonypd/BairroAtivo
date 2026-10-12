@@ -88,12 +88,12 @@ export default function PaginaInicial() {
           <View style={styles.botaoComSeta}>
             <Botao
               label="Ver ocorrências"
+              href="/ocorrencias"
               icon={
                 <IconeOcorrencias width={24} height={24} fill={cores.surface} />
               }
               iconPosition="leading"
               variant="primary"
-              disabled
               fullWidth
               style={styles.botaoOcorrencias}
               contentStyle={styles.conteudoBotao}
@@ -105,7 +105,7 @@ export default function PaginaInicial() {
           </View>
           <Botao
             label="Registrar ocorrência"
-            href="/ocorrencias/nova"
+            href="/login"
             icon={
               <View style={styles.iconeAdicionar}>
                 <IconeAdicionar width={22} height={22} fill={cores.surface} />
