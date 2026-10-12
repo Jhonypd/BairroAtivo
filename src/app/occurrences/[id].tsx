@@ -1,4 +1,4 @@
-import { Link, useLocalSearchParams } from "expo-router";
+import { router, useLocalSearchParams } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { occurrences } from "../../domain/occurrences";
 
@@ -10,15 +10,14 @@ export default function OccurrenceDetailsScreen() {
     return (
       <View style={styles.notFound}>
         <Text style={styles.title}>Ocorrência não encontrada</Text>
-        <Link href="/occurrences/index" asChild>
-          <Pressable><Text style={styles.link}>Voltar para ocorrências</Text></Pressable>
-        </Link>
+        <BackToOccurrences />
       </View>
     );
   }
 
   return (
     <ScrollView contentContainerStyle={styles.container}>
+      <BackToOccurrences />
       <Text style={styles.category}>{occurrence.category}</Text>
       <Text style={styles.title}>{occurrence.title}</Text>
       <View style={styles.infoCard}>
@@ -36,9 +35,24 @@ export default function OccurrenceDetailsScreen() {
   );
 }
 
+function BackToOccurrences() {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.replace("/occurrences/index")}
+      style={({ pressed }) => [styles.backButton, pressed && styles.pressed]}
+    >
+      <Text style={styles.backButtonText}>← Voltar às ocorrências</Text>
+    </Pressable>
+  );
+}
+
 const styles = StyleSheet.create({
   container: { padding: 22, paddingBottom: 36, gap: 18 },
   notFound: { flex: 1, padding: 24, justifyContent: "center", alignItems: "center", gap: 16 },
+  backButton: { alignSelf: "flex-start", minHeight: 44, justifyContent: "center", paddingHorizontal: 14, borderWidth: 1, borderColor: "#B8CCBF", borderRadius: 12, backgroundColor: "#FFFFFF" },
+  pressed: { opacity: 0.75 },
+  backButtonText: { color: "#176B4D", fontSize: 14, fontWeight: "700" },
   category: { color: "#176B4D", fontSize: 14, fontWeight: "700" },
   title: { color: "#183B2B", fontSize: 28, lineHeight: 36, fontWeight: "700" },
   infoCard: { padding: 20, borderRadius: 20, backgroundColor: "#FFFFFF", gap: 8 },
@@ -47,5 +61,4 @@ const styles = StyleSheet.create({
   value: { color: "#183B2B", fontSize: 16, fontWeight: "700", marginBottom: 8 },
   description: { color: "#405447", fontSize: 16, lineHeight: 25 },
   disclaimer: { color: "#748078", fontSize: 13, lineHeight: 20 },
-  link: { color: "#176B4D", fontWeight: "700" },
 });
