@@ -1,3 +1,3 @@
-export function tituloEstaPreenchido(_titulo: string): boolean {
-  return true;
+export function tituloEstaPreenchido(titulo: string): boolean {
+  return titulo.trim().length > 0;
 }
