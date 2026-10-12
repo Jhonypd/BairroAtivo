@@ -1,4 +1,4 @@
-import { router } from "expo-router";
+import { router, type Href } from "expo-router";
 import type { ReactNode } from "react";
 import { Pressable, Text, View, type StyleProp, type ViewStyle } from "react-native";
 import { actionButtonStyles as styles, buttonSizeStyles } from "./ActionButton.styles";
@@ -13,7 +13,7 @@ type ButtonBaseProps = {
 };
 
 type ButtonAction =
-  | { href: "/" | "/occurrences/index" | "/create"; replace?: boolean; onPress?: never }
+  | { href: Href; replace?: boolean; onPress?: never }
   | { href?: never; replace?: never; onPress: () => void };
 
 type ButtonContent =

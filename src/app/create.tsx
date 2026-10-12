@@ -30,7 +30,7 @@ export default function CreateOccurrenceScreen() {
         <Text style={styles.eyebrow}>FORMULÁRIO DEMONSTRATIVO</Text>
         <Text style={styles.title}>Tudo preenchido!</Text>
         <Text style={styles.description}>Os dados não foram salvos. Esta etapa apenas demonstra o formulário.</Text>
-        <ActionButton label="Voltar às ocorrências" href="/occurrences/index" replace variant="outline" />
+        <ActionButton label="Voltar às ocorrências" href="/occurrences" replace variant="outline" />
       </View>
     );
   }

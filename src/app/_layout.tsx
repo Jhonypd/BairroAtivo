@@ -13,6 +13,7 @@ export default function RootLayout() {
     >
       <Stack.Screen name="index" options={{ title: "BairroAtivo" }} />
       <Stack.Screen name="create" options={{ title: "Nova ocorrência" }} />
+      <Stack.Screen name="occurrences" options={{ headerShown: false }} />
     </Stack>
   );
 }

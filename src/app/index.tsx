@@ -12,7 +12,7 @@ export default function HomeScreen() {
         <Text style={styles.title}>Problemas no seu bairro?</Text>
         <Text style={styles.subtitle}>Consulte os relatos da comunidade ou registre um problema para conhecer o funcionamento do aplicativo.</Text>
         <View style={styles.actions}>
-          <ActionButton label="Consultar ocorrências" href="/occurrences/index" size="lg" />
+          <ActionButton label="Consultar ocorrências" href="/occurrences" size="lg" />
           <ActionButton label="Registrar uma ocorrência" href="/create" variant="secondary" />
         </View>
       </View>

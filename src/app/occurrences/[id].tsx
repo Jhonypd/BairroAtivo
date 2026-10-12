@@ -4,8 +4,13 @@ import { ActionButton } from "../../components/ActionButton";
 import { occurrences } from "../../domain/occurrences";
 import { occurrenceDetailsStyles as styles } from "../../styles/screens/occurrenceDetails.styles";
 
+export async function generateStaticParams(): Promise<{ id: string }[]> {
+  return occurrences.map(({ id }) => ({ id }));
+}
+
 export default function OccurrenceDetailsScreen() {
-  const { id } = useLocalSearchParams<{ id: string }>();
+  const { id: routeId } = useLocalSearchParams<{ id?: string | string[] }>();
+  const id = Array.isArray(routeId) ? routeId[0] : routeId;
   const occurrence = occurrences.find((item) => item.id === id);
 
   if (!occurrence) {
@@ -15,7 +20,7 @@ export default function OccurrenceDetailsScreen() {
         <View style={styles.notFound}>
           <ActionButton
             label="Voltar às ocorrências"
-            href="/occurrences/index"
+            href="/occurrences"
             replace
             variant="outline"
             size="sm"
@@ -32,7 +37,7 @@ export default function OccurrenceDetailsScreen() {
       <ScrollView contentContainerStyle={styles.container}>
         <ActionButton
           label="Voltar às ocorrências"
-          href="/occurrences/index"
+          href="/occurrences"
           replace
           variant="outline"
           size="sm"
