@@ -16,7 +16,10 @@ export default function PaginaInicial() {
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <StatusBar style="dark" />
-      <ScrollView style={styles.rolagem} contentContainerStyle={styles.container}>
+      <ScrollView
+        style={styles.rolagem}
+        contentContainerStyle={styles.container}
+      >
         <View style={styles.cabecalho}>
           <View style={styles.perfilResumo}>
             <View style={styles.avatar}>
@@ -60,8 +63,8 @@ export default function PaginaInicial() {
               >
                 <Stop offset="0%" stopColor="#E4F1E5" />
                 <Stop offset="42%" stopColor="#E4F1E5" />
-                <Stop offset="65%" stopColor="#E4F1E5" stopOpacity="0.85" />
-                <Stop offset="82%" stopColor="#E4F1E5" stopOpacity="0.38" />
+                <Stop offset="60%" stopColor="#E4F1E5" stopOpacity="0.85" />
+                <Stop offset="72%" stopColor="#E4F1E5" stopOpacity="0.48" />
                 <Stop offset="100%" stopColor="#E4F1E5" stopOpacity="0.04" />
               </LinearGradient>
             </Defs>
