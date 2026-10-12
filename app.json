@@ -14,6 +14,7 @@
         "backgroundImage": "./assets/images/android-icon-background.png",
         "monochromeImage": "./assets/images/android-icon-monochrome.png"
       },
+      "package": "com.seunome.bairroativo",
       "predictiveBackGestureEnabled": false
     },
     "web": {
@@ -23,11 +24,19 @@
     "plugins": [
       "expo-router",
       [
+        "expo-image-picker",
+        {
+          "photosPermission": "O BairroAtivo precisa acessar suas fotos para anexar imagens às ocorrências.",
+          "cameraPermission": "O BairroAtivo precisa acessar a câmera para fotografar ocorrências.",
+          "microphonePermission": false
+        }
+      ],
+      [
         "expo-splash-screen",
         {
-          "backgroundColor": "#F7F8F4",
-          "image": "./assets/images/splash-icon.png",
-          "imageWidth": 300,
+          "backgroundColor": "#F2F8EE",
+          "image": "./assets/images/logo_.png",
+          "imageWidth": 260,
           "resizeMode": "contain"
         }
       ]
@@ -35,6 +44,12 @@
     "experiments": {
       "typedRoutes": true,
       "reactCompiler": true
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "ff0da38f-ee5e-41f6-b7a7-4de7728ebca9"
+      }
     }
   }
 }

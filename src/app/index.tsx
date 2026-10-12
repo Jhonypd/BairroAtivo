@@ -1,3 +1,3 @@
-import { PaginaInicial } from "@/features/inicio";
+import { PaginaSplash } from "@/features/inicio";
 
-export default PaginaInicial;
+export default PaginaSplash;

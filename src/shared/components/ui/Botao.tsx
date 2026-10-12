@@ -1,6 +1,6 @@
 import { router, type Href } from "expo-router";
 import type { ReactNode } from "react";
-import { Pressable, Text, View, type StyleProp, type ViewStyle } from "react-native";
+import { Pressable, Text, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 import { botaoStyles as styles, tamanhosBotao } from "./Botao.styles";
 import type { TamanhoBotao, VarianteBotao } from "./botao.types";
 
@@ -10,6 +10,8 @@ type PropriedadesBaseBotao = {
   accessibilityLabel?: string;
   disabled?: boolean;
   fullWidth?: boolean;
+  contentStyle?: StyleProp<ViewStyle>;
+  labelStyle?: StyleProp<TextStyle>;
 };
 
 type AcaoBotao =
@@ -83,7 +85,7 @@ export function Botao(props: PropriedadesBotao) {
         props.style,
       ]}
     >
-      <View style={[styles.content, isIconOnly && styles.iconOnlyContent]}>
+      <View style={[styles.content, isIconOnly && styles.iconOnlyContent, props.contentStyle]}>
         {iconPosition === "leading" && icon}
         {"label" in props && props.label ? (
           <Text
@@ -92,6 +94,7 @@ export function Botao(props: PropriedadesBotao) {
               sizeStyles.label,
               estilosRotuloVariante[variant],
               props.disabled && styles.disabledLabel,
+              props.labelStyle,
             ]}
           >
             {props.label}
