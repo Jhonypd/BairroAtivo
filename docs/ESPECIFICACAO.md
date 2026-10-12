@@ -3,7 +3,7 @@
 **Versão:** 0.1 — preliminar  
 **Disciplina:** Hands On Work VIII — UNIVALI  
 **Situação:** versão inicial. Alguns pontos serão ajustados depois de analisar as respostas da pesquisa.  
-**Acesso:** qualquer pessoa pode consultar ocorrências. Para cadastrar ou gerenciar registros, será necessário login.
+**Acesso:** qualquer pessoa pode consultar ocorrências. Para cadastrar ou gerenciar registros, será necessário entrar com uma conta Google.
 
 ## 1. Problema e justificativa
 
@@ -33,7 +33,7 @@ O aplicativo vai permitir cadastrar e consultar ocorrências. Ele não será um 
 | RF02 | Visualizar detalhes públicos de uma ocorrência | Alta |
 | RF03 | Filtrar ocorrências por bairro, categoria e status | Alta |
 | RF04 | Visualizar ocorrências em mapa com marcadores | Alta |
-| RF05 | Criar conta, autenticar-se e encerrar sessão | Alta |
+| RF05 | Entrar com Google e sair da conta pelo Supabase Auth | Alta |
 | RF06 | Cadastrar ocorrência com título, descrição, categoria, bairro e localização | Alta |
 | RF07 | Anexar fotografia à ocorrência, com permissões apropriadas | Alta |
 | RF08 | Editar e excluir apenas ocorrências próprias, mediante autenticação | Alta |
@@ -45,7 +45,7 @@ O aplicativo vai permitir cadastrar e consultar ocorrências. Ele não será um 
 ### 4.1 Requisitos não funcionais
 
 - **RNF01 — Plataforma:** aplicativo React Native com Expo e TypeScript; Android como plataforma mínima de demonstração, com atenção à compatibilidade iOS.
-- **RNF02 — Segurança:** usar Supabase Auth; aplicar Row Level Security (RLS) para impedir que um usuário altere dados de outro; nunca colocar service role key no aplicativo.
+- **RNF02 — Segurança:** usar Supabase Auth com login Google (OAuth); aplicar Row Level Security (RLS) para impedir que um usuário altere dados de outro; nunca colocar service role key no aplicativo.
 - **RNF03 — Privacidade:** evitar coletar endereço residencial desnecessário; localização é a do problema, sujeita à revisão pelo usuário; cuidado com pessoas, placas e dados pessoais nas fotos.
 - **RNF04 — Usabilidade:** interface em português, estados vazios, mensagens de erro claras, feedback de carregamento e controles acessíveis.
 - **RNF05 — Resiliência:** tratar rede indisponível, permissões recusadas, falhas de upload e dados inválidos sem travar o app.
@@ -55,7 +55,7 @@ O aplicativo vai permitir cadastrar e consultar ocorrências. Ele não será um 
 
 ## 5. Regras de negócio
 
-- **RN01:** visitante não autenticado pode consultar ocorrências publicadas, mas não criar, editar ou excluir.
+- **RN01:** visitante sem login pode consultar ocorrências publicadas, mas não criar, editar ou excluir. Para essas ações, o aplicativo solicitará login com Google.
 - **RN02:** cadastro de ocorrência exige sessão válida e os campos obrigatórios preenchidos.
 - **RN03:** cada ocorrência pertence ao usuário criador (identificado pelo ID do Supabase Auth).
 - **RN04:** apenas o proprietário pode editar ou excluir sua ocorrência; a restrição deve ser aplicada também no banco via RLS.
@@ -68,11 +68,11 @@ O aplicativo vai permitir cadastrar e consultar ocorrências. Ele não será um 
 
 ## 6. Escopo e limites
 
-**Incluído no MVP:** autenticação mista, cadastro/consulta/edição/exclusão autorizada, fotos, mapa/localização, filtros, status comunitário, notificações locais, testes e validação.
+**Incluído no MVP:** consulta pública e login com Google pelo Supabase Auth, cadastro/consulta/edição/exclusão autorizada, fotos, mapa/localização, filtros, status comunitário, notificações locais, testes e validação.
 
 **Fora do escopo:** integração com prefeitura, encaminhamento oficial, garantia de resolução, chat, avaliações públicas de moradores, pagamentos, moderação avançada, painel administrativo complexo e push remoto em produção.
 
-**Pontos pendentes:** definir quem pode alterar o status das ocorrências, como será feita a publicação e por quanto tempo as fotos serão guardadas. Também vou conferir os limites dos serviços e considerar as respostas da pesquisa.
+**Pontos pendentes:** testar o fluxo de login com Google no Expo em dispositivo físico e configurar corretamente os redirecionamentos OAuth. Definir quem pode alterar o status das ocorrências, como será feita a publicação e por quanto tempo as fotos serão guardadas. Também vou conferir os limites dos serviços e considerar as respostas da pesquisa.
 
 ## 7. Critérios de aceitação essenciais
 
