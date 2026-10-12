@@ -1,4 +1,4 @@
-import { Link } from "expo-router";
+import { router, type Href } from "expo-router";
 import { Pressable, StyleSheet, Text, View } from "react-native";
 import type { Occurrence } from "../types/occurrence";
 
@@ -10,8 +10,11 @@ const statusColors: Record<Occurrence["status"], string> = {
 
 export function OccurrenceCard({ occurrence }: { occurrence: Occurrence }) {
   return (
-    <Link href={{ pathname: "/occurrences/[id]", params: { id: occurrence.id } }} asChild>
-      <Pressable style={({ pressed }) => [styles.card, pressed && styles.pressed]}>
+    <Pressable
+      accessibilityRole="button"
+      onPress={() => router.push(`/occurrences/${encodeURIComponent(occurrence.id)}` as Href)}
+      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+    >
         <View style={styles.topLine}>
           <Text style={styles.category}>{occurrence.category}</Text>
           <Text style={[styles.status, { color: statusColors[occurrence.status] }]}>
@@ -21,8 +24,7 @@ export function OccurrenceCard({ occurrence }: { occurrence: Occurrence }) {
         <Text style={styles.title}>{occurrence.title}</Text>
         <Text style={styles.neighborhood}>{occurrence.neighborhood}</Text>
         <Text style={styles.more}>Ver detalhes →</Text>
-      </Pressable>
-    </Link>
+    </Pressable>
   );
 }
 

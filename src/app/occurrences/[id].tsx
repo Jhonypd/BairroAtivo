@@ -1,4 +1,4 @@
-import { router, useLocalSearchParams } from "expo-router";
+import { router, Stack, useLocalSearchParams } from "expo-router";
 import { Pressable, ScrollView, StyleSheet, Text, View } from "react-native";
 import { occurrences } from "../../domain/occurrences";
 
@@ -8,30 +8,36 @@ export default function OccurrenceDetailsScreen() {
 
   if (!occurrence) {
     return (
-      <View style={styles.notFound}>
-        <Text style={styles.title}>Ocorrência não encontrada</Text>
-        <BackToOccurrences />
-      </View>
+      <>
+        <Stack.Screen options={{ title: "Ocorrência" }} />
+        <View style={styles.notFound}>
+          <Text style={styles.title}>Ocorrência não encontrada</Text>
+          <BackToOccurrences />
+        </View>
+      </>
     );
   }
 
   return (
-    <ScrollView contentContainerStyle={styles.container}>
-      <BackToOccurrences />
-      <Text style={styles.category}>{occurrence.category}</Text>
-      <Text style={styles.title}>{occurrence.title}</Text>
-      <View style={styles.infoCard}>
-        <Text style={styles.label}>Bairro</Text>
-        <Text style={styles.value}>{occurrence.neighborhood}</Text>
-        <Text style={styles.label}>Status comunitário</Text>
-        <Text style={styles.value}>{occurrence.status}</Text>
-      </View>
-      <View style={styles.descriptionCard}>
-        <Text style={styles.label}>Descrição</Text>
-        <Text style={styles.description}>{occurrence.description}</Text>
-      </View>
-      <Text style={styles.disclaimer}>Este é um registro demonstrativo. O status não indica atendimento oficial.</Text>
-    </ScrollView>
+    <>
+      <Stack.Screen options={{ title: "Detalhes da ocorrência" }} />
+      <ScrollView contentContainerStyle={styles.container}>
+        <BackToOccurrences />
+        <Text style={styles.category}>{occurrence.category}</Text>
+        <Text style={styles.title}>{occurrence.title}</Text>
+        <View style={styles.infoCard}>
+          <Text style={styles.label}>Bairro</Text>
+          <Text style={styles.value}>{occurrence.neighborhood}</Text>
+          <Text style={styles.label}>Status comunitário</Text>
+          <Text style={styles.value}>{occurrence.status}</Text>
+        </View>
+        <View style={styles.descriptionCard}>
+          <Text style={styles.label}>Descrição</Text>
+          <Text style={styles.description}>{occurrence.description}</Text>
+        </View>
+        <Text style={styles.disclaimer}>Este é um registro demonstrativo. O status não indica atendimento oficial.</Text>
+      </ScrollView>
+    </>
   );
 }
 
