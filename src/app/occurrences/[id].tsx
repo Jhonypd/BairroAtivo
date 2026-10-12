@@ -11,8 +11,8 @@ export default function OccurrenceDetailsScreen() {
       <>
         <Stack.Screen options={{ title: "Ocorrência" }} />
         <View style={styles.notFound}>
-          <Text style={styles.title}>Ocorrência não encontrada</Text>
           <BackToOccurrences />
+          <Text style={styles.title}>Ocorrência não encontrada</Text>
         </View>
       </>
     );
@@ -55,7 +55,7 @@ function BackToOccurrences() {
 
 const styles = StyleSheet.create({
   container: { padding: 22, paddingBottom: 36, gap: 18 },
-  notFound: { flex: 1, padding: 24, justifyContent: "center", alignItems: "center", gap: 16 },
+  notFound: { flex: 1, padding: 22, justifyContent: "flex-start", alignItems: "stretch", gap: 16 },
   backButton: { alignSelf: "flex-start", minHeight: 44, justifyContent: "center", paddingHorizontal: 14, borderWidth: 1, borderColor: "#B8CCBF", borderRadius: 12, backgroundColor: "#FFFFFF" },
   pressed: { opacity: 0.75 },
   backButtonText: { color: "#176B4D", fontSize: 14, fontWeight: "700" },
