@@ -12,14 +12,22 @@ export const actionButtonStyles = StyleSheet.create({
     borderRadius: 12,
   },
   primary: { borderColor: colors.primary, backgroundColor: colors.primary },
+  secondary: { borderColor: colors.secondary, backgroundColor: colors.secondary },
   outline: { borderColor: colors.borderEmphasis, backgroundColor: colors.surface },
+  ghost: { borderColor: "transparent", backgroundColor: "transparent" },
+  destructive: { borderColor: colors.destructive, backgroundColor: colors.destructive },
   icon: { paddingHorizontal: 0, backgroundColor: "transparent", borderColor: "transparent" },
+  fullWidth: { alignSelf: "stretch" },
+  disabled: { borderColor: colors.disabled, backgroundColor: colors.disabled },
   pressed: { opacity: 0.78 },
   content: { flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 8 },
   iconOnlyContent: { gap: 0 },
   iconSlot: { alignItems: "center", justifyContent: "center" },
   label: { color: colors.surface, fontWeight: "700" },
-  outlineLabel: { color: colors.primary },
+  secondaryLabel: { color: colors.secondaryText },
+  outlineLabel: { color: colors.primaryDark },
+  ghostLabel: { color: colors.primary },
+  disabledLabel: { color: colors.textSubtle },
 });
 
 type ButtonSizeStyle = {

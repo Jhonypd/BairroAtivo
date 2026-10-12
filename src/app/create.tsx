@@ -55,7 +55,7 @@ export default function CreateOccurrenceScreen() {
 
       {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
       <ActionButton label="Revisar preenchimento" onPress={submitForm} />
-      <ActionButton label="Voltar ao início" href="/" variant="outline" />
+      <ActionButton label="Voltar ao início" href="/" variant="ghost" />
     </ScrollView>
   );
 }

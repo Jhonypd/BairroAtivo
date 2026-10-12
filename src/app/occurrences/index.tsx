@@ -14,7 +14,7 @@ export default function OccurrencesScreen() {
       <View style={styles.list}>
         {occurrences.map((occurrence) => <OccurrenceCard key={occurrence.id} occurrence={occurrence} />)}
       </View>
-      <ActionButton label="Registrar uma ocorrência" href="/create" variant="outline" />
+      <ActionButton label="Registrar uma ocorrência" href="/create" variant="secondary" />
       <Text style={styles.disclaimer}>Os registros exibidos são fictícios.</Text>
     </ScrollView>
   );

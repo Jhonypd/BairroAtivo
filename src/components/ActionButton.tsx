@@ -8,6 +8,8 @@ type ButtonBaseProps = {
   size?: ButtonSize;
   style?: StyleProp<ViewStyle>;
   accessibilityLabel?: string;
+  disabled?: boolean;
+  fullWidth?: boolean;
 };
 
 type ButtonAction =
@@ -30,6 +32,15 @@ type ButtonContent =
     };
 
 type Props = ButtonBaseProps & ButtonAction & ButtonContent;
+
+const labelVariantStyles = {
+  primary: styles.label,
+  secondary: styles.secondaryLabel,
+  outline: styles.outlineLabel,
+  ghost: styles.ghostLabel,
+  destructive: styles.label,
+  icon: styles.label,
+} as const;
 
 export function ActionButton(props: Props) {
   const variant = props.variant ?? "primary";
@@ -57,6 +68,7 @@ export function ActionButton(props: Props) {
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={props.accessibilityLabel}
+      disabled={props.disabled}
       hitSlop={size === "xs" ? 6 : size === "sm" ? 2 : 0}
       onPress={handlePress}
       style={({ pressed }) => [
@@ -64,6 +76,8 @@ export function ActionButton(props: Props) {
         sizeStyles.button,
         styles[variant],
         isIconOnly && sizeStyles.iconButton,
+        props.fullWidth && styles.fullWidth,
+        props.disabled && styles.disabled,
         pressed && styles.pressed,
         props.style,
       ]}
@@ -75,7 +89,8 @@ export function ActionButton(props: Props) {
             style={[
               styles.label,
               sizeStyles.label,
-              variant === "outline" && styles.outlineLabel,
+              labelVariantStyles[variant],
+              props.disabled && styles.disabledLabel,
             ]}
           >
             {props.label}
