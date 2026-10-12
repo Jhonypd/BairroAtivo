@@ -10,8 +10,12 @@ type ButtonBaseProps = {
 
 type Props = ButtonBaseProps &
   (
-    | { href: "/" | "/occurrences/index" | "/create"; onPress?: never }
-    | { href?: never; onPress: () => void }
+    | {
+        href: "/" | "/occurrences/index" | "/create";
+        replace?: boolean;
+        onPress?: never;
+      }
+    | { href?: never; replace?: never; onPress: () => void }
   );
 
 export function ActionButton(props: Props) {
@@ -22,7 +26,11 @@ export function ActionButton(props: Props) {
       accessibilityRole="button"
       onPress={() => {
         if (props.href !== undefined) {
-          router.push(props.href);
+          if (props.replace) {
+            router.replace(props.href);
+          } else {
+            router.push(props.href);
+          }
         } else {
           props.onPress?.();
         }

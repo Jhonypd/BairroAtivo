@@ -1,6 +1,6 @@
 import { Stack, useLocalSearchParams } from "expo-router";
 import { ScrollView, Text, View } from "react-native";
-import { BackToOccurrences } from "../../components/BackToOccurrences";
+import { ActionButton } from "../../components/ActionButton";
 import { occurrences } from "../../domain/occurrences";
 import { occurrenceDetailsStyles as styles } from "../../styles/screens/occurrenceDetails.styles";
 
@@ -13,7 +13,13 @@ export default function OccurrenceDetailsScreen() {
       <>
         <Stack.Screen options={{ title: "Ocorrência" }} />
         <View style={styles.notFound}>
-          <BackToOccurrences />
+          <ActionButton
+            label="Voltar às ocorrências"
+            href="/occurrences/index"
+            replace
+            secondary
+            style={styles.backButton}
+          />
           <Text style={styles.title}>Nenhuma ocorrência encontrada</Text>
         </View>
       </>
@@ -24,7 +30,13 @@ export default function OccurrenceDetailsScreen() {
     <>
       <Stack.Screen options={{ title: "Detalhes da ocorrência" }} />
       <ScrollView contentContainerStyle={styles.container}>
-        <BackToOccurrences />
+        <ActionButton
+          label="Voltar às ocorrências"
+          href="/occurrences/index"
+          replace
+          secondary
+          style={styles.backButton}
+        />
         <Text style={styles.category}>{occurrence.category}</Text>
         <Text style={styles.title}>{occurrence.title}</Text>
         <View style={styles.infoCard}>

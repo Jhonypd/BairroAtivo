@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { Pressable, ScrollView, Text, TextInput, View } from "react-native";
 import { ActionButton } from "../components/ActionButton";
-import { BackToOccurrences } from "../components/BackToOccurrences";
 import { createOccurrenceStyles as styles } from "../styles/screens/createOccurrence.styles";
 
 const categories = ["Vias públicas", "Iluminação", "Limpeza urbana", "Outros"];
@@ -31,7 +30,7 @@ export default function CreateOccurrenceScreen() {
         <Text style={styles.eyebrow}>FORMULÁRIO DEMONSTRATIVO</Text>
         <Text style={styles.title}>Tudo preenchido!</Text>
         <Text style={styles.description}>Os dados não foram salvos. Esta etapa apenas demonstra o formulário.</Text>
-        <BackToOccurrences />
+        <ActionButton label="Voltar às ocorrências" href="/occurrences/index" replace secondary />
       </View>
     );
   }
