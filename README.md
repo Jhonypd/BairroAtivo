@@ -39,10 +39,13 @@ Os comandos Android e iOS precisam de um dispositivo ou emulador configurado; o 
 ## Verificações
 
 ```bash
+npm test
 npm run typecheck
 npm run lint
 npx expo-doctor
 ```
+
+Os testes usam Jest com o preset `jest-expo` e React Native Testing Library. Arquivos de teste ficam próximos à feature em `__tests__`, fora de `src/app/`.
 
 ## Organização
 
@@ -52,7 +55,7 @@ npx expo-doctor
 - `src/features/ocorrencias/`: telas, componentes, dados simulados e tipos de ocorrências.
 - `src/shared/`: componentes de interface reutilizáveis entre funcionalidades.
 - `src/configs/`: tema e configurações globais.
-- `tests/`: testes futuros.
+- `src/features/**/__tests__/`: testes unitários e de interface próximos às funcionalidades.
 
 O formulário e a lista usam dados simulados. Nenhum serviço externo está conectado nesta etapa.
 
