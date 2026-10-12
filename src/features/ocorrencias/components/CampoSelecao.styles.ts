@@ -1,0 +1,40 @@
+import { StyleSheet } from "react-native";
+import { cores } from "@/configs/tema";
+
+export const campoSelecaoStyles = StyleSheet.create({
+  field: { gap: 8 },
+  label: { color: cores.primaryDark, fontSize: 14, fontWeight: "700" },
+  trigger: {
+    minHeight: 52,
+    paddingHorizontal: 14,
+    borderWidth: 1,
+    borderColor: cores.border,
+    borderRadius: 12,
+    backgroundColor: cores.surface,
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+  },
+  value: { color: cores.primaryDark, fontSize: 15 },
+  placeholder: { color: cores.placeholder },
+  chevron: { color: cores.primary, fontSize: 22, lineHeight: 24 },
+  options: {
+    padding: 6,
+    borderWidth: 1,
+    borderColor: cores.border,
+    borderRadius: 12,
+    backgroundColor: cores.surface,
+    gap: 2,
+  },
+  option: { minHeight: 44, justifyContent: "center", paddingHorizontal: 12, borderRadius: 8 },
+  optionSelected: { backgroundColor: cores.selected },
+  optionText: { color: cores.text, fontSize: 14 },
+  optionTextSelected: { color: cores.primaryDark, fontWeight: "700" },
+  pressed: { opacity: 0.75 },
+});
+
+
+
+
+
+

@@ -46,13 +46,12 @@ npx expo-doctor
 
 ## Organização
 
-- `src/app/`: rotas e layouts do Expo Router.
-- `src/components/`: componentes visuais reutilizáveis.
-- `src/styles/`: estilos específicos das telas, fora da pasta de rotas.
-- `src/theme/`: cores e valores visuais compartilhados.
-- `src/services/`: integrações e serviços futuros.
-- `src/types/`: tipos compartilhados.
-- `src/domain/`: regras de negócio.
+- `src/app/`: rotas pequenas e layouts do Expo Router.
+- `src/features/inicio/`: tela inicial.
+- `src/features/autenticacao/`: tela de acesso e fluxo de autenticação futuro.
+- `src/features/ocorrencias/`: telas, componentes, dados simulados e tipos de ocorrências.
+- `src/shared/`: componentes de interface reutilizáveis entre funcionalidades.
+- `src/configs/`: tema e configurações globais.
 - `tests/`: testes futuros.
 
 O formulário e a lista usam dados simulados. Nenhum serviço externo está conectado nesta etapa.
