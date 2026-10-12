@@ -10,7 +10,6 @@ export const occurrenceDetailsStyles = StyleSheet.create({
     alignItems: "stretch",
     gap: 16,
   },
-  backButton: { alignSelf: "flex-start", minHeight: 44, paddingHorizontal: 14, borderRadius: 12 },
   category: { color: colors.primary, fontSize: 14, fontWeight: "700" },
   title: { color: colors.primaryDark, fontSize: 28, lineHeight: 36, fontWeight: "700" },
   infoCard: { padding: 20, borderRadius: 20, backgroundColor: colors.surface, gap: 8 },

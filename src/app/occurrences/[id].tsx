@@ -17,8 +17,8 @@ export default function OccurrenceDetailsScreen() {
             label="Voltar às ocorrências"
             href="/occurrences/index"
             replace
-            secondary
-            style={styles.backButton}
+            variant="outline"
+            size="sm"
           />
           <Text style={styles.title}>Nenhuma ocorrência encontrada</Text>
         </View>
@@ -34,8 +34,8 @@ export default function OccurrenceDetailsScreen() {
           label="Voltar às ocorrências"
           href="/occurrences/index"
           replace
-          secondary
-          style={styles.backButton}
+          variant="outline"
+          size="sm"
         />
         <Text style={styles.category}>{occurrence.category}</Text>
         <Text style={styles.title}>{occurrence.title}</Text>

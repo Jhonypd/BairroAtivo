@@ -30,7 +30,7 @@ export default function CreateOccurrenceScreen() {
         <Text style={styles.eyebrow}>FORMULÁRIO DEMONSTRATIVO</Text>
         <Text style={styles.title}>Tudo preenchido!</Text>
         <Text style={styles.description}>Os dados não foram salvos. Esta etapa apenas demonstra o formulário.</Text>
-        <ActionButton label="Voltar às ocorrências" href="/occurrences/index" replace secondary />
+        <ActionButton label="Voltar às ocorrências" href="/occurrences/index" replace variant="outline" />
       </View>
     );
   }
@@ -55,7 +55,7 @@ export default function CreateOccurrenceScreen() {
 
       {error ? <Text accessibilityRole="alert" style={styles.error}>{error}</Text> : null}
       <ActionButton label="Revisar preenchimento" onPress={submitForm} />
-      <ActionButton label="Voltar ao início" href="/" secondary />
+      <ActionButton label="Voltar ao início" href="/" variant="outline" />
     </ScrollView>
   );
 }
