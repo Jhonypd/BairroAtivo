@@ -2,10 +2,17 @@ import { StyleSheet } from "react-native";
 import { colors } from "../../theme/colors";
 
 export const occurrencesStyles = StyleSheet.create({
-  container: { padding: 20, paddingBottom: 36, gap: 20 },
-  intro: { gap: 8 },
-  title: { color: colors.primaryDark, fontSize: 25, fontWeight: "700", lineHeight: 32 },
-  description: { color: colors.textMuted, fontSize: 15, lineHeight: 22 },
+  container: { flexGrow: 1, width: "100%", maxWidth: 600, alignSelf: "center", padding: 20, paddingBottom: 36, gap: 16 },
+  intro: { gap: 6 },
+  title: { color: colors.primaryDark, fontSize: 24, fontWeight: "800", lineHeight: 31 },
+  description: { color: colors.textMuted, fontSize: 14, lineHeight: 21 },
+  search: { minHeight: 48, paddingHorizontal: 16, borderRadius: 14, backgroundColor: colors.surface, borderWidth: 1, borderColor: colors.border, color: colors.primaryDark, fontSize: 14 },
+  placeholder: { color: colors.placeholder },
+  filters: { flexDirection: "row", gap: 8, paddingRight: 20 },
+  resultCount: { color: colors.textSubtle, fontSize: 12, fontWeight: "600" },
   list: { gap: 12 },
-  disclaimer: { color: colors.textSubtle, fontSize: 12, textAlign: "center" },
+  emptyState: { padding: 20, borderRadius: 16, backgroundColor: colors.surface, gap: 10, alignItems: "flex-start" },
+  emptyTitle: { color: colors.primaryDark, fontSize: 17, fontWeight: "700" },
+  emptyDescription: { color: colors.textMuted, fontSize: 14, lineHeight: 20 },
+  disclaimer: { color: colors.textSubtle, fontSize: 12, lineHeight: 18, textAlign: "center" },
 });

@@ -7,4 +7,5 @@ export type Occurrence = {
   category: string;
   neighborhood: string;
   status: OccurrenceStatus;
+  reportedAt: string;
 };

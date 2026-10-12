@@ -14,7 +14,8 @@ type ButtonBaseProps = {
 
 type ButtonAction =
   | { href: Href; replace?: boolean; onPress?: never }
-  | { href?: never; replace?: never; onPress: () => void };
+  | { href?: never; replace?: never; onPress: () => void }
+  | { href?: never; replace?: never; onPress?: never; disabled: true };
 
 type ButtonContent =
   | {

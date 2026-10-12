@@ -16,6 +16,7 @@ export const occurrenceDetailsStyles = StyleSheet.create({
   descriptionCard: { padding: 20, borderRadius: 20, backgroundColor: colors.surfaceSoft, gap: 10 },
   label: { color: colors.textMuted, fontSize: 13, fontWeight: "600" },
   value: { color: colors.primaryDark, fontSize: 16, fontWeight: "700", marginBottom: 8 },
+  status: { alignSelf: "flex-start", paddingVertical: 5, paddingHorizontal: 10, borderRadius: 999, backgroundColor: colors.surfaceSoft, fontSize: 13, fontWeight: "700" },
   description: { color: colors.text, fontSize: 16, lineHeight: 25 },
   disclaimer: { color: colors.textSubtle, fontSize: 13, lineHeight: 20 },
 });

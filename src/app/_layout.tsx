@@ -11,7 +11,8 @@ export default function RootLayout() {
         contentStyle: { backgroundColor: colors.background },
       }}
     >
-      <Stack.Screen name="index" options={{ title: "BairroAtivo" }} />
+      <Stack.Screen name="index" options={{ headerShown: false }} />
+      <Stack.Screen name="access" options={{ title: "Acesso" }} />
       <Stack.Screen name="create" options={{ title: "Nova ocorrência" }} />
       <Stack.Screen name="occurrences" options={{ headerShown: false }} />
     </Stack>
