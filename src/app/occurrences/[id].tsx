@@ -14,7 +14,7 @@ export default function OccurrenceDetailsScreen() {
         <Stack.Screen options={{ title: "Ocorrência" }} />
         <View style={styles.notFound}>
           <BackToOccurrences />
-          <Text style={styles.title}>Ocorrência não encontrada</Text>
+          <Text style={styles.title}>Nenhuma ocorrência encontrada</Text>
         </View>
       </>
     );
