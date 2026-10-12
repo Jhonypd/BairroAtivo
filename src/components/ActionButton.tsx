@@ -1,18 +1,32 @@
 import { router } from "expo-router";
-import { StyleSheet, Text, Pressable, type StyleProp, type ViewStyle } from "react-native";
+import { Text, Pressable, type StyleProp, type ViewStyle } from "react-native";
+import { actionButtonStyles as styles } from "./ActionButton.styles";
 
-type Props = {
+type ButtonBaseProps = {
   label: string;
-  href: "/" | "/occurrences/index" | "/create";
   secondary?: boolean;
   style?: StyleProp<ViewStyle>;
 };
 
-export function ActionButton({ label, href, secondary = false, style }: Props) {
+type Props = ButtonBaseProps &
+  (
+    | { href: "/" | "/occurrences/index" | "/create"; onPress?: never }
+    | { href?: never; onPress: () => void }
+  );
+
+export function ActionButton(props: Props) {
+  const { label, secondary = false, style } = props;
+
   return (
     <Pressable
       accessibilityRole="button"
-      onPress={() => router.push(href)}
+      onPress={() => {
+        if (props.href !== undefined) {
+          router.push(props.href);
+        } else {
+          props.onPress?.();
+        }
+      }}
       style={({ pressed }) => [
         styles.button,
         secondary && styles.secondary,
@@ -24,18 +38,3 @@ export function ActionButton({ label, href, secondary = false, style }: Props) {
     </Pressable>
   );
 }
-
-const styles = StyleSheet.create({
-  button: {
-    minHeight: 54,
-    alignItems: "center",
-    justifyContent: "center",
-    paddingHorizontal: 22,
-    borderRadius: 16,
-    backgroundColor: "#176B4D",
-  },
-  secondary: { borderWidth: 1, borderColor: "#B8CCBF", backgroundColor: "#FFFFFF" },
-  pressed: { opacity: 0.78 },
-  label: { color: "#FFFFFF", fontSize: 16, fontWeight: "700" },
-  secondaryLabel: { color: "#176B4D" },
-});

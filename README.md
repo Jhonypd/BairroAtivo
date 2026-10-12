@@ -1,6 +1,6 @@
 # BairroAtivo
 
-Aplicativo mobile em React Native, Expo e TypeScript para apoiar o registro de problemas comunitários. Esta entrega configura a base do projeto e uma tela inicial; as funcionalidades do produto serão desenvolvidas em etapas futuras.
+Aplicativo mobile em React Native, Expo e TypeScript para consultar relatos comunitários e demonstrar o cadastro de problemas encontrados nos bairros.
 
 ## Requisitos
 
@@ -48,12 +48,14 @@ npx expo-doctor
 
 - `src/app/`: rotas e layouts do Expo Router.
 - `src/components/`: componentes visuais reutilizáveis.
+- `src/styles/`: estilos específicos das telas, fora da pasta de rotas.
+- `src/theme/`: cores e valores visuais compartilhados.
 - `src/services/`: integrações e serviços futuros.
 - `src/types/`: tipos compartilhados.
 - `src/domain/`: regras de negócio.
 - `tests/`: testes futuros.
 
-As pastas sem código funcional contêm apenas marcadores para preservar a estrutura no Git. Nenhum serviço externo está conectado nesta etapa.
+O formulário e a lista usam dados simulados. Nenhum serviço externo está conectado nesta etapa.
 
 ## Tecnologias
 

@@ -1,7 +1,8 @@
-import { ScrollView, StyleSheet, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { ActionButton } from "../../components/ActionButton";
 import { OccurrenceCard } from "../../components/OccurrenceCard";
 import { occurrences } from "../../domain/occurrences";
+import { occurrencesStyles as styles } from "../../styles/screens/occurrences.styles";
 
 export default function OccurrencesScreen() {
   return (
@@ -18,12 +19,3 @@ export default function OccurrencesScreen() {
     </ScrollView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: { padding: 20, paddingBottom: 36, gap: 20 },
-  intro: { gap: 8 },
-  title: { color: "#183B2B", fontSize: 25, fontWeight: "700", lineHeight: 32 },
-  description: { color: "#66736A", fontSize: 15, lineHeight: 22 },
-  list: { gap: 12 },
-  disclaimer: { color: "#748078", fontSize: 12, textAlign: "center" },
-});

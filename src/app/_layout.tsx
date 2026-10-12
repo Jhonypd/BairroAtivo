@@ -1,13 +1,14 @@
 import { Stack } from "expo-router";
+import { colors } from "../theme/colors";
 
 export default function RootLayout() {
   return (
     <Stack
       screenOptions={{
-        headerStyle: { backgroundColor: "#F7F8F4" },
-        headerTintColor: "#183B2B",
+        headerStyle: { backgroundColor: colors.background },
+        headerTintColor: colors.primaryDark,
         headerTitleStyle: { fontWeight: "700" },
-        contentStyle: { backgroundColor: "#F7F8F4" },
+        contentStyle: { backgroundColor: colors.background },
       }}
     >
       <Stack.Screen name="index" options={{ title: "BairroAtivo" }} />
