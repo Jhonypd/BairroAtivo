@@ -1,9 +1,9 @@
 # BairroAtivo — Especificação de Requisitos (PB02)
 
-**Versão:** 0.2 — requisitos revisados  
+**Versão:** 0.3 — requisitos revisados  
 **Disciplina:** Hands On Work VIII — UNIVALI  
 **Situação:** requisitos revisados após levantamento exploratório com moradores; a implementação completa está prevista para a Etapa 2.  
-**Acesso:** qualquer pessoa pode consultar ocorrências. Para cadastrar ou gerenciar registros, será necessário entrar com uma conta Google.
+**Acesso:** qualquer pessoa pode consultar ocorrências publicadas. Para cadastrar, gerenciar ou apoiar registros, será necessário entrar com uma conta Google. O autor pode optar por não exibir seu nome publicamente.
 
 ## 1. Problema e justificativa
 
@@ -15,12 +15,12 @@ O aplicativo vai permitir cadastrar e consultar ocorrências. Ele não será um 
 
 **Geral:** desenvolver e testar um aplicativo mobile para registrar e acompanhar problemas encontrados nos bairros.
 
-**Específicos:** permitir consultas sem login; exigir conta para criar e gerenciar registros; incluir fotos, mapa, filtros e notificações; testar as principais funcionalidades e avaliar o aplicativo com moradores.
+**Específicos:** permitir consultas sem login; exigir conta para criar e gerenciar registros; oferecer publicação com identificação pública opcional; disponibilizar uma área de ocorrências próprias e apoio único por usuário a cada registro; incluir fotos, mapa, filtros e notificações; testar as principais funcionalidades e avaliar o aplicativo com moradores.
 
 ## 3. Stakeholders
 
 - **Moradores visitantes:** visualizam ocorrências públicas sem login.
-- **Moradores cadastrados:** criam e gerenciam suas ocorrências.
+- **Moradores cadastrados:** criam e gerenciam suas ocorrências, escolhem se seu nome será público e podem apoiar ocorrências.
 - **Responsável pelo desenvolvimento:** cuida da programação, dos testes e da documentação do projeto.
 - **Representantes comunitários:** potenciais participantes da validação.
 - **Órgãos públicos:** podem ter interesse nas informações, mas não participam do projeto e não recebem registros automaticamente.
@@ -40,13 +40,16 @@ O aplicativo vai permitir cadastrar e consultar ocorrências. Ele não será um 
 | RF09 | Consultar status: Aberta, Em acompanhamento, Resolvida | Alta |
 | RF10 | Permitir ao autor autenticado atualizar o status da própria ocorrência, identificado como acompanhamento comunitário | Média |
 | RF11 | Emitir notificações locais relevantes, mediante consentimento | Baixa |
-| RF12 | Exibir as próprias ocorrências em área de gerenciamento | Alta |
+| RF12 | Exibir uma lista exclusiva das ocorrências criadas pelo usuário autenticado, sem retirar essas ocorrências da listagem pública | Alta |
+| RF13 | Permitir que o autor autenticado escolha publicar a ocorrência sem exibir seu nome aos demais usuários | Alta |
+| RF14 | Permitir que usuários autenticados apoiem ou retirem apoio de ocorrências, limitando a um apoio por usuário em cada registro | Média |
+| RF15 | Exibir publicamente a contagem de apoios de cada ocorrência, sem expor quem apoiou | Média |
 
 ### 4.1 Requisitos não funcionais
 
 - **RNF01 — Plataforma:** aplicativo React Native com Expo e TypeScript; Android como plataforma mínima de demonstração, com atenção à compatibilidade iOS.
 - **RNF02 — Segurança:** usar Supabase Auth com login Google (OAuth); aplicar Row Level Security (RLS) para impedir que um usuário altere dados de outro; nunca colocar service role key no aplicativo.
-- **RNF03 — Privacidade:** evitar coletar endereço residencial desnecessário; localização é a do problema, sujeita à revisão pelo usuário; cuidado com pessoas, placas e dados pessoais nas fotos.
+- **RNF03 — Privacidade:** evitar coletar endereço residencial desnecessário; localização é a do problema, sujeita à revisão pelo usuário; cuidado com pessoas, placas e dados pessoais nas fotos. Na publicação sem identificação pública, o nome do autor não deve aparecer nem ser inferível por campos expostos na API; o vínculo com a conta permanece protegido no backend.
 - **RNF04 — Usabilidade:** interface em português, estados vazios, mensagens de erro claras, feedback de carregamento e controles acessíveis.
 - **RNF05 — Resiliência:** tratar rede indisponível, permissões recusadas, falhas de upload e dados inválidos sem travar o app.
 - **RNF06 — Qualidade:** regras centrais cobertas por testes unitários e de integração; documentar ciclos TDD Red–Green–Refactor.
@@ -65,10 +68,14 @@ O aplicativo vai permitir cadastrar e consultar ocorrências. Ele não será um 
 - **RN08:** notificações dependem de consentimento e disponibilidade do dispositivo; push remoto não é requisito obrigatório do MVP.
 - **RN09:** registros de demonstração não devem conter dados pessoais reais sem necessidade e autorização.
 - **RN10:** acesso público limita-se aos campos aprovados para exposição; e-mail e identificadores de autenticação não são exibidos.
+- **RN11:** todas as ocorrências são criadas por usuários autenticados, inclusive as publicadas sem nome. O autor escolhe, no cadastro, se seu nome será apresentado publicamente; a escolha não altera o registro de propriedade no backend.
+- **RN12:** uma ocorrência publicada sem nome ainda aparece em 'Minhas ocorrências' para o autor autenticado, que poderá gerenciá-la conforme as regras de autorização.
+- **RN13:** um usuário autenticado pode apoiar cada ocorrência no máximo uma vez e retirar esse apoio. A unicidade deverá ser garantida no banco de dados por restrição para o par (usuário, ocorrência) e por políticas RLS; a lista de apoiadores não será pública.
+- **RN14:** visitantes podem ver a contagem de apoios, mas devem se autenticar para apoiar ou retirar apoio. A quantidade de apoios não representa confirmação oficial nem prioridade automática de atendimento.
 
 ## 6. Escopo e limites
 
-**Incluído no MVP:** consulta pública e login com Google pelo Supabase Auth, cadastro/consulta/edição/exclusão autorizada, fotos, mapa/localização, filtros, status comunitário, notificações locais, testes e validação.
+**Incluído no MVP:** consulta pública e login com Google pelo Supabase Auth, cadastro/consulta/edição/exclusão autorizada, publicação com nome oculto opcional, lista 'Minhas ocorrências', sistema de apoios por usuário autenticado, fotos, mapa/localização, filtros, status comunitário, notificações locais, testes e validação.
 
 **Fora do escopo:** integração com prefeitura, encaminhamento oficial, exportação e envio automático de relatórios, garantia de resolução, chat, avaliações públicas de moradores, pagamentos, moderação avançada, painel administrativo complexo e push remoto em produção.
 
@@ -86,10 +93,13 @@ O aplicativo vai permitir cadastrar e consultar ocorrências. Ele não será um 
 8. Notificação local ocorre apenas com permissão e gatilho aplicável.
 9. Testes automatizados das regras essenciais passam; há registro de ciclos TDD.
 10. Resultados de validação com moradores são documentados com método, amostra real e limitações.
+11. Publicação com nome oculto não revela a identidade do autor na lista, nos detalhes ou na resposta pública da API; o autor continua encontrando o registro em 'Minhas ocorrências'.
+12. Um usuário autenticado consegue apoiar e retirar apoio, mas não gerar dois apoios simultâneos na mesma ocorrência; visitantes não conseguem apoiar.
+13. A lista 'Minhas ocorrências' só aparece para usuários autenticados, enquanto a listagem geral permanece acessível a visitantes.
 
 ## 8. Métricas de sucesso
 
-- Cobrir automaticamente as regras de autenticação/autorização, validação de cadastro e filtragem.
+- Cobrir automaticamente as regras de autenticação/autorização, validação de cadastro, filtragem, ocultação de identidade pública e unicidade dos apoios.
 - Obter execução bem-sucedida dos cenários de aceitação essenciais no ambiente de testes.
 - Realizar teste de usabilidade com moradores voluntários e registrar suas percepções.
 - Medir tarefas concluídas, dificuldades encontradas e sugestões coletadas durante a validação.
