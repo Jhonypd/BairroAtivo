@@ -1,8 +1,6 @@
 # BairroAtivo — Especificação de Requisitos (PB02)
 
-**Versão:** 0.3 — requisitos revisados  
 **Disciplina:** Hands On Work VIII — UNIVALI  
-**Situação:** requisitos revisados após levantamento exploratório com moradores; a implementação completa está prevista para a Etapa 2.  
 **Acesso:** qualquer pessoa pode consultar ocorrências publicadas. Para cadastrar, gerenciar ou apoiar registros, será necessário entrar com uma conta Google. O autor pode optar por não exibir seu nome publicamente.
 
 ## 1. Problema e justificativa
@@ -112,7 +110,7 @@ O aplicativo vai permitir cadastrar e consultar ocorrências. Ele não será um 
 
 ## 10. Organização do projeto
 
-O Trello é utilizado para acompanhar tarefas e sprints. O GitHub reúne o código-fonte, os requisitos e as evidências técnicas. Os resultados exploratórios do PB01 foram considerados na revisão do escopo e são descritos de forma consolidada no relatório parcial.
+O Trello é utilizado para acompanhar tarefas e sprints. O GitHub reúne o código-fonte, os requisitos e as evidências técnicas. As respostas da pesquisa com moradores ajudaram a definir as prioridades do aplicativo.
 
 ### 10.1 Possibilidade de evolução: exportação de ocorrências
 
