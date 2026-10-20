@@ -1,42 +1,70 @@
 # BairroAtivo
 
-Aplicativo mobile em React Native, Expo e TypeScript para consultar relatos comunitários e demonstrar o cadastro de problemas encontrados nos bairros.
+**Um aplicativo para visualizar e registrar problemas encontrados nos bairros.**
 
-## Requisitos
+O BairroAtivo é um projeto de aplicativo mobile desenvolvido com **React Native, Expo e TypeScript**. A proposta é reunir, em um só lugar, relatos sobre problemas de infraestrutura urbana — como buracos nas ruas, iluminação danificada, calçadas em más condições e descarte irregular de lixo — para facilitar a consulta e o acompanhamento pela comunidade.
 
-- Node.js 22.13 ou superior (linha LTS recomendada pelo Expo SDK 57).
-- npm 10 ou superior.
-- Expo Go em um dispositivo Android/iOS ou um emulador configurado. Para iOS Simulator é necessário macOS.
+O projeto faz parte da disciplina **Hands On Work VIII**, do curso de **Análise e Desenvolvimento de Sistemas da UNIVALI**.
 
-## Instalação
+> **Importante:** o BairroAtivo é um projeto acadêmico independente. Não é um serviço oficial da prefeitura, não encaminha solicitações automaticamente a órgãos públicos e não garante a resolução dos problemas registrados.
 
-Clone o repositório e instale as dependências:
+## Baixar o aplicativo
 
-```bash
-git clone https://github.com/Jhonypd/BairroAtivo.git
-cd BairroAtivo
-npm install
-```
+O protótipo da primeira etapa está disponível para **Android**. O APK foi gerado com Expo EAS Build e testado em dispositivo físico.
 
-## Executar
+**[Baixar APK pelo GitHub Releases](https://github.com/Jhonypd/BairroAtivo/releases/tag/BairroAtivo)**
 
-Inicie o servidor de desenvolvimento:
+Na página da Release, basta localizar a seção **Assets** e baixar o arquivo com extensão `.apk`. Em seguida, abra o arquivo no Android para instalar o aplicativo. Dependendo das configurações do aparelho, pode ser necessário autorizar a instalação de aplicativos dessa origem.
 
-```bash
-npm start
-```
+A versão disponibilizada é demonstrativa e utiliza **dados simulados**, sem conexão com banco de dados.
 
-Leia o QR code com o Expo Go ou use os atalhos exibidos no terminal. Também é possível executar diretamente:
+## Funcionalidades do protótipo
 
-```bash
-npm run android
-npm run ios
-npm run web
-```
+Na etapa atual, é possível:
 
-Os comandos Android e iOS precisam de um dispositivo ou emulador configurado; o simulador iOS requer macOS.
+- Navegar pelas telas do aplicativo;
+- Consultar uma lista de ocorrências de exemplo;
+- Visualizar os detalhes de uma ocorrência;
+- Pesquisar e filtrar os registros apresentados;
+- Acessar o formulário demonstrativo de ocorrência.
 
-## Verificações
+**Ainda não estão implementados:** autenticação com Google, publicação e persistência de ocorrências reais, envio de fotografias, mapa integrado, notificações e sincronização com backend.
+
+## Pesquisa com a comunidade
+
+Antes do desenvolvimento, foi realizado um questionário exploratório com **nove participantes**, entre 10 e 14 de outubro de 2026, para identificar dificuldades relacionadas à infraestrutura dos bairros.
+
+Entre as respostas:
+
+- **8 de 9** participantes mencionaram buracos nas ruas;
+- **5 de 9** apontaram calçadas danificadas;
+- **7 de 9** disseram que utilizariam um aplicativo com essa finalidade, e **2** responderam que talvez utilizassem.
+
+Os resultados contribuíram para definir os requisitos e as prioridades do projeto. Por se tratar de uma amostra pequena, não representam a opinião de toda a população de Brusque.
+
+## Tecnologias utilizadas
+
+| Tecnologia | Finalidade |
+| --- | --- |
+| React Native | Desenvolvimento da interface mobile |
+| Expo | Ambiente de desenvolvimento e compilação do aplicativo |
+| TypeScript | Tipagem e organização do código |
+| Expo Router | Navegação e estrutura de rotas |
+| Jest | Execução dos testes automatizados |
+| React Native Testing Library | Testes de componentes e comportamentos da interface |
+| EAS Build | Geração do APK Android |
+| GitHub | Versionamento e disponibilização do código |
+| Trello | Organização das tarefas e acompanhamento do desenvolvimento |
+
+A próxima fase prevê a integração com **Supabase**, incluindo banco PostgreSQL e autenticação. Esses serviços **ainda não estão conectados** ao protótipo.
+
+## Desenvolvimento e testes
+
+O projeto utiliza práticas de **desenvolvimento orientado a testes (TDD)**, seguindo o ciclo *Red → Green → Refactor*: definir o comportamento esperado em um teste, implementar a solução necessária e refatorar mantendo os testes aprovados.
+
+Na primeira etapa, foram registradas **duas suítes com quatro testes automatizados aprovados**, além de verificações de tipos, lint e testes manuais de navegação.
+
+Para executar as verificações localmente:
 
 ```bash
 npm test
@@ -45,24 +73,92 @@ npm run lint
 npx expo-doctor
 ```
 
-Os testes usam Jest com o preset `jest-expo` e React Native Testing Library. Arquivos de teste ficam próximos à feature em `__tests__`, fora de `src/app/`.
+As evidências dos ciclos de teste estão documentadas em [EVIDENCIAS_TDD_PB06.md](docs/EVIDENCIAS_TDD_PB06.md).
 
-## Organização
+## Como executar o projeto
 
-- `src/app/`: rotas pequenas e layouts do Expo Router.
-- `src/features/inicio/`: tela inicial.
-- `src/features/autenticacao/`: tela de acesso e fluxo de autenticação futuro.
-- `src/features/ocorrencias/`: telas, componentes, dados simulados e tipos de ocorrências.
-- `src/shared/`: componentes de interface reutilizáveis entre funcionalidades.
-- `src/configs/`: tema e configurações globais.
-- `src/features/**/__tests__/`: testes unitários e de interface próximos às funcionalidades.
+### Pré-requisitos
 
-O formulário e a lista usam dados simulados. Nenhum serviço externo está conectado nesta etapa.
+- Node.js compatível com o Expo SDK utilizado (recomendado Node.js 22.13 ou superior);
+- npm;
+- Expo Go instalado no celular ou um emulador configurado.
 
-## Tecnologias
+### Instalação
 
-- Expo SDK 57 e React Native 0.86.
-- React 19 e TypeScript em modo estrito.
-- Expo Router para navegação baseada em arquivos.
+```bash
+git clone https://github.com/Jhonypd/BairroAtivo.git
+cd BairroAtivo
+npm install
+```
 
-Não adicione credenciais ao repositório. Arquivos locais `.env` são ignorados pelo Git.
+### Execução
+
+```bash
+npm start
+```
+
+Leia o QR code exibido no terminal usando o Expo Go.
+
+Também estão disponíveis os comandos:
+
+```bash
+npm run android
+npm run ios
+npm run web
+```
+
+Os ambientes Android e iOS exigem dispositivo ou emulador configurado. Para executar o simulador iOS, é necessário macOS.
+
+### Gerar um APK Android
+
+O projeto já possui um perfil `preview` no `eas.json`, configurado para gerar um APK:
+
+```bash
+npx eas-cli login
+npx eas-cli build --platform android --profile preview
+```
+
+O processo exige uma conta Expo autenticada e gera um link para baixar o arquivo ao final da compilação.
+
+## Organização do código
+
+```text
+src/
+├── app/              # Rotas e layouts do Expo Router
+├── features/
+│   ├── inicio/       # Tela inicial
+│   ├── autenticacao/ # Estrutura para o acesso de usuários
+│   └── ocorrencias/  # Telas, componentes e dados simulados
+├── shared/           # Componentes reutilizáveis
+└── configs/          # Tema e configurações gerais
+```
+
+Os testes ficam próximos às respectivas funcionalidades, em diretórios `__tests__`.
+
+## Próximos passos
+
+O desenvolvimento continuará com o objetivo de permitir:
+
+- Login com Google;
+- Cadastro e gerenciamento de ocorrências por usuários autenticados;
+- Consulta pública e área **Minhas ocorrências**;
+- Publicação com opção de ocultar o nome do autor;
+- Inclusão de fotos e visualização em mapa;
+- Apoio a ocorrências, limitado a um por usuário em cada registro;
+- Persistência dos dados e regras de acesso no Supabase;
+- Ampliação dos testes automatizados e validação com usuários.
+
+Esses itens são **funcionalidades planejadas**, não recursos disponíveis no APK atual.
+
+## Planejamento e documentação
+
+O desenvolvimento é acompanhado por cartões, sprints e tarefas no Trello. O repositório concentra o código-fonte e a documentação técnica.
+
+- [Quadro do projeto no Trello](https://trello.com/b/xIG5oXo2/hands-on-work-viii)
+- [Especificação de requisitos](docs/ESPECIFICACAO.md)
+- [Evidências de TDD](docs/EVIDENCIAS_TDD_PB06.md)
+- [Release do protótipo Android](https://github.com/Jhonypd/BairroAtivo/releases/tag/BairroAtivo)
+
+---
+
+Desenvolvido por **Jhony Pereira Duarte** — Análise e Desenvolvimento de Sistemas, **UNIVALI**.
