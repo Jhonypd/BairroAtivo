@@ -66,7 +66,7 @@ export default function PaginaAcesso() {
 
           <Botao
             label="Explorar sem login"
-            href="/ocorrencias"
+            href="/inicio"
             variant="secondary"
             fullWidth
             style={styles.botaoExplorar}
