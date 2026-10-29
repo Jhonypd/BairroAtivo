@@ -1,20 +1,34 @@
 import { Stack, useLocalSearchParams } from "expo-router";
-import { ScrollView, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { ActivityIndicator, ScrollView, Text, View } from "react-native";
 import { Botao } from "@/shared/components/ui/Botao";
-import { ocorrencias } from "../data/ocorrenciasSimuladas";
+import { buscarOcorrenciaPorId } from "../services/ocorrenciasSupabase";
+import type { Ocorrencia } from "../types/Ocorrencia";
 import { paginaDetalheOcorrenciaStyles as styles } from "./PaginaDetalheOcorrencia.styles";
 import { cores } from "@/configs/tema";
-
-export async function generateStaticParams(): Promise<{ id: string }[]> {
-  return ocorrencias.map(({ id }) => ({ id }));
-}
 
 export default function PaginaDetalheOcorrencia() {
   const { id: idRota } = useLocalSearchParams<{ id?: string | string[] }>();
   const id = Array.isArray(idRota) ? idRota[0] : idRota;
-  const ocorrencia = ocorrencias.find((item) => item.id === id);
+  const [ocorrencia, definirOcorrencia] = useState<Ocorrencia | null>(null);
+  const [carregando, definirCarregando] = useState(true);
+  const [erro, definirErro] = useState(false);
 
-  if (!ocorrencia) {
+  useEffect(() => {
+    let ativa = true;
+    if (!id) return;
+    buscarOcorrenciaPorId(id)
+      .then((resultado) => { if (ativa) definirOcorrencia(resultado); })
+      .catch(() => { if (ativa) definirErro(true); })
+      .finally(() => { if (ativa) definirCarregando(false); });
+    return () => { ativa = false; };
+  }, [id]);
+
+  if (carregando) {
+    return <View style={styles.notFound}><ActivityIndicator accessibilityLabel="Carregando ocorrência" /><Text style={styles.value}>Carregando ocorrência...</Text></View>;
+  }
+
+  if (erro || !ocorrencia) {
     return (
       <>
         <Stack.Screen options={{ title: "Ocorrência" }} />
@@ -26,7 +40,7 @@ export default function PaginaDetalheOcorrencia() {
             variant="outline"
             size="sm"
           />
-          <Text style={styles.titulo}>Nenhuma ocorrência encontrada</Text>
+          <Text style={styles.titulo}>{erro ? "Não foi possível carregar a ocorrência" : "Nenhuma ocorrência encontrada"}</Text>
         </View>
       </>
     );
@@ -51,6 +65,7 @@ export default function PaginaDetalheOcorrencia() {
           <Text style={styles.value}>{ocorrencia.bairro}</Text>
           <Text style={styles.label}>Data do registro</Text>
           <Text style={styles.value}>{ocorrencia.registradaEm}</Text>
+          {ocorrencia.nomeAutorPublico ? <><Text style={styles.label}>Publicado por</Text><Text style={styles.value}>{ocorrencia.nomeAutorPublico}</Text></> : null}
           <Text style={styles.label}>Status comunitário</Text>
           <Text style={[styles.status, { color: ocorrencia.status === "Aberta" ? cores.statusOpen : ocorrencia.status === "Resolvida" ? cores.statusResolved : cores.statusInProgress }]}>
             {ocorrencia.status}
@@ -61,7 +76,7 @@ export default function PaginaDetalheOcorrencia() {
           <Text style={styles.descricao}>{ocorrencia.descricao}</Text>
         </View>
         <Text style={styles.disclaimer}>
-          Este é um registro demonstrativo. O BairroAtivo não é um serviço oficial da prefeitura.
+          O BairroAtivo não é um serviço oficial da prefeitura.
         </Text>
       </ScrollView>
     </>

@@ -8,6 +8,7 @@ export type Ocorrencia = {
   bairro: string;
   status: StatusOcorrencia;
   registradaEm: string;
+  nomeAutorPublico?: string;
 };
 
 

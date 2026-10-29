@@ -27,6 +27,7 @@ export function CartaoOcorrencia({ ocorrencia }: { ocorrencia: Ocorrencia }) {
       </View>
       <Text style={styles.titulo}>{ocorrencia.titulo}</Text>
       <Text style={styles.bairro}>{ocorrencia.bairro}</Text>
+      {ocorrencia.nomeAutorPublico ? <Text style={styles.bairro}>Por {ocorrencia.nomeAutorPublico}</Text> : null}
       <Text style={styles.more}>Ver detalhes <Text accessibilityElementsHidden>›</Text></Text>
     </Pressable>
   );
