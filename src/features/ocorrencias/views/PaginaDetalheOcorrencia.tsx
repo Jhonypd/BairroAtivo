@@ -24,11 +24,11 @@ export default function PaginaDetalheOcorrencia() {
     return () => { ativa = false; };
   }, [id]);
 
-  if (carregando) {
+  if (carregando && id && !erro) {
     return <View style={styles.notFound}><ActivityIndicator accessibilityLabel="Carregando ocorrência" /><Text style={styles.value}>Carregando ocorrência...</Text></View>;
   }
 
-  if (erro || !ocorrencia) {
+  if (!id || erro || !ocorrencia) {
     return (
       <>
         <Stack.Screen options={{ title: "Ocorrência" }} />
@@ -40,7 +40,13 @@ export default function PaginaDetalheOcorrencia() {
             variant="outline"
             size="sm"
           />
-          <Text style={styles.titulo}>{erro ? "Não foi possível carregar a ocorrência" : "Nenhuma ocorrência encontrada"}</Text>
+          <Text style={styles.titulo}>
+            {!id
+              ? "Identificador da ocorrência inválido"
+              : erro
+                ? "Não foi possível carregar a ocorrência"
+                : "Nenhuma ocorrência encontrada"}
+          </Text>
         </View>
       </>
     );

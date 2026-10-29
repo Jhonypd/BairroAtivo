@@ -64,7 +64,7 @@ O projeto integra `@supabase/supabase-js` ao schema `howviii` para consulta púb
 
 Copie `.env.example` para `.env` e preencha `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` com a chave publishable do projeto Supabase. O `.env` está ignorado pelo Git. Nunca utilize uma chave `service_role` no aplicativo.
 
-As políticas RLS existentes permitem `SELECT` público em todas as colunas de `howviii.ocorrencias`. O app solicita somente os campos públicos aprovados, mas essa política não impede clientes de requisitarem `autor_id` diretamente. Ajuste a política no Supabase para expor somente campos públicos antes de depender desta configuração em produção.
+O acesso à coluna `autor_id` foi restringido no Supabase. Em 29/10/2026, confirmei que nem `anon` nem `authenticated` têm privilégio de `SELECT` nessa coluna. A listagem do app também solicita somente os campos públicos aprovados.
 
 ## Desenvolvimento e testes
 

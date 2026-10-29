@@ -16,7 +16,7 @@ Após implementar conversão de status/categoria/data, consulta com lista vazia,
 
 ### Refactor
 
-Os filtros de título, bairro, categoria e status foram adicionados ao serviço e cobertos por teste. Após as mudanças finais, `npm test -- --runInBand` concluiu com **3 suítes aprovadas, 10 testes aprovados**.
+Os filtros de título, bairro, categoria e status foram adicionados ao serviço e cobertos por teste. Após as mudanças finais, `npm test -- --runInBand` concluiu com **4 suítes aprovadas, 14 testes aprovados**.
 
 ## Segurança da seleção
 
@@ -24,6 +24,18 @@ O teste verifica que a chamada `.select()` especifica `id,titulo,descricao,categ
 
 ## Verificação do banco
 
-Leitura da configuração do Supabase em 29/10/2026 confirmou que `howviii.ocorrencias` existe, tem RLS habilitado e política `SELECT` para `anon` e `authenticated` com condição `true`. Isso permite leitura das linhas e colunas acessíveis pela API; a projeção do cliente reduz exposição na aplicação, mas não substitui uma política que restrinja colunas. A pendência foi documentada no README. Nenhuma tabela, policy ou migration foi alterada.
+Verificação SQL read-only em 29/10/2026 confirmou que `howviii.ocorrencias` tem RLS habilitado e política `SELECT` para `anon` e `authenticated`. A política de linhas usa condição `true`, e os privilégios por coluna foram verificados separadamente: `has_column_privilege` retornou `false` para `anon` e `authenticated` na coluna `autor_id`. Nenhuma tabela, policy ou migration foi alterada nesta tarefa.
 
 Uma chamada HTTP GET real à Data API, com a chave publishable e cabeçalho de schema `howviii`, retornou HTTP 200 e zero registros em `29/10/2026`. Isso confirma a consulta pública real ao schema vazio; não substitui validação da tela em emulador ou dispositivo.
+
+## Tela de detalhes sem identificador
+
+### Red
+
+Comando: `npm test -- --runInBand src/features/ocorrencias/__tests__/PaginaDetalheOcorrencia.test.tsx`
+
+Resultado: 3 cenários passaram (carregamento, erro e registro inexistente) e o cenário de ID ausente falhou porque a tela continuava exibindo o indicador de carregamento.
+
+### Green / Refactor
+
+A tela passou a exibir `Identificador da ocorrência inválido` sem consultar o serviço quando o parâmetro está ausente. Resultado final: **1 suíte aprovada, 4 testes aprovados**, cobrindo carregamento, erro de consulta, ocorrência inexistente e ID ausente. As verificações completas terminaram com 4 suítes e 14 testes aprovados, typecheck aprovado e lint aprovado.
