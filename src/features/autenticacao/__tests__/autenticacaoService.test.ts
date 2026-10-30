@@ -2,6 +2,7 @@ import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { entrarComGoogle } from "../services/autenticacao";
 import { supabase } from "@/configs/supabase";
 import * as WebBrowser from "expo-web-browser";
+import * as Linking from "expo-linking";
 
 jest.mock("@/configs/supabase", () => ({
   supabase: {
@@ -23,6 +24,7 @@ jest.mock("expo-web-browser", () => ({
 const autenticar = jest.mocked(supabase!.auth.signInWithOAuth);
 const trocarCodigo = jest.mocked(supabase!.auth.exchangeCodeForSession);
 const abrirNavegador = jest.mocked(WebBrowser.openAuthSessionAsync);
+const criarUrl = jest.mocked(Linking.createURL);
 
 describe("login Google via Supabase Auth", () => {
   beforeEach(() => { jest.clearAllMocks(); });
@@ -38,6 +40,7 @@ describe("login Google via Supabase Auth", () => {
       provider: "google",
       options: { redirectTo: "bairroativo://auth/callback", skipBrowserRedirect: true },
     });
+    expect(criarUrl).toHaveBeenCalledWith("auth/callback", { scheme: "bairroativo" });
     expect(abrirNavegador).toHaveBeenCalledWith("https://supabase.test/oauth", "bairroativo://auth/callback");
     expect(trocarCodigo).toHaveBeenCalledWith("codigo-retornado");
   });

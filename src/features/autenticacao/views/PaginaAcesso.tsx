@@ -14,6 +14,8 @@ import { Botao } from "@/shared/components/ui/Botao";
 import { paginaAcessoStyles as styles } from "./PaginaAcesso.styles";
 import { useAutenticacao } from "../contexto/AutenticacaoProvider";
 import { useEffect } from "react";
+import { cores } from "@/configs/tema";
+import GoogleIcon from "@/shared/icons/devicon--google.svg";
 
 const logo = require("../../../../assets/images/logo_.png");
 const paisagem = require("../../../../assets/images/splash-background.jpg");
@@ -61,9 +63,10 @@ export default function PaginaAcesso() {
 
           <Botao
             label={autenticando ? "Conectando..." : "Continuar com Google"}
-            icon={autenticando ? <ActivityIndicator color="#4285F4" /> : <Text style={styles.googleMark}>G</Text>}
+            icon={autenticando ? <ActivityIndicator color={cores.primaryDark} /> : <GoogleIcon width={20} height={20} accessibilityLabel="Google" />}
             onPress={() => void entrarComGoogle()}
             disabled={autenticando || carregando}
+            variant="outline"
             fullWidth
             style={styles.botaoGoogle}
           />

@@ -38,8 +38,8 @@ npm run lint
 npx expo-doctor
 ```
 
-Resultados desta continuação: **9 suítes aprovadas, 33 testes aprovados**; typecheck aprovado; lint aprovado sem avisos; Expo Doctor aprovado com **20/20 verificações**. O armazenamento móvel da sessão usa `expo-secure-store`; o mock correspondente é configurado para executar os testes sem módulo nativo.
+Resultados desta continuação: **10 suítes aprovadas, 34 testes aprovados**; typecheck aprovado; lint aprovado sem avisos; Expo Doctor aprovado com **20/20 verificações**. O armazenamento móvel da sessão usa `expo-secure-store`; o mock correspondente é configurado para executar os testes sem módulo nativo.
 
 ## Verificação externa pendente
 
-O usuário confirmou que o provedor Google, Client ID, Client Secret e o redirect `bairroativo://auth/callback` já estão configurados no Supabase. A URL Supabase e a chave publicável foram cadastradas no ambiente `development` do EAS; o Client Secret do Google não é enviado ao aplicativo. O retorno OAuth deve ser validado em development build iOS/Android; Expo Go não permite validar esse deep link nativo. Esta máquina não tem Android conectado nem simulador iOS configurado. O build de desenvolvimento Android está em execução no EAS. O build iOS depende de credenciais de assinatura/distribuição Apple para o perfil interno.
+O usuário confirmou que o provedor Google, Client ID, Client Secret e o redirect `bairroativo://auth/callback` já estão configurados no Supabase. A URL Supabase e a chave publicável foram cadastradas no ambiente `development` do EAS; o Client Secret do Google não é enviado ao aplicativo. No iPhone, o teste feito pelo Expo Go não retornou ao app porque o Expo Go não registra o esquema nativo `bairroativo://`. A configuração introspectada do app inclui `bairroativo` em `CFBundleURLTypes`. A validação real deve ser repetida numa development build iOS; o EAS ainda depende de credenciais Apple para assinar/distribuir essa build. O build Android está em execução e esta máquina não tem aparelho Android conectado.
