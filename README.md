@@ -28,7 +28,7 @@ No APK da Release da Etapa 1, é possível:
 - Pesquisar e filtrar os registros apresentados;
 - Acessar o formulário demonstrativo de ocorrência.
 
-O APK da primeira etapa continua sendo demonstrativo. No código atual de `develop`, já existe o fluxo de autenticação Google com Supabase Auth, mas ele ainda depende de configuração dos painéis Google/Supabase e de validação em development build. Publicação e gerenciamento real de ocorrências, envio de fotografias, mapa integrado e notificações ainda não foram implementados.
+O APK da primeira etapa continua sendo demonstrativo. No código atual de `develop`, o fluxo de autenticação Google com Supabase Auth está implementado e o provedor e o endereço de retorno já foram configurados nos painéis Google/Supabase. Ainda falta validar o login real em development build nos aparelhos Android e iOS. Publicação e gerenciamento real de ocorrências, envio de fotografias, mapa integrado e notificações ainda não foram implementados.
 
 No código atual em `develop`, a listagem e os detalhes consultam ocorrências públicas no Supabase, com pesquisa/filtros, ordenação recente e estados de carregamento, erro e lista vazia. Os testes usam mocks e não comprovam a autorização do banco nem a conexão em dispositivo.
 
@@ -75,7 +75,7 @@ O app utiliza o fluxo OAuth do Supabase em navegador externo, com retorno ao dee
 3. No Supabase Dashboard, abra **Authentication → URL Configuration → Redirect URLs** e permita `bairroativo://auth/callback`.
 4. O esquema `bairroativo` já está configurado em `app.json`. Depois de configurar o provedor, valide em uma development build instalada no aparelho.
 
-O Expo Go não oferece um esquema nativo customizado confiável para retorno OAuth. Use uma development build:
+O Expo Go não oferece um esquema nativo customizado confiável para retorno OAuth. O fluxo usa SecureStore para persistir a sessão no mobile. Use uma development build:
 
 ```bash
 npx eas-cli build --profile development --platform android
@@ -83,7 +83,7 @@ npx eas-cli build --profile development --platform ios
 npx expo start --dev-client
 ```
 
-O fluxo está coberto por testes com mocks, mas o login real ainda não foi validado no aparelho; não considere a autenticação operacional até completar as configurações e o teste em dispositivo.
+O fluxo e a rota de callback estão cobertos por testes com mocks. A configuração dos painéis já foi confirmada; a autenticação real ainda não foi validada em aparelho e depende da instalação da development build e de uma conta Google para concluir o teste.
 
 ## Desenvolvimento e testes
 

@@ -7,6 +7,10 @@ export type ResultadoLogin =
   | { tipo: "autenticado"; sessao: Session }
   | { tipo: "cancelado" };
 
+let codigoConcluido: string | null = null;
+let sessaoConcluida: Session | null = null;
+const trocasEmAndamento = new Map<string, Promise<Session>>();
+
 function clienteSupabase() {
   if (!supabase) throw new Error("A conexão com o Supabase não está configurada.");
   return supabase;
@@ -26,13 +30,35 @@ export function observarSessao(notificar: (sessao: Session | null) => void) {
   return () => data.subscription.unsubscribe();
 }
 
+export async function concluirLoginComCodigo(codigo: string): Promise<Session> {
+  if (codigoConcluido === codigo && sessaoConcluida) return sessaoConcluida;
+
+  const trocaExistente = trocasEmAndamento.get(codigo);
+  if (trocaExistente) return trocaExistente;
+
+  const troca = (async () => {
+    const { data, error } = await clienteSupabase().auth.exchangeCodeForSession(codigo);
+    if (error) throw error;
+    if (!data.session) throw new Error("Não foi possível criar a sessão autenticada.");
+    codigoConcluido = codigo;
+    sessaoConcluida = data.session;
+    return data.session;
+  })();
+  trocasEmAndamento.set(codigo, troca);
+  try {
+    return await troca;
+  } finally {
+    trocasEmAndamento.delete(codigo);
+  }
+}
+
 function valorParametro(valor: string | string[] | undefined) {
   return Array.isArray(valor) ? valor[0] : valor;
 }
 
 export async function entrarComGoogle(): Promise<ResultadoLogin> {
   const cliente = clienteSupabase();
-  const redirectTo = Linking.createURL("auth/callback");
+  const redirectTo = Linking.createURL("auth/callback", { scheme: "bairroativo" });
   const { data, error } = await cliente.auth.signInWithOAuth({
     provider: "google",
     options: { redirectTo, skipBrowserRedirect: true },
@@ -49,10 +75,7 @@ export async function entrarComGoogle(): Promise<ResultadoLogin> {
   const codigo = valorParametro(parametros?.code as string | string[] | undefined);
   if (!codigo) throw new Error("O Google não retornou um código de autenticação.");
 
-  const { data: dadosSessao, error: erroTroca } = await cliente.auth.exchangeCodeForSession(codigo);
-  if (erroTroca) throw erroTroca;
-  if (!dadosSessao.session) throw new Error("Não foi possível criar a sessão autenticada.");
-  return { tipo: "autenticado", sessao: dadosSessao.session };
+  return { tipo: "autenticado", sessao: await concluirLoginComCodigo(codigo) };
 }
 
 export async function sair() {

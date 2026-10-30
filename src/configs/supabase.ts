@@ -1,5 +1,5 @@
 import { AppState, Platform } from "react-native";
-import AsyncStorage from "@react-native-async-storage/async-storage";
+import * as SecureStore from "expo-secure-store";
 import "react-native-url-polyfill/auto";
 import { createClient } from "@supabase/supabase-js";
 
@@ -11,7 +11,13 @@ export const supabase =
     ? createClient(endereco, chavePublicavel, {
         db: { schema: "howviii" },
         auth: {
-          ...(Platform.OS === "web" ? {} : { storage: AsyncStorage }),
+          ...(Platform.OS === "web" ? {} : {
+            storage: {
+              getItem: SecureStore.getItemAsync,
+              setItem: SecureStore.setItemAsync,
+              removeItem: SecureStore.deleteItemAsync,
+            },
+          }),
           autoRefreshToken: true,
           persistSession: true,
           detectSessionInUrl: false,
