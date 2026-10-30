@@ -1,6 +1,7 @@
 import {
   Image,
   ImageBackground,
+  ActivityIndicator,
   ScrollView,
   Text,
   View,
@@ -8,15 +9,23 @@ import {
 } from "react-native";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
+import { router } from "expo-router";
 import { Botao } from "@/shared/components/ui/Botao";
 import { paginaAcessoStyles as styles } from "./PaginaAcesso.styles";
+import { useAutenticacao } from "../contexto/AutenticacaoProvider";
+import { useEffect } from "react";
 
 const logo = require("../../../../assets/images/logo_.png");
 const paisagem = require("../../../../assets/images/splash-background.jpg");
 
 export default function PaginaAcesso() {
+  const { usuario, carregando, autenticando, erro, entrarComGoogle } = useAutenticacao();
   const { height } = useWindowDimensions();
   const alturaDestaque = Math.min(Math.max(height * 0.56, 320), 430);
+
+  useEffect(() => {
+    if (!carregando && usuario) router.replace("/inicio");
+  }, [carregando, usuario]);
 
   return (
     <SafeAreaView style={styles.safeArea} edges={["bottom"]}>
@@ -51,12 +60,14 @@ export default function PaginaAcesso() {
           </View>
 
           <Botao
-            label="Continuar com Google"
-            icon={<Text style={styles.googleMark}>G</Text>}
-            disabled
+            label={autenticando ? "Conectando..." : "Continuar com Google"}
+            icon={autenticando ? <ActivityIndicator color="#4285F4" /> : <Text style={styles.googleMark}>G</Text>}
+            onPress={() => void entrarComGoogle()}
+            disabled={autenticando || carregando}
             fullWidth
             style={styles.botaoGoogle}
           />
+          {erro ? <Text accessibilityRole="alert" style={styles.erro}>{erro}</Text> : null}
 
           <View style={styles.separator}>
             <View style={styles.separatorLine} />
@@ -70,12 +81,6 @@ export default function PaginaAcesso() {
             variant="secondary"
             fullWidth
             style={styles.botaoExplorar}
-          />
-          <Botao
-            label="Pré-visualizar formulário de ocorrência"
-            href="/ocorrencias/nova"
-            variant="ghost"
-            fullWidth
           />
           <Text style={styles.helper}>
             Você poderá consultar ocorrências de forma pública. Para registrar,

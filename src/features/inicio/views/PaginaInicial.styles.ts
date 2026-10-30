@@ -20,7 +20,7 @@ export const paginaInicialStyles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "space-between",
   },
-  perfilResumo: { flexDirection: "row", alignItems: "center", gap: 10 },
+  perfilResumo: { flexDirection: "row", alignItems: "center", gap: 10, flexShrink: 1 },
   avatar: {
     width: 36,
     height: 36,
@@ -30,7 +30,7 @@ export const paginaInicialStyles = StyleSheet.create({
     backgroundColor: cores.primary,
   },
   iniciais: { color: cores.surface, fontSize: 12, fontWeight: "800" },
-  saudacao: { gap: 1 },
+  saudacao: { gap: 1, flexShrink: 1 },
   ola: { color: cores.text, fontSize: 12 },
   nome: { color: cores.primaryDark, fontSize: 14, fontWeight: "700" },
   notificacao: {

@@ -1,3 +1,6 @@
+import { AppState, Platform } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import "react-native-url-polyfill/auto";
 import { createClient } from "@supabase/supabase-js";
 
 const endereco = process.env.EXPO_PUBLIC_SUPABASE_URL;
@@ -8,9 +11,21 @@ export const supabase =
     ? createClient(endereco, chavePublicavel, {
         db: { schema: "howviii" },
         auth: {
-          autoRefreshToken: false,
-          persistSession: false,
+          ...(Platform.OS === "web" ? {} : { storage: AsyncStorage }),
+          autoRefreshToken: true,
+          persistSession: true,
           detectSessionInUrl: false,
+          flowType: "pkce",
         },
       })
     : null;
+
+if (supabase && Platform.OS !== "web") {
+  if (AppState.currentState === "active") supabase.auth.startAutoRefresh();
+  else supabase.auth.stopAutoRefresh();
+
+  AppState.addEventListener("change", (state) => {
+    if (state === "active") supabase.auth.startAutoRefresh();
+    else supabase.auth.stopAutoRefresh();
+  });
+}

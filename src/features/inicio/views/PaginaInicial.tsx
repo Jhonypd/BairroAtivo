@@ -9,10 +9,18 @@ import IconeAdicionar from "@/shared/icons/add_24dp_E3E3E3.svg";
 import IconeNotificacoes from "@/shared/icons/notifications_24dp_E3E3E3.svg";
 import { cores } from "@/configs/tema";
 import { paginaInicialStyles as styles } from "./PaginaInicial.styles";
+import { useAutenticacao } from "@/features/autenticacao/contexto/AutenticacaoProvider";
 
 const ilustracaoBairro = require("../../../../assets/images/splash-background.jpg");
 
 export default function PaginaInicial() {
+  const { usuario, autenticando, erro, sair } = useAutenticacao();
+  const nomePerfil = typeof usuario?.user_metadata.full_name === "string"
+    ? usuario.user_metadata.full_name
+    : typeof usuario?.user_metadata.name === "string"
+      ? usuario.user_metadata.name
+      : usuario?.email?.split("@")[0] ?? "visitante";
+  const iniciaisPerfil = nomePerfil.split(/[\s._-]+/).filter(Boolean).slice(0, 2).map((parte) => parte[0]).join("").toLocaleUpperCase("pt-BR") || "BA";
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <StatusBar style="dark" />
@@ -23,13 +31,16 @@ export default function PaginaInicial() {
         <View style={styles.cabecalho}>
           <View style={styles.perfilResumo}>
             <View style={styles.avatar}>
-              <Text style={styles.iniciais}>BA</Text>
+              <Text style={styles.iniciais}>{iniciaisPerfil}</Text>
             </View>
             <View style={styles.saudacao}>
               <Text style={styles.ola}>Olá,</Text>
-              <Text style={styles.nome}>visitante</Text>
+              <Text numberOfLines={1} style={styles.nome}>{nomePerfil}</Text>
             </View>
           </View>
+          {usuario ? (
+            <Botao label={autenticando ? "Saindo..." : "Sair"} onPress={() => void sair().catch(() => undefined)} disabled={autenticando} variant="ghost" size="xs" />
+          ) : <Botao label="Entrar" href="/login" variant="ghost" size="xs" />}
           <View style={styles.notificacao} accessibilityLabel="Notificações">
             <IconeNotificacoes
               width={24}
@@ -39,6 +50,7 @@ export default function PaginaInicial() {
             <View style={styles.indicadorNotificacao} />
           </View>
         </View>
+        {erro ? <Text accessibilityRole="alert" style={{ color: cores.error }}>{erro}</Text> : null}
 
         <View style={styles.hero}>
           <Image

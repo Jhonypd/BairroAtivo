@@ -28,7 +28,7 @@ No APK da Release da Etapa 1, é possível:
 - Pesquisar e filtrar os registros apresentados;
 - Acessar o formulário demonstrativo de ocorrência.
 
-**Ainda não estão implementados:** autenticação com Google, publicação e persistência de ocorrências, envio de fotografias, mapa integrado e notificações.
+O APK da primeira etapa continua sendo demonstrativo. No código atual de `develop`, já existe o fluxo de autenticação Google com Supabase Auth, mas ele ainda depende de configuração dos painéis Google/Supabase e de validação em development build. Publicação e gerenciamento real de ocorrências, envio de fotografias, mapa integrado e notificações ainda não foram implementados.
 
 No código atual em `develop`, a listagem e os detalhes consultam ocorrências públicas no Supabase, com pesquisa/filtros, ordenação recente e estados de carregamento, erro e lista vazia. Os testes usam mocks e não comprovam a autorização do banco nem a conexão em dispositivo.
 
@@ -58,13 +58,32 @@ Os resultados contribuíram para definir os requisitos e as prioridades do proje
 | GitHub | Versionamento e disponibilização do código |
 | Trello | Organização das tarefas e acompanhamento do desenvolvimento |
 
-O projeto integra `@supabase/supabase-js` ao schema `howviii` para consulta pública de ocorrências. A autenticação permanece planejada.
+O projeto integra `@supabase/supabase-js` ao schema `howviii` para consulta pública de ocorrências e autenticação Google. A sessão é restaurada entre aberturas do app e os tokens são atualizados automaticamente quando o aplicativo está ativo. O cadastro real de ocorrências ainda não está implementado.
 
 ### Configurar a conexão local
 
 Copie `.env.example` para `.env` e preencha `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` com a chave publishable do projeto Supabase. O `.env` está ignorado pelo Git. Nunca utilize uma chave `service_role` no aplicativo.
 
 O acesso à coluna `autor_id` foi restringido no Supabase. Em 29/10/2026, confirmei que nem `anon` nem `authenticated` têm privilégio de `SELECT` nessa coluna. A listagem do app também solicita somente os campos públicos aprovados.
+
+### Configurar o login Google
+
+O app utiliza o fluxo OAuth do Supabase em navegador externo, com retorno ao deep link `bairroativo://auth/callback` e troca PKCE do código pela sessão.
+
+1. No Google Cloud Console, crie um cliente OAuth do tipo **Aplicativo da Web**. Em **URIs de redirecionamento autorizados**, cadastre `https://jcwjiozlgzifmurtlvpj.supabase.co/auth/v1/callback`.
+2. No Supabase Dashboard, abra **Authentication → Sign In / Providers → Google**, habilite o provedor e informe o Client ID e o Client Secret do cliente Web. O segredo fica somente no Supabase, nunca no aplicativo ou no `.env`.
+3. No Supabase Dashboard, abra **Authentication → URL Configuration → Redirect URLs** e permita `bairroativo://auth/callback`.
+4. O esquema `bairroativo` já está configurado em `app.json`. Depois de configurar o provedor, valide em uma development build instalada no aparelho.
+
+O Expo Go não oferece um esquema nativo customizado confiável para retorno OAuth. Use uma development build:
+
+```bash
+npx eas-cli build --profile development --platform android
+npx eas-cli build --profile development --platform ios
+npx expo start --dev-client
+```
+
+O fluxo está coberto por testes com mocks, mas o login real ainda não foi validado no aparelho; não considere a autenticação operacional até completar as configurações e o teste em dispositivo.
 
 ## Desenvolvimento e testes
 
@@ -89,7 +108,7 @@ As evidências dos ciclos de teste estão documentadas em [EVIDENCIAS_TDD_PB06.m
 
 - Node.js compatível com o Expo SDK utilizado (recomendado Node.js 22.13 ou superior);
 - npm;
-- Expo Go instalado no celular ou um emulador configurado.
+- Expo Go instalado para consultar as telas públicas; uma development build é necessária para testar o login OAuth.
 
 ### Instalação
 
@@ -105,7 +124,7 @@ npm install
 npm start
 ```
 
-Leia o QR code exibido no terminal usando o Expo Go.
+Leia o QR code exibido no terminal usando o Expo Go para navegar pelas telas públicas. Para autenticação Google, siga as instruções de development build acima e inicie com `npx expo start --dev-client`.
 
 Também estão disponíveis os comandos:
 
