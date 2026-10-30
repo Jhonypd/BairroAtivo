@@ -34,7 +34,8 @@ export const paginaInicialStyles = StyleSheet.create({
   },
   fotoPerfil: { width: "100%", height: "100%", borderRadius: 18 },
   iniciais: { color: cores.surface, fontSize: 12, fontWeight: "800" },
-  setaPerfil: { color: cores.textMuted, fontSize: 17, lineHeight: 20, marginLeft: -4, alignSelf: "center" },
+  nomeComSeta: { flexDirection: "row", alignItems: "center", gap: 6, flexShrink: 1 },
+  setaPerfil: { width: 7, height: 7, borderRightWidth: 1.5, borderBottomWidth: 1.5, borderColor: cores.textMuted, marginRight: 2 },
   menuPerfilOverlay: { flex: 1 },
   menuPerfilFundo: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: "rgba(15, 28, 20, 0.18)" },
   menuPerfil: {

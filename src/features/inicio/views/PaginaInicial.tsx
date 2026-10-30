@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { router } from "expo-router";
-import { Animated, Image, Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { Animated, Easing, Image, Modal, Pressable, ScrollView, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -40,20 +40,21 @@ export default function PaginaInicial() {
     definirMenuPerfilAberto(true);
     Animated.timing(progressoSeta, {
       toValue: 1,
-      duration: 180,
+      duration: 140,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
     }).start();
   }
 
   function fecharMenuPerfil() {
     progressoSeta.stopAnimation();
+    definirMenuPerfilAberto(false);
     Animated.timing(progressoSeta, {
       toValue: 0,
-      duration: 180,
+      duration: 140,
+      easing: Easing.out(Easing.cubic),
       useNativeDriver: true,
-    }).start(({ finished }) => {
-      if (finished) definirMenuPerfilAberto(false);
-    });
+    }).start();
   }
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
@@ -78,11 +79,18 @@ export default function PaginaInicial() {
               )}
             </View>
             <View style={styles.saudacao}>
-              <Text numberOfLines={1} style={styles.nome}>
-                {carregando ? "Verificando sessão…" : usuario ? nomePerfil : "Visitante"}
-              </Text>
+              <View style={styles.nomeComSeta}>
+                <Text numberOfLines={1} style={styles.nome}>
+                  {carregando ? "Verificando sessão…" : usuario ? nomePerfil : "Visitante"}
+                </Text>
+                <Animated.View
+                  style={[
+                    styles.setaPerfil,
+                    { transform: [{ rotate: "45deg" }, { rotate: rotacaoSeta }] },
+                  ]}
+                />
+              </View>
             </View>
-            <Animated.Text style={[styles.setaPerfil, { transform: [{ rotate: rotacaoSeta }] }]}>⌄</Animated.Text>
           </Pressable>
           <View style={styles.notificacao} accessibilityLabel="Notificações">
             <IconeNotificacoes
