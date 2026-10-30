@@ -4,6 +4,13 @@ import { supabase } from "@/configs/supabase";
 import * as WebBrowser from "expo-web-browser";
 import * as Linking from "expo-linking";
 
+let mockExecutionEnvironment = "standalone";
+
+jest.mock("expo-constants", () => ({
+  __esModule: true,
+  default: { get executionEnvironment() { return mockExecutionEnvironment; } },
+}));
+
 jest.mock("@/configs/supabase", () => ({
   supabase: {
     auth: {
@@ -27,7 +34,18 @@ const abrirNavegador = jest.mocked(WebBrowser.openAuthSessionAsync);
 const criarUrl = jest.mocked(Linking.createURL);
 
 describe("login Google via Supabase Auth", () => {
-  beforeEach(() => { jest.clearAllMocks(); });
+  beforeEach(() => {
+    jest.clearAllMocks();
+    mockExecutionEnvironment = "standalone";
+  });
+
+  it("explica que o login OAuth exige development build quando roda no Expo Go", async () => {
+    mockExecutionEnvironment = "storeClient";
+
+    await expect(entrarComGoogle()).rejects.toThrow(/development build/i);
+    expect(autenticar).not.toHaveBeenCalled();
+    expect(abrirNavegador).not.toHaveBeenCalled();
+  });
 
   it("abre o OAuth com retorno ao deep link e troca o código por uma sessão", async () => {
     const sessao = { user: { id: "usuario-1" } } as unknown as import("@supabase/supabase-js").Session;

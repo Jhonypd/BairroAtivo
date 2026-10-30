@@ -1,5 +1,6 @@
 import * as Linking from "expo-linking";
 import * as WebBrowser from "expo-web-browser";
+import Constants from "expo-constants";
 import type { Session } from "@supabase/supabase-js";
 import { supabase } from "@/configs/supabase";
 
@@ -57,6 +58,10 @@ function valorParametro(valor: string | string[] | undefined) {
 }
 
 export async function entrarComGoogle(): Promise<ResultadoLogin> {
+  if (Constants.executionEnvironment === "storeClient") {
+    throw new Error("O login Google não funciona pelo Expo Go. Instale e abra uma development build do BairroAtivo para receber o retorno bairroativo://auth/callback.");
+  }
+
   const cliente = clienteSupabase();
   const redirectTo = Linking.createURL("auth/callback", { scheme: "bairroativo" });
   const { data, error } = await cliente.auth.signInWithOAuth({

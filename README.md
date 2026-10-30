@@ -75,7 +75,7 @@ O app utiliza o fluxo OAuth do Supabase em navegador externo, com retorno ao dee
 3. No Supabase Dashboard, abra **Authentication → URL Configuration → Redirect URLs** e permita `bairroativo://auth/callback`.
 4. O esquema `bairroativo` já está configurado em `app.json`. Depois de configurar o provedor, valide em uma development build instalada no aparelho.
 
-O Expo Go não registra o esquema customizado `bairroativo://`, então o retorno OAuth não reabre o aplicativo — isso foi confirmado no teste feito pelo iPhone. O fluxo usa SecureStore para persistir a sessão no mobile. Para testar o login, instale uma development build iOS/Android:
+O Expo Go não registra o esquema customizado `bairroativo://`; no iPhone, isso fazia o Safari exibir “Safari can’t open…”. O app agora avisa que o login Google exige uma development build, em vez de abrir um retorno que o Expo Go não consegue tratar. O fluxo usa SecureStore para persistir a sessão no mobile. Para testar o login, instale uma development build iOS/Android:
 
 ```bash
 npx eas-cli build --profile development --platform android
@@ -83,7 +83,7 @@ npx eas-cli build --profile development --platform ios
 npx expo start --dev-client
 ```
 
-O fluxo e a rota de callback estão cobertos por testes com mocks. A configuração dos painéis já foi confirmada. O teste no iPhone via Expo Go não concluiu porque o app não registra o esquema nativo; a autenticação real precisa ser validada numa development build instalada e com uma conta Google.
+O fluxo e a rota de callback estão cobertos por testes com mocks. A configuração dos painéis já foi confirmada. No Expo Go, o app avisa que o login Google exige uma development build; a autenticação real precisa ser validada numa development build instalada e com uma conta Google.
 
 ## Desenvolvimento e testes
 
