@@ -29,7 +29,7 @@ export function CampoSelecao({ label, placeholder, options, value, onChange, abe
   }, [aberto, progressoSeta]);
 
   return (
-    <View style={[styles.field, aberto && styles.fieldAberto]}>
+    <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
       <Pressable
         accessibilityRole="button"

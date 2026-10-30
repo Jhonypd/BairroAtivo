@@ -6,8 +6,30 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { listarOcorrencias } from "../services/ocorrenciasSupabase";
 import type { Ocorrencia } from "../types/Ocorrencia";
 
+let mockFocarTela: (() => void | (() => void)) | null = null;
+
 jest.mock("../services/ocorrenciasSupabase", () => ({ listarOcorrencias: jest.fn() }));
-jest.mock("@/shared/components/NavegacaoInferior", () => ({ NavegacaoInferior: () => null }));
+jest.mock("@/shared/components/NavegacaoInferior", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  const { Pressable, Text } = jest.requireActual<typeof import("react-native")>("react-native");
+  return {
+    NavegacaoInferior: () => React.createElement(
+      Pressable,
+      { testID: "simular-retorno-a-listagem", onPress: () => { mockFocarTela?.(); } },
+      React.createElement(Text, null, "Simular retorno à listagem"),
+    ),
+  };
+});
+jest.mock("expo-router", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  return {
+    router: { push: jest.fn(), replace: jest.fn() },
+    useFocusEffect: (callback: () => void | (() => void)) => {
+      mockFocarTela = callback;
+      return React.useEffect(callback, [callback]);
+    },
+  };
+});
 jest.mock("react-native/Libraries/Components/RefreshControl/RefreshControl", () => {
   const React = jest.requireActual<typeof import("react")>("react");
   const { Pressable } = jest.requireActual<typeof import("react-native")>("react-native");
@@ -44,6 +66,7 @@ async function escolherFiltro(rotuloCampo: string, valor: string) {
 describe("filtros públicos da listagem", () => {
   beforeEach(() => {
     jest.clearAllMocks();
+    mockFocarTela = null;
     listarMock.mockResolvedValue(registros);
   });
 
@@ -108,6 +131,12 @@ describe("filtros públicos da listagem", () => {
       "Ver detalhes de Lâmpada da praça apagada",
       "Ver detalhes de Coleta de lixo atrasada",
     ]);
+  });
+
+  it("atualiza os registros quando a tela volta a receber foco", async () => {
+    await abrirListagem();
+    await fireEvent.press(screen.getByTestId("simular-retorno-a-listagem"));
+    await waitFor(() => expect(listarMock).toHaveBeenCalledTimes(2));
   });
 
   it("mostra erro de conexão e permite tentar novamente", async () => {

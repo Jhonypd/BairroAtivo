@@ -171,7 +171,7 @@ export default function PaginaInicial() {
           </View>
           <Botao
             label="Registrar ocorrência"
-            href="/login"
+            href="/ocorrencias/nova"
             icon={
               <View style={styles.iconeAdicionar}>
                 <IconeAdicionar width={22} height={22} fill={cores.surface} />

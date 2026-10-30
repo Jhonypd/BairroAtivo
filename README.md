@@ -28,9 +28,9 @@ No APK da Release da Etapa 1, é possível:
 - Pesquisar e filtrar os registros apresentados;
 - Acessar o formulário demonstrativo de ocorrência.
 
-O APK da primeira etapa continua sendo demonstrativo. No código atual de `develop`, o fluxo de autenticação Google com Supabase Auth está implementado e o provedor e o endereço de retorno já foram configurados nos painéis Google/Supabase. Ainda falta validar o login real em development build nos aparelhos Android e iOS. Publicação e gerenciamento real de ocorrências, envio de fotografias, mapa integrado e notificações ainda não foram implementados.
+O APK da primeira etapa continua sendo demonstrativo. No código atual de `develop`, o fluxo Google com Supabase Auth e o cadastro real de ocorrências estão implementados. Edição e exclusão de ocorrências, envio de fotografias, mapa integrado e notificações ainda não foram implementados.
 
-No código atual em `develop`, a listagem e os detalhes consultam ocorrências públicas no Supabase, com busca por texto e filtros combináveis por status, bairro e categoria. As opções de bairro e categoria vêm dos registros públicos carregados; os resultados mantêm a ordenação recente e exibem estados de carregamento, erro, lista vazia e ausência de correspondências. Os testes usam mocks e não comprovam a autorização do banco nem a conexão em dispositivo.
+No código atual em `develop`, a listagem e os detalhes consultam ocorrências públicas no Supabase, com busca por texto e filtros combináveis por status, bairro e categoria. O cadastro exige sessão autenticada, associa o registro ao usuário atual e permite optar por exibir o nome publicamente. Categorias são convertidas para os códigos aceitos pelo banco; as consultas públicas e o retorno do cadastro não solicitam `autor_id`. Os filtros usam os registros carregados, com ordenação recente e estados de carregamento, erro, lista vazia e ausência de correspondências. Os testes automatizados usam mocks para as chamadas Supabase.
 
 ## Pesquisa com a comunidade
 

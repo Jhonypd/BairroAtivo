@@ -2,8 +2,7 @@ import { StyleSheet } from "react-native";
 import { cores } from "@/configs/tema";
 
 export const campoSelecaoStyles = StyleSheet.create({
-  field: { gap: 8, position: "relative" },
-  fieldAberto: { zIndex: 2, elevation: 8 },
+  field: { gap: 8 },
   label: { color: cores.primaryDark, fontSize: 14, fontWeight: "700" },
   trigger: {
     minHeight: 52,
@@ -20,14 +19,8 @@ export const campoSelecaoStyles = StyleSheet.create({
   placeholder: { color: cores.placeholder },
   chevron: { width: 7, height: 7, borderRightWidth: 1.5, borderBottomWidth: 1.5, borderColor: cores.primary, marginRight: 3 },
   options: {
-    position: "absolute",
-    top: 78,
-    left: 0,
-    right: 0,
     maxHeight: 240,
-    zIndex: 3,
-    elevation: 10,
-    padding: 6,
+    padding: 4,
     borderWidth: 1,
     borderColor: cores.border,
     borderRadius: 12,
