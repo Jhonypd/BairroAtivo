@@ -56,7 +56,7 @@ export const paginaAcessoStyles = StyleSheet.create({
     lineHeight: 19,
     textAlign: "center",
   },
-  googleMark: { color: "#4285F4", fontSize: 18, fontWeight: "800" },
+  erro: { color: cores.error, fontSize: 13, lineHeight: 19, textAlign: "center" },
   botaoGoogle: {
     minHeight: 48,
     borderColor: "#D8E0DA",

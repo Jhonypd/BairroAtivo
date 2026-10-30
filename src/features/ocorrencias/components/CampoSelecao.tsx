@@ -1,4 +1,5 @@
-import { Pressable, ScrollView, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Animated, Easing, Pressable, ScrollView, Text, View } from "react-native";
 import { campoSelecaoStyles as styles } from "./CampoSelecao.styles";
 
 type Props = {
@@ -12,6 +13,21 @@ type Props = {
 };
 
 export function CampoSelecao({ label, placeholder, options, value, onChange, aberto, aoAlternar }: Props) {
+  const [progressoSeta] = useState(() => new Animated.Value(0));
+  const rotacaoSeta = progressoSeta.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "180deg"],
+  });
+
+  useEffect(() => {
+    Animated.timing(progressoSeta, {
+      toValue: aberto ? 1 : 0,
+      duration: 140,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }, [aberto, progressoSeta]);
+
   return (
     <View style={[styles.field, aberto && styles.fieldAberto]}>
       <Text style={styles.label}>{label}</Text>
@@ -23,7 +39,10 @@ export function CampoSelecao({ label, placeholder, options, value, onChange, abe
         style={({ pressed }) => [styles.trigger, pressed && styles.pressed]}
       >
         <Text style={[styles.value, !value && styles.placeholder]}>{value || placeholder}</Text>
-        <Text style={styles.chevron} accessibilityElementsHidden>⌄</Text>
+        <Animated.View
+          accessibilityElementsHidden
+          style={[styles.chevron, { transform: [{ rotate: "45deg" }, { rotate: rotacaoSeta }] }]}
+        />
       </Pressable>
       {aberto ? (
         <View style={styles.options}>

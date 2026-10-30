@@ -1,4 +1,6 @@
-import { Image, ScrollView, Text, View } from "react-native";
+import { useState } from "react";
+import { router } from "expo-router";
+import { Animated, Easing, Image, Modal, Pressable, ScrollView, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -9,10 +11,51 @@ import IconeAdicionar from "@/shared/icons/add_24dp_E3E3E3.svg";
 import IconeNotificacoes from "@/shared/icons/notifications_24dp_E3E3E3.svg";
 import { cores } from "@/configs/tema";
 import { paginaInicialStyles as styles } from "./PaginaInicial.styles";
+import { useAutenticacao } from "@/features/autenticacao/contexto/AutenticacaoProvider";
 
 const ilustracaoBairro = require("../../../../assets/images/splash-background.jpg");
 
 export default function PaginaInicial() {
+  const { usuario, carregando, autenticando, erro, sair } = useAutenticacao();
+  const [menuPerfilAberto, definirMenuPerfilAberto] = useState(false);
+  const [progressoSeta] = useState(() => new Animated.Value(0));
+  const rotacaoSeta = progressoSeta.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "180deg"],
+  });
+  const nomePerfil = typeof usuario?.user_metadata.full_name === "string"
+    ? usuario.user_metadata.full_name
+    : typeof usuario?.user_metadata.name === "string"
+      ? usuario.user_metadata.name
+      : usuario?.email?.split("@")[0] ?? "visitante";
+  const iniciaisPerfil = nomePerfil.split(/[\s._-]+/).filter(Boolean).slice(0, 2).map((parte) => parte[0]).join("").toLocaleUpperCase("pt-BR") || "BA";
+  const fotoPerfil = typeof usuario?.user_metadata.avatar_url === "string"
+    ? usuario.user_metadata.avatar_url
+    : typeof usuario?.user_metadata.picture === "string"
+      ? usuario.user_metadata.picture
+      : null;
+
+  function abrirMenuPerfil() {
+    progressoSeta.stopAnimation();
+    definirMenuPerfilAberto(true);
+    Animated.timing(progressoSeta, {
+      toValue: 1,
+      duration: 140,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }
+
+  function fecharMenuPerfil() {
+    progressoSeta.stopAnimation();
+    definirMenuPerfilAberto(false);
+    Animated.timing(progressoSeta, {
+      toValue: 0,
+      duration: 140,
+      easing: Easing.out(Easing.cubic),
+      useNativeDriver: true,
+    }).start();
+  }
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <StatusBar style="dark" />
@@ -21,15 +64,34 @@ export default function PaginaInicial() {
         contentContainerStyle={styles.container}
       >
         <View style={styles.cabecalho}>
-          <View style={styles.perfilResumo}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Abrir opções de perfil"
+            accessibilityState={{ expanded: menuPerfilAberto }}
+            onPress={abrirMenuPerfil}
+            style={({ pressed }) => [styles.perfilResumo, pressed && styles.perfilResumoPressionado]}
+          >
             <View style={styles.avatar}>
-              <Text style={styles.iniciais}>BA</Text>
+              {fotoPerfil ? (
+                <Image source={{ uri: fotoPerfil }} style={styles.fotoPerfil} accessibilityLabel="Foto do perfil" />
+              ) : (
+                <Text style={styles.iniciais}>{iniciaisPerfil}</Text>
+              )}
             </View>
             <View style={styles.saudacao}>
-              <Text style={styles.ola}>Olá,</Text>
-              <Text style={styles.nome}>visitante</Text>
+              <View style={styles.nomeComSeta}>
+                <Text numberOfLines={1} style={styles.nome}>
+                  {carregando ? "Verificando sessão…" : usuario ? nomePerfil : "Visitante"}
+                </Text>
+                <Animated.View
+                  style={[
+                    styles.setaPerfil,
+                    { transform: [{ rotate: "45deg" }, { rotate: rotacaoSeta }] },
+                  ]}
+                />
+              </View>
             </View>
-          </View>
+          </Pressable>
           <View style={styles.notificacao} accessibilityLabel="Notificações">
             <IconeNotificacoes
               width={24}
@@ -39,6 +101,7 @@ export default function PaginaInicial() {
             <View style={styles.indicadorNotificacao} />
           </View>
         </View>
+        {erro ? <Text accessibilityRole="alert" style={{ color: cores.error }}>{erro}</Text> : null}
 
         <View style={styles.hero}>
           <Image
@@ -126,13 +189,68 @@ export default function PaginaInicial() {
           <Text style={styles.recentesTitulo}>Ocorrências recentes</Text>
           <Text style={styles.verTodas}>Ver todas</Text>
         </View>
-        <View style={styles.vazio}>
-          <Text style={styles.vazioTexto}>
-            Faça login para ver seu histórico de ocorrências.
-          </Text>
-          <Botao label="Entrar" href="/login" variant="ghost" size="sm" />
-        </View>
+        {carregando ? null : usuario ? (
+          <View style={styles.vazio}>
+            <Text style={styles.vazioTexto}>
+              Seu histórico de ocorrências aparecerá aqui.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.vazio}>
+            <Text style={styles.vazioTexto}>
+              Faça login para ver seu histórico de ocorrências.
+            </Text>
+            <Botao label="Entrar" href="/login" variant="ghost" size="sm" />
+          </View>
+        )}
       </ScrollView>
+      <Modal
+        visible={menuPerfilAberto}
+        transparent
+        animationType="fade"
+        onRequestClose={fecharMenuPerfil}
+      >
+        <View style={styles.menuPerfilOverlay}>
+          <Pressable
+            accessibilityLabel="Fechar opções de perfil"
+            onPress={fecharMenuPerfil}
+            style={styles.menuPerfilFundo}
+          />
+          <View style={styles.menuPerfil}>
+            <Text style={styles.menuPerfilNome} numberOfLines={1}>
+              {carregando ? "Verificando sessão…" : usuario ? nomePerfil : "Visitante"}
+            </Text>
+            {usuario?.email ? (
+              <Text style={styles.menuPerfilEmail} numberOfLines={1}>{usuario.email}</Text>
+            ) : null}
+            <View style={styles.menuPerfilDivisor} />
+            {usuario ? (
+              <Botao
+                label={autenticando ? "Saindo…" : "Sair da conta"}
+                onPress={() => {
+                  void sair().then(fecharMenuPerfil).catch(() => undefined);
+                }}
+                disabled={autenticando}
+                variant="ghost"
+                size="sm"
+                style={styles.acaoMenuPerfil}
+              />
+            ) : (
+              <Botao
+                label={carregando ? "Aguarde…" : "Entrar"}
+                onPress={() => {
+                  fecharMenuPerfil();
+                  router.push("/login");
+                }}
+                disabled={carregando}
+                variant="ghost"
+                size="sm"
+                style={styles.acaoMenuPerfil}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
       <NavegacaoInferior ativa="inicio" />
     </SafeAreaView>
   );

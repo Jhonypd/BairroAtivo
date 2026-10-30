@@ -18,7 +18,7 @@ export const campoSelecaoStyles = StyleSheet.create({
   },
   value: { color: cores.primaryDark, fontSize: 15 },
   placeholder: { color: cores.placeholder },
-  chevron: { color: cores.primary, fontSize: 22, lineHeight: 24 },
+  chevron: { width: 7, height: 7, borderRightWidth: 1.5, borderBottomWidth: 1.5, borderColor: cores.primary, marginRight: 3 },
   options: {
     position: "absolute",
     top: 78,
