@@ -38,9 +38,12 @@ export default function PaginaInicial() {
               accessibilityLabel="Abrir opções de perfil"
               accessibilityState={{ expanded: menuPerfilAberto }}
               onPress={() => definirMenuPerfilAberto(true)}
-              style={styles.avatar}
+              style={({ pressed }) => [styles.avatar, pressed && styles.avatarPressionado]}
             >
               <Text style={styles.iniciais}>{iniciaisPerfil}</Text>
+              <View style={styles.indicadorMenuAvatar}>
+                <Text style={styles.setaMenuAvatar}>⌄</Text>
+              </View>
             </Pressable>
             <View style={styles.saudacao}>
               <Text style={styles.ola}>Olá,</Text>
