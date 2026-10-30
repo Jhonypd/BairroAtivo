@@ -1,11 +1,12 @@
 import { Stack, useLocalSearchParams } from "expo-router";
 import { useEffect, useState } from "react";
-import { ActivityIndicator, ScrollView, Text, View } from "react-native";
+import { ScrollView, Text, View } from "react-native";
 import { Botao } from "@/shared/components/ui/Botao";
 import { buscarOcorrenciaPorId } from "../services/ocorrenciasSupabase";
 import type { Ocorrencia } from "../types/Ocorrencia";
 import { paginaDetalheOcorrenciaStyles as styles } from "./PaginaDetalheOcorrencia.styles";
 import { cores } from "@/configs/tema";
+import { useCarregamentoGlobal } from "@/shared/components/ui/CarregamentoGlobal";
 
 export default function PaginaDetalheOcorrencia() {
   const { id: idRota } = useLocalSearchParams<{ id?: string | string[] }>();
@@ -13,20 +14,19 @@ export default function PaginaDetalheOcorrencia() {
   const [ocorrencia, definirOcorrencia] = useState<Ocorrencia | null>(null);
   const [carregando, definirCarregando] = useState(true);
   const [erro, definirErro] = useState(false);
+  const { executarComCarregamento } = useCarregamentoGlobal();
 
   useEffect(() => {
     let ativa = true;
     if (!id) return;
-    buscarOcorrenciaPorId(id)
+    executarComCarregamento(() => buscarOcorrenciaPorId(id), "Carregando ocorrência")
       .then((resultado) => { if (ativa) definirOcorrencia(resultado); })
       .catch(() => { if (ativa) definirErro(true); })
       .finally(() => { if (ativa) definirCarregando(false); });
     return () => { ativa = false; };
-  }, [id]);
+  }, [id, executarComCarregamento]);
 
-  if (carregando && id && !erro) {
-    return <View style={styles.notFound}><ActivityIndicator accessibilityLabel="Carregando ocorrência" /><Text style={styles.value}>Carregando ocorrência...</Text></View>;
-  }
+  if (carregando && id && !erro) return null;
 
   if (!id || erro || !ocorrencia) {
     return (
