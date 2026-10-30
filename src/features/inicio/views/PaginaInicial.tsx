@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { router } from "expo-router";
-import { Image, Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { Animated, Image, Modal, Pressable, ScrollView, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -18,6 +18,11 @@ const ilustracaoBairro = require("../../../../assets/images/splash-background.jp
 export default function PaginaInicial() {
   const { usuario, carregando, autenticando, erro, sair } = useAutenticacao();
   const [menuPerfilAberto, definirMenuPerfilAberto] = useState(false);
+  const [progressoSeta] = useState(() => new Animated.Value(0));
+  const rotacaoSeta = progressoSeta.interpolate({
+    inputRange: [0, 1],
+    outputRange: ["0deg", "180deg"],
+  });
   const nomePerfil = typeof usuario?.user_metadata.full_name === "string"
     ? usuario.user_metadata.full_name
     : typeof usuario?.user_metadata.name === "string"
@@ -29,6 +34,27 @@ export default function PaginaInicial() {
     : typeof usuario?.user_metadata.picture === "string"
       ? usuario.user_metadata.picture
       : null;
+
+  function abrirMenuPerfil() {
+    progressoSeta.stopAnimation();
+    definirMenuPerfilAberto(true);
+    Animated.timing(progressoSeta, {
+      toValue: 1,
+      duration: 180,
+      useNativeDriver: true,
+    }).start();
+  }
+
+  function fecharMenuPerfil() {
+    progressoSeta.stopAnimation();
+    Animated.timing(progressoSeta, {
+      toValue: 0,
+      duration: 180,
+      useNativeDriver: true,
+    }).start(({ finished }) => {
+      if (finished) definirMenuPerfilAberto(false);
+    });
+  }
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <StatusBar style="dark" />
@@ -41,7 +67,7 @@ export default function PaginaInicial() {
             accessibilityRole="button"
             accessibilityLabel="Abrir opções de perfil"
             accessibilityState={{ expanded: menuPerfilAberto }}
-            onPress={() => definirMenuPerfilAberto(true)}
+            onPress={abrirMenuPerfil}
             style={({ pressed }) => [styles.perfilResumo, pressed && styles.perfilResumoPressionado]}
           >
             <View style={styles.avatar}>
@@ -56,7 +82,7 @@ export default function PaginaInicial() {
                 {carregando ? "Verificando sessão…" : usuario ? nomePerfil : "Visitante"}
               </Text>
             </View>
-            <Text style={styles.setaPerfil}>⌄</Text>
+            <Animated.Text style={[styles.setaPerfil, { transform: [{ rotate: rotacaoSeta }] }]}>⌄</Animated.Text>
           </Pressable>
           <View style={styles.notificacao} accessibilityLabel="Notificações">
             <IconeNotificacoes
@@ -174,12 +200,12 @@ export default function PaginaInicial() {
         visible={menuPerfilAberto}
         transparent
         animationType="fade"
-        onRequestClose={() => definirMenuPerfilAberto(false)}
+        onRequestClose={fecharMenuPerfil}
       >
         <View style={styles.menuPerfilOverlay}>
           <Pressable
             accessibilityLabel="Fechar opções de perfil"
-            onPress={() => definirMenuPerfilAberto(false)}
+            onPress={fecharMenuPerfil}
             style={styles.menuPerfilFundo}
           />
           <View style={styles.menuPerfil}>
@@ -194,7 +220,7 @@ export default function PaginaInicial() {
               <Botao
                 label={autenticando ? "Saindo…" : "Sair da conta"}
                 onPress={() => {
-                  void sair().then(() => definirMenuPerfilAberto(false)).catch(() => undefined);
+                  void sair().then(fecharMenuPerfil).catch(() => undefined);
                 }}
                 disabled={autenticando}
                 variant="ghost"
@@ -205,7 +231,7 @@ export default function PaginaInicial() {
               <Botao
                 label={carregando ? "Aguarde…" : "Entrar"}
                 onPress={() => {
-                  definirMenuPerfilAberto(false);
+                  fecharMenuPerfil();
                   router.push("/login");
                 }}
                 disabled={carregando}

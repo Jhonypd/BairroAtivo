@@ -34,7 +34,7 @@ export const paginaInicialStyles = StyleSheet.create({
   },
   fotoPerfil: { width: "100%", height: "100%", borderRadius: 18 },
   iniciais: { color: cores.surface, fontSize: 12, fontWeight: "800" },
-  setaPerfil: { color: cores.textMuted, fontSize: 17, lineHeight: 20, marginLeft: -4, marginTop: 7 },
+  setaPerfil: { color: cores.textMuted, fontSize: 17, lineHeight: 20, marginLeft: -4, alignSelf: "center" },
   menuPerfilOverlay: { flex: 1 },
   menuPerfilFundo: { position: "absolute", top: 0, right: 0, bottom: 0, left: 0, backgroundColor: "rgba(15, 28, 20, 0.18)" },
   menuPerfil: {
@@ -57,7 +57,7 @@ export const paginaInicialStyles = StyleSheet.create({
   menuPerfilEmail: { marginTop: 3, color: cores.textMuted, fontSize: 12 },
   menuPerfilDivisor: { height: 1, marginTop: 12, marginBottom: 4, backgroundColor: cores.border },
   acaoMenuPerfil: { alignSelf: "flex-start" },
-  saudacao: { gap: 1, flexShrink: 1 },
+  saudacao: { flexShrink: 1 },
   nome: { color: cores.primaryDark, fontSize: 14, fontWeight: "700" },
   notificacao: {
     width: 36,
