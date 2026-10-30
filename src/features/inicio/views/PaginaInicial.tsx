@@ -1,4 +1,6 @@
-import { Image, ScrollView, Text, View } from "react-native";
+import { useState } from "react";
+import { router } from "expo-router";
+import { Image, Modal, Pressable, ScrollView, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -14,7 +16,8 @@ import { useAutenticacao } from "@/features/autenticacao/contexto/AutenticacaoPr
 const ilustracaoBairro = require("../../../../assets/images/splash-background.jpg");
 
 export default function PaginaInicial() {
-  const { usuario, autenticando, erro, sair } = useAutenticacao();
+  const { usuario, carregando, autenticando, erro, sair } = useAutenticacao();
+  const [menuPerfilAberto, definirMenuPerfilAberto] = useState(false);
   const nomePerfil = typeof usuario?.user_metadata.full_name === "string"
     ? usuario.user_metadata.full_name
     : typeof usuario?.user_metadata.name === "string"
@@ -30,17 +33,22 @@ export default function PaginaInicial() {
       >
         <View style={styles.cabecalho}>
           <View style={styles.perfilResumo}>
-            <View style={styles.avatar}>
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel="Abrir opções de perfil"
+              accessibilityState={{ expanded: menuPerfilAberto }}
+              onPress={() => definirMenuPerfilAberto(true)}
+              style={styles.avatar}
+            >
               <Text style={styles.iniciais}>{iniciaisPerfil}</Text>
-            </View>
+            </Pressable>
             <View style={styles.saudacao}>
               <Text style={styles.ola}>Olá,</Text>
-              <Text numberOfLines={1} style={styles.nome}>{nomePerfil}</Text>
+              <Text numberOfLines={1} style={styles.nome}>
+                {carregando ? "Verificando sessão…" : usuario ? nomePerfil : "Visitante"}
+              </Text>
             </View>
           </View>
-          {usuario ? (
-            <Botao label={autenticando ? "Saindo..." : "Sair"} onPress={() => void sair().catch(() => undefined)} disabled={autenticando} variant="ghost" size="xs" />
-          ) : <Botao label="Entrar" href="/login" variant="ghost" size="xs" />}
           <View style={styles.notificacao} accessibilityLabel="Notificações">
             <IconeNotificacoes
               width={24}
@@ -138,13 +146,68 @@ export default function PaginaInicial() {
           <Text style={styles.recentesTitulo}>Ocorrências recentes</Text>
           <Text style={styles.verTodas}>Ver todas</Text>
         </View>
-        <View style={styles.vazio}>
-          <Text style={styles.vazioTexto}>
-            Faça login para ver seu histórico de ocorrências.
-          </Text>
-          <Botao label="Entrar" href="/login" variant="ghost" size="sm" />
-        </View>
+        {carregando ? null : usuario ? (
+          <View style={styles.vazio}>
+            <Text style={styles.vazioTexto}>
+              Seu histórico de ocorrências aparecerá aqui.
+            </Text>
+          </View>
+        ) : (
+          <View style={styles.vazio}>
+            <Text style={styles.vazioTexto}>
+              Faça login para ver seu histórico de ocorrências.
+            </Text>
+            <Botao label="Entrar" href="/login" variant="ghost" size="sm" />
+          </View>
+        )}
       </ScrollView>
+      <Modal
+        visible={menuPerfilAberto}
+        transparent
+        animationType="fade"
+        onRequestClose={() => definirMenuPerfilAberto(false)}
+      >
+        <View style={styles.menuPerfilOverlay}>
+          <Pressable
+            accessibilityLabel="Fechar opções de perfil"
+            onPress={() => definirMenuPerfilAberto(false)}
+            style={styles.menuPerfilFundo}
+          />
+          <View style={styles.menuPerfil}>
+            <Text style={styles.menuPerfilNome} numberOfLines={1}>
+              {carregando ? "Verificando sessão…" : usuario ? nomePerfil : "Visitante"}
+            </Text>
+            {usuario?.email ? (
+              <Text style={styles.menuPerfilEmail} numberOfLines={1}>{usuario.email}</Text>
+            ) : null}
+            <View style={styles.menuPerfilDivisor} />
+            {usuario ? (
+              <Botao
+                label={autenticando ? "Saindo…" : "Sair da conta"}
+                onPress={() => {
+                  void sair().then(() => definirMenuPerfilAberto(false)).catch(() => undefined);
+                }}
+                disabled={autenticando}
+                variant="ghost"
+                size="sm"
+                style={styles.acaoMenuPerfil}
+              />
+            ) : (
+              <Botao
+                label={carregando ? "Aguarde…" : "Entrar"}
+                onPress={() => {
+                  definirMenuPerfilAberto(false);
+                  router.push("/login");
+                }}
+                disabled={carregando}
+                variant="ghost"
+                size="sm"
+                style={styles.acaoMenuPerfil}
+              />
+            )}
+          </View>
+        </View>
+      </Modal>
       <NavegacaoInferior ativa="inicio" />
     </SafeAreaView>
   );
