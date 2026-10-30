@@ -24,6 +24,11 @@ export default function PaginaInicial() {
       ? usuario.user_metadata.name
       : usuario?.email?.split("@")[0] ?? "visitante";
   const iniciaisPerfil = nomePerfil.split(/[\s._-]+/).filter(Boolean).slice(0, 2).map((parte) => parte[0]).join("").toLocaleUpperCase("pt-BR") || "BA";
+  const fotoPerfil = typeof usuario?.user_metadata.avatar_url === "string"
+    ? usuario.user_metadata.avatar_url
+    : typeof usuario?.user_metadata.picture === "string"
+      ? usuario.user_metadata.picture
+      : null;
   return (
     <SafeAreaView style={styles.safeArea} edges={["top"]}>
       <StatusBar style="dark" />
@@ -40,10 +45,13 @@ export default function PaginaInicial() {
             style={({ pressed }) => [styles.perfilResumo, pressed && styles.perfilResumoPressionado]}
           >
             <View style={styles.avatar}>
-              <Text style={styles.iniciais}>{iniciaisPerfil}</Text>
+              {fotoPerfil ? (
+                <Image source={{ uri: fotoPerfil }} style={styles.fotoPerfil} accessibilityLabel="Foto do perfil" />
+              ) : (
+                <Text style={styles.iniciais}>{iniciaisPerfil}</Text>
+              )}
             </View>
             <View style={styles.saudacao}>
-              <Text style={styles.ola}>Olá,</Text>
               <Text numberOfLines={1} style={styles.nome}>
                 {carregando ? "Verificando sessão…" : usuario ? nomePerfil : "Visitante"}
               </Text>
