@@ -5,6 +5,11 @@ import { CarregamentoGlobalProvider } from "@/shared/components/ui/CarregamentoG
 import { SafeAreaProvider } from "react-native-safe-area-context";
 import * as servico from "../services/ocorrenciasSupabase";
 
+jest.mock("expo-router", () => {
+  const React = jest.requireActual<typeof import("react")>("react");
+  return { useFocusEffect: (callback: () => void | (() => void)) => React.useEffect(callback, [callback]) };
+});
+
 jest.mock("../services/ocorrenciasSupabase", () => ({
   listarOcorrencias: jest.fn().mockResolvedValue([] as never),
 }));

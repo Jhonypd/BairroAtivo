@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
+import { useFocusEffect } from "expo-router";
 import { FlatList, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import { Botao } from "@/shared/components/ui/Botao";
 import { NavegacaoInferior } from "@/shared/components/NavegacaoInferior";
@@ -103,22 +104,10 @@ export default function PaginaOcorrencias() {
     }
   }, [executarComCarregamento]);
 
-  useEffect(() => {
-    const idRequisicao = ++requisicaoAtual.current;
-    executarComCarregamento(listarOcorrencias, "Carregando ocorrências")
-      .then((resultado) => {
-        if (idRequisicao === requisicaoAtual.current) definirOcorrencias(resultado);
-      })
-      .catch(() => {
-        if (idRequisicao === requisicaoAtual.current) {
-          definirErro("Não foi possível conectar ao servidor. Tente novamente.");
-        }
-      })
-      .finally(() => {
-        if (idRequisicao === requisicaoAtual.current) definirCarregando(false);
-      });
+  useFocusEffect(useCallback(() => {
+    void carregarOcorrencias();
     return () => { requisicaoAtual.current += 1; };
-  }, [executarComCarregamento]);
+  }, [carregarOcorrencias]));
 
   return (
     <View style={styles.tela}>
