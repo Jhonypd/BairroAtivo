@@ -5,7 +5,7 @@ import { cores } from "@/configs/tema";
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
-      <Stack initialRouteName="index" screenOptions={{
+      <Stack screenOptions={{
         headerStyle: { backgroundColor: cores.background },
         headerTintColor: cores.primaryDark,
         headerTitleStyle: { fontWeight: "700" },

@@ -22,11 +22,11 @@ describe("detalhes da ocorrência", () => {
     jest.clearAllMocks();
   });
 
-  it("mostra carregamento enquanto busca os detalhes", () => {
+  it("mostra carregamento enquanto busca os detalhes", async () => {
     parametrosMock.mockReturnValue({ id: "ocorrencia-1" } as never);
     buscarMock.mockReturnValue(new Promise(() => {}));
 
-    render(<PaginaDetalheOcorrencia />);
+    await render(<PaginaDetalheOcorrencia />);
 
     expect(screen.getByText("Carregando ocorrência...")).toBeOnTheScreen();
   });
@@ -35,7 +35,7 @@ describe("detalhes da ocorrência", () => {
     parametrosMock.mockReturnValue({ id: "inexistente" } as never);
     buscarMock.mockResolvedValue(null);
 
-    render(<PaginaDetalheOcorrencia />);
+    await render(<PaginaDetalheOcorrencia />);
 
     expect(await screen.findByText("Nenhuma ocorrência encontrada")).toBeOnTheScreen();
   });
@@ -44,15 +44,15 @@ describe("detalhes da ocorrência", () => {
     parametrosMock.mockReturnValue({ id: "ocorrencia-1" } as never);
     buscarMock.mockRejectedValue(new Error("offline"));
 
-    render(<PaginaDetalheOcorrencia />);
+    await render(<PaginaDetalheOcorrencia />);
 
     expect(await screen.findByText("Não foi possível carregar a ocorrência")).toBeOnTheScreen();
   });
 
-  it("pede para abrir a lista quando o identificador está ausente", () => {
+  it("pede para abrir a lista quando o identificador está ausente", async () => {
     parametrosMock.mockReturnValue({} as never);
 
-    render(<PaginaDetalheOcorrencia />);
+    await render(<PaginaDetalheOcorrencia />);
 
     expect(screen.getByText("Identificador da ocorrência inválido")).toBeOnTheScreen();
     expect(buscarMock).not.toHaveBeenCalled();

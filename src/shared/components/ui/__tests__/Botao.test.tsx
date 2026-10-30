@@ -21,7 +21,7 @@ describe("Botao com navegação", () => {
     const botao = screen.getByRole("button", { name: "Ver ocorrências" });
     expect(botao).toBeTruthy();
 
-    fireEvent.press(botao);
+    await fireEvent.press(botao);
 
     expect(router.push).toHaveBeenCalledWith("/ocorrencias");
   });
