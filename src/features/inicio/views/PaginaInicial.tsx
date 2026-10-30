@@ -32,26 +32,24 @@ export default function PaginaInicial() {
         contentContainerStyle={styles.container}
       >
         <View style={styles.cabecalho}>
-          <View style={styles.perfilResumo}>
-            <Pressable
-              accessibilityRole="button"
-              accessibilityLabel="Abrir opções de perfil"
-              accessibilityState={{ expanded: menuPerfilAberto }}
-              onPress={() => definirMenuPerfilAberto(true)}
-              style={({ pressed }) => [styles.avatar, pressed && styles.avatarPressionado]}
-            >
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel="Abrir opções de perfil"
+            accessibilityState={{ expanded: menuPerfilAberto }}
+            onPress={() => definirMenuPerfilAberto(true)}
+            style={({ pressed }) => [styles.perfilResumo, pressed && styles.perfilResumoPressionado]}
+          >
+            <View style={styles.avatar}>
               <Text style={styles.iniciais}>{iniciaisPerfil}</Text>
-              <View style={styles.indicadorMenuAvatar}>
-                <Text style={styles.setaMenuAvatar}>⌄</Text>
-              </View>
-            </Pressable>
+            </View>
             <View style={styles.saudacao}>
               <Text style={styles.ola}>Olá,</Text>
               <Text numberOfLines={1} style={styles.nome}>
                 {carregando ? "Verificando sessão…" : usuario ? nomePerfil : "Visitante"}
               </Text>
             </View>
-          </View>
+            <Text style={styles.setaPerfil}>⌄</Text>
+          </Pressable>
           <View style={styles.notificacao} accessibilityLabel="Notificações">
             <IconeNotificacoes
               width={24}
