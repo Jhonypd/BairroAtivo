@@ -16,11 +16,11 @@ O protótipo da primeira etapa está disponível para **Android**. O APK foi ger
 
 Na página da Release, basta localizar a seção **Assets** e baixar o arquivo com extensão `.apk`. Em seguida, abra o arquivo no Android para instalar o aplicativo. Dependendo das configurações do aparelho, pode ser necessário autorizar a instalação de aplicativos dessa origem.
 
-A versão disponibilizada é demonstrativa e utiliza **dados simulados**, sem conexão com banco de dados.
+A versão disponibilizada na Release da Etapa 1 é demonstrativa e utiliza **dados simulados**, sem conexão com banco de dados. O código atual em `develop` iniciou a integração pública com Supabase.
 
 ## Funcionalidades do protótipo
 
-Na etapa atual, é possível:
+No APK da Release da Etapa 1, é possível:
 
 - Navegar pelas telas do aplicativo;
 - Consultar uma lista de ocorrências de exemplo;
@@ -28,7 +28,9 @@ Na etapa atual, é possível:
 - Pesquisar e filtrar os registros apresentados;
 - Acessar o formulário demonstrativo de ocorrência.
 
-**Ainda não estão implementados:** autenticação com Google, publicação e persistência de ocorrências reais, envio de fotografias, mapa integrado, notificações e sincronização com backend.
+**Ainda não estão implementados:** autenticação com Google, publicação e persistência de ocorrências, envio de fotografias, mapa integrado e notificações.
+
+No código atual em `develop`, a listagem e os detalhes consultam ocorrências públicas no Supabase, com pesquisa/filtros, ordenação recente e estados de carregamento, erro e lista vazia. Os testes usam mocks e não comprovam a autorização do banco nem a conexão em dispositivo.
 
 ## Pesquisa com a comunidade
 
@@ -56,7 +58,13 @@ Os resultados contribuíram para definir os requisitos e as prioridades do proje
 | GitHub | Versionamento e disponibilização do código |
 | Trello | Organização das tarefas e acompanhamento do desenvolvimento |
 
-A próxima fase prevê a integração com **Supabase**, incluindo banco PostgreSQL e autenticação. Esses serviços **ainda não estão conectados** ao protótipo.
+O projeto integra `@supabase/supabase-js` ao schema `howviii` para consulta pública de ocorrências. A autenticação permanece planejada.
+
+### Configurar a conexão local
+
+Copie `.env.example` para `.env` e preencha `EXPO_PUBLIC_SUPABASE_PUBLISHABLE_KEY` com a chave publishable do projeto Supabase. O `.env` está ignorado pelo Git. Nunca utilize uma chave `service_role` no aplicativo.
+
+O acesso à coluna `autor_id` foi restringido no Supabase. Em 29/10/2026, confirmei que nem `anon` nem `authenticated` têm privilégio de `SELECT` nessa coluna. A listagem do app também solicita somente os campos públicos aprovados.
 
 ## Desenvolvimento e testes
 
@@ -145,7 +153,7 @@ O desenvolvimento continuará com o objetivo de permitir:
 - Publicação com opção de ocultar o nome do autor;
 - Inclusão de fotos e visualização em mapa;
 - Apoio a ocorrências, limitado a um por usuário em cada registro;
-- Persistência dos dados e regras de acesso no Supabase;
+- Autenticação e gravação de dados no Supabase;
 - Ampliação dos testes automatizados e validação com usuários.
 
 Esses itens são **funcionalidades planejadas**, não recursos disponíveis no APK atual.

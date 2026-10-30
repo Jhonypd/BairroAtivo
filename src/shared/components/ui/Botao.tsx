@@ -1,8 +1,10 @@
-import { router, type Href } from "expo-router";
+import { router } from "expo-router";
 import type { ReactNode } from "react";
 import { Pressable, Text, View, type StyleProp, type TextStyle, type ViewStyle } from "react-native";
 import { botaoStyles as styles, tamanhosBotao } from "./Botao.styles";
 import type { TamanhoBotao, VarianteBotao } from "./botao.types";
+
+type Href = Parameters<typeof router.push>[0];
 
 type PropriedadesBaseBotao = {
   size?: TamanhoBotao;

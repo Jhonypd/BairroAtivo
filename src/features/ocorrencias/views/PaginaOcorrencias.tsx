@@ -1,11 +1,13 @@
-import { useMemo, useState } from "react";
-import { FlatList, ScrollView, Text, TextInput, View } from "react-native";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { FlatList, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import { Botao } from "@/shared/components/ui/Botao";
 import { NavegacaoInferior } from "@/shared/components/NavegacaoInferior";
 import { FiltroStatus } from "../components/FiltroStatus";
 import { CartaoOcorrencia } from "../components/CartaoOcorrencia";
-import { ocorrencias } from "../data/ocorrenciasSimuladas";
+import { listarOcorrencias } from "../services/ocorrenciasSupabase";
+import type { Ocorrencia } from "../types/Ocorrencia";
 import { ocorrenciasStyles as styles } from "./PaginaOcorrencias.styles";
+import { useCarregamentoGlobal } from "@/shared/components/ui/CarregamentoGlobal";
 
 const filtrosStatus = [
   "Todas",
@@ -22,9 +24,14 @@ const rotulosFiltroStatus: Record<FiltroStatusTipo, string> = {
 };
 
 export default function PaginaOcorrencias() {
+  const [ocorrencias, definirOcorrencias] = useState<Ocorrencia[]>([]);
+  const [carregando, definirCarregando] = useState(true);
+  const [atualizando, definirAtualizando] = useState(false);
+  const [erro, definirErro] = useState<string | null>(null);
   const [consulta, definirConsulta] = useState("");
   const [filtroStatus, definirFiltroStatus] =
     useState<FiltroStatusTipo>("Todas");
+  const { executarComCarregamento } = useCarregamentoGlobal();
   const ocorrenciasVisiveis = useMemo(() => {
     const consultaNormalizada = consulta.trim().toLocaleLowerCase("pt-BR");
     return ocorrencias.filter((ocorrencia) => {
@@ -38,7 +45,30 @@ export default function PaginaOcorrencias() {
         correspondeStatus && textoPesquisavel.includes(consultaNormalizada)
       );
     });
-  }, [consulta, filtroStatus]);
+  }, [consulta, filtroStatus, ocorrencias]);
+
+  const carregarOcorrencias = useCallback(async (atualizacao = false) => {
+    if (atualizacao) definirAtualizando(true);
+    else definirCarregando(true);
+    definirErro(null);
+    try {
+      definirOcorrencias(await executarComCarregamento(listarOcorrencias, "Carregando ocorrências"));
+    } catch {
+      definirErro("Não foi possível conectar ao servidor. Tente novamente.");
+    } finally {
+      definirCarregando(false);
+      definirAtualizando(false);
+    }
+  }, [executarComCarregamento]);
+
+  useEffect(() => {
+    let ativa = true;
+    executarComCarregamento(listarOcorrencias, "Carregando ocorrências")
+      .then((resultado) => { if (ativa) definirOcorrencias(resultado); })
+      .catch(() => { if (ativa) definirErro("Não foi possível conectar ao servidor. Tente novamente."); })
+      .finally(() => { if (ativa) definirCarregando(false); });
+    return () => { ativa = false; };
+  }, [executarComCarregamento]);
 
   return (
     <View style={styles.tela}>
@@ -89,7 +119,19 @@ export default function PaginaOcorrencias() {
         keyExtractor={(ocorrencia) => ocorrencia.id}
         renderItem={({ item }) => <CartaoOcorrencia ocorrencia={item} />}
         keyboardShouldPersistTaps="handled"
-        ListEmptyComponent={
+        refreshControl={<RefreshControl refreshing={atualizando} onRefresh={() => void carregarOcorrencias(true)} />}
+        ListEmptyComponent={carregando ? undefined : erro ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>Não foi possível carregar</Text>
+            <Text style={styles.emptyDescription}>{erro}</Text>
+            <Botao label="Tentar novamente" onPress={() => void carregarOcorrencias()} variant="outline" size="sm" />
+          </View>
+        ) : ocorrencias.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>Nenhuma ocorrência cadastrada</Text>
+            <Text style={styles.emptyDescription}>Quando a comunidade publicar ocorrências, elas aparecerão aqui.</Text>
+          </View>
+        ) : (
           <View style={styles.emptyState}>
             <Text style={styles.emptyTitle}>Nenhuma ocorrência encontrada</Text>
             <Text style={styles.emptyDescription}>
@@ -105,14 +147,13 @@ export default function PaginaOcorrencias() {
               size="sm"
             />
           </View>
-        }
+        )}
       />
 
       <View style={styles.rodapeConteudo}>
         <Botao label="Registrar ocorrência" href="/login" size="lg" fullWidth />
         <Text style={styles.disclaimer}>
-          Os registros são fictícios. O BairroAtivo não é um serviço oficial da
-          prefeitura.
+          O BairroAtivo não é um serviço oficial da prefeitura.
         </Text>
       </View>
       <NavegacaoInferior ativa="ocorrencias" />
