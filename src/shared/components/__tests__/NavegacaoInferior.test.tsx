@@ -4,6 +4,7 @@ import { router } from "expo-router";
 import { NavegacaoInferior } from "../NavegacaoInferior";
 
 jest.mock("expo-router", () => ({ router: { push: jest.fn() } }));
+jest.mock("@/features/autenticacao/contexto/AutenticacaoProvider", () => ({ useAutenticacao: jest.fn(() => ({ usuario: null })) }));
 jest.mock("react-native-safe-area-context", () => ({ useSafeAreaInsets: () => ({ bottom: 0 }) }));
 jest.mock("@/shared/icons/home_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
 jest.mock("@/shared/icons/assignment_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
