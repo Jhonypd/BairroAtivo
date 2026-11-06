@@ -8,6 +8,7 @@ import type { Ocorrencia } from "../types/Ocorrencia";
 
 jest.mock("../services/ocorrenciasSupabase", () => ({ listarMinhasOcorrencias: jest.fn(), excluirOcorrencia: jest.fn() }));
 jest.mock("@/shared/components/NavegacaoInferior", () => ({ NavegacaoInferior: () => null }));
+jest.mock("@/shared/icons/location_on_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
 // Jest mock factories cannot reference imported bindings outside the factory.
 jest.mock("expo-router", () => ({ router: { push: jest.fn() }, useFocusEffect: (callback: () => void) => jest.requireActual<typeof import("react")>("react").useEffect(callback, []) }));
 

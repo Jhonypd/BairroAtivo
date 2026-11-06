@@ -12,6 +12,9 @@ import { ocorrenciasStyles as styles } from "./PaginaOcorrencias.styles";
 import { useCarregamentoGlobal } from "@/shared/components/ui/CarregamentoGlobal";
 import { useAutenticacao } from "@/features/autenticacao/contexto/AutenticacaoProvider";
 import { PaginaMinhasOcorrencias } from "./PaginaMinhasOcorrencias";
+import IconeFiltros from "@/shared/icons/filter_alt_24dp_E3E3E3.svg";
+import IconeBusca from "@/shared/icons/search_24dp_E3E3E3.svg";
+import { cores } from "@/configs/tema";
 
 type VisualizacaoOcorrencias = "todas" | "minhas";
 
@@ -39,6 +42,10 @@ export default function PaginaOcorrencias() {
     useState<FiltroStatusTipo>("Todas");
   const [filtroBairro, definirFiltroBairro] = useState("");
   const [filtroCategoria, definirFiltroCategoria] = useState("");
+  const [statusRascunho, definirStatusRascunho] = useState<FiltroStatusTipo>("Todas");
+  const [bairroRascunho, definirBairroRascunho] = useState("");
+  const [categoriaRascunho, definirCategoriaRascunho] = useState("");
+  const [painelFiltrosAberto, definirPainelFiltrosAberto] = useState(false);
   const [campoAberto, definirCampoAberto] = useState<"bairro" | "categoria" | null>(null);
   const requisicaoAtual = useRef(0);
   const { executarComCarregamento } = useCarregamentoGlobal();
@@ -74,18 +81,43 @@ export default function PaginaOcorrencias() {
     });
   }, [consulta, filtroBairro, filtroCategoria, filtroStatus, ocorrencias]);
 
-  const carregarOcorrencias = useCallback(async (atualizacao = false) => {
+  const quantidadeFiltrosAtivos =
+    Number(filtroStatus !== "Todas") + Number(Boolean(filtroBairro)) + Number(Boolean(filtroCategoria));
+
+  const abrirPainelFiltros = useCallback(() => {
+    definirStatusRascunho(filtroStatus);
+    definirBairroRascunho(filtroBairro);
+    definirCategoriaRascunho(filtroCategoria);
+    definirCampoAberto(null);
+    definirPainelFiltrosAberto(true);
+  }, [filtroBairro, filtroCategoria, filtroStatus]);
+
+  const fecharPainelFiltros = useCallback(() => {
+    definirStatusRascunho(filtroStatus);
+    definirBairroRascunho(filtroBairro);
+    definirCategoriaRascunho(filtroCategoria);
+    definirCampoAberto(null);
+    definirPainelFiltrosAberto(false);
+  }, [filtroBairro, filtroCategoria, filtroStatus]);
+
+  const carregarOcorrencias = useCallback(async (atualizacao = false): Promise<boolean> => {
     const idRequisicao = ++requisicaoAtual.current;
     if (atualizacao) definirAtualizando(true);
     else definirCarregando(true);
     definirErro(null);
     try {
-      const resultado = await executarComCarregamento(listarOcorrencias, "Carregando ocorrências");
+      const resultado = await executarComCarregamento(
+        listarOcorrencias,
+        atualizacao ? "Atualizando ocorrências" : "Carregando ocorrências",
+      );
       if (idRequisicao === requisicaoAtual.current) definirOcorrencias(resultado);
+      else return false;
+      return true;
     } catch {
       if (idRequisicao === requisicaoAtual.current) {
         definirErro("Não foi possível conectar ao servidor. Tente novamente.");
       }
+      return false;
     } finally {
       if (idRequisicao === requisicaoAtual.current) {
         definirCarregando(false);
@@ -93,6 +125,26 @@ export default function PaginaOcorrencias() {
       }
     }
   }, [executarComCarregamento]);
+
+  const aplicarFiltros = useCallback(async () => {
+    const atualizou = await carregarOcorrencias(true);
+    if (!atualizou) return;
+    definirFiltroStatus(statusRascunho);
+    definirFiltroBairro(bairroRascunho);
+    definirFiltroCategoria(categoriaRascunho);
+    definirPainelFiltrosAberto(false);
+  }, [bairroRascunho, carregarOcorrencias, categoriaRascunho, statusRascunho]);
+
+  const limparFiltrosAplicados = useCallback(() => {
+    definirConsulta("");
+    definirFiltroStatus("Todas");
+    definirFiltroBairro("");
+    definirFiltroCategoria("");
+    definirStatusRascunho("Todas");
+    definirBairroRascunho("");
+    definirCategoriaRascunho("");
+    definirPainelFiltrosAberto(false);
+  }, []);
 
   useFocusEffect(useCallback(() => {
     void carregarOcorrencias();
@@ -103,6 +155,7 @@ export default function PaginaOcorrencias() {
     <View style={styles.tela}>
       <View style={styles.cabecalhoConteudo}>
         <View style={styles.intro}>
+          <Text style={styles.eyebrow}>BAIRROATIVO</Text>
           <Text style={styles.titulo}>Relatos da comunidade</Text>
           <Text style={styles.descricao}>
             Veja o que está acontecendo nos bairros.
@@ -127,60 +180,120 @@ export default function PaginaOcorrencias() {
 
         {visualizacao === "todas" ? <>
 
-        <TextInput
-          value={consulta}
-          onChangeText={definirConsulta}
-          placeholder="Buscar por palavra-chave..."
-          placeholderTextColor={styles.placeholder.color}
-          style={styles.search}
-          accessibilityLabel="Buscar ocorrências"
-          returnKeyType="search"
-        />
-
-        <ScrollView
-          horizontal
-          style={styles.filtrosRolagem}
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.filters}
-        >
-          {filtrosStatus.map((filter) => (
-            <FiltroStatus
-              key={filter}
-              label={rotulosFiltroStatus[filter]}
-              selected={filtroStatus === filter}
-              onPress={() => definirFiltroStatus(filter)}
+        <View style={styles.buscaLinha}>
+          <View style={styles.buscaCampo}>
+            <IconeBusca width={18} height={18} accessibilityElementsHidden />
+            <TextInput
+              value={consulta}
+              onChangeText={definirConsulta}
+              placeholder="Buscar ocorrências..."
+              placeholderTextColor={styles.placeholder.color}
+              style={styles.search}
+              accessibilityLabel="Buscar ocorrências"
+              returnKeyType="search"
             />
-          ))}
-        </ScrollView>
+          </View>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`Filtros${quantidadeFiltrosAtivos ? `, ${quantidadeFiltrosAtivos} ativos` : ""}`}
+            accessibilityHint="Abre os filtros de status, bairro e categoria"
+            accessibilityState={{ expanded: painelFiltrosAberto }}
+            accessibilityValue={{ text: String(quantidadeFiltrosAtivos) }}
+            aria-controls="painel-filtros"
+            aria-expanded={painelFiltrosAberto}
+            onPress={() => painelFiltrosAberto ? fecharPainelFiltros() : abrirPainelFiltros()}
+            style={styles.botaoFiltros}
+          >
+            <IconeFiltros width={19} height={19} fill={cores.primaryDark} accessibilityLabel="" />
+            <Text style={styles.rotuloBotaoFiltros}>Filtros</Text>
+            {quantidadeFiltrosAtivos ? <View style={styles.contadorFiltros}><Text style={styles.contadorFiltrosTexto}>{quantidadeFiltrosAtivos}</Text></View> : null}
+          </Pressable>
+        </View>
+
+        {quantidadeFiltrosAtivos ? (
+          <Pressable accessibilityRole="button" onPress={abrirPainelFiltros} style={styles.filtrosAtivos}>
+            <Text style={styles.filtrosAtivosTexto}>
+              {quantidadeFiltrosAtivos} {quantidadeFiltrosAtivos === 1 ? "filtro ativo" : "filtros ativos"}
+              {filtroStatus !== "Todas" ? ` · ${rotulosFiltroStatus[filtroStatus]}` : ""}
+              {filtroBairro ? ` · ${filtroBairro}` : ""}
+              {filtroCategoria ? ` · ${filtroCategoria}` : ""}
+            </Text>
+            <Text style={styles.editarFiltros}>Editar</Text>
+          </Pressable>
+        ) : null}
 
         <View
-          testID="container-filtros-combos"
-          style={[styles.filtrosCampos, campoAberto !== null && styles.filtrosCamposAberto]}
+          testID="painel-filtros"
+          nativeID="painel-filtros"
+          accessibilityElementsHidden={!painelFiltrosAberto}
+          importantForAccessibility={painelFiltrosAberto ? "auto" : "no-hide-descendants"}
+          style={[styles.painelFiltros, !painelFiltrosAberto && styles.painelFiltrosFechado]}
         >
-          <View style={[styles.filtroCampo, campoAberto === "bairro" && styles.filtroCampoAberto]}>
-            <CampoSelecao
-              label="Bairro"
-              placeholder="Todos os bairros"
-              options={bairrosDisponiveis}
-              value={filtroBairro}
-              onChange={definirFiltroBairro}
-              aberto={campoAberto === "bairro"}
-              exibirLimpar
-              aoAlternar={() => definirCampoAberto((atual) => atual === "bairro" ? null : "bairro")}
-            />
-          </View>
-          <View style={[styles.filtroCampo, campoAberto === "categoria" && styles.filtroCampoAberto]}>
-            <CampoSelecao
-              label="Categoria"
-              placeholder="Todas as categorias"
-              options={categoriasDisponiveis}
-              value={filtroCategoria}
-              onChange={definirFiltroCategoria}
-              aberto={campoAberto === "categoria"}
-              exibirLimpar
-              aoAlternar={() => definirCampoAberto((atual) => atual === "categoria" ? null : "categoria")}
-            />
-          </View>
+            <View style={styles.painelTituloLinha}>
+              <Text style={styles.painelTitulo}>Filtrar ocorrências</Text>
+              <Pressable accessibilityRole="button" accessibilityLabel="Fechar filtros" onPress={fecharPainelFiltros} hitSlop={8}>
+                <Text style={styles.fecharFiltros}>×</Text>
+              </Pressable>
+            </View>
+            <ScrollView
+              horizontal
+              style={styles.filtrosRolagem}
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.filters}
+            >
+              {filtrosStatus.map((filter) => (
+                <FiltroStatus
+                  key={filter}
+                  label={rotulosFiltroStatus[filter]}
+                  selected={statusRascunho === filter}
+                  onPress={() => definirStatusRascunho(filter)}
+                />
+              ))}
+            </ScrollView>
+
+            <View
+              testID="container-filtros-combos"
+              style={[styles.filtrosCampos, campoAberto !== null && styles.filtrosCamposAberto]}
+            >
+              <View style={[styles.filtroCampo, campoAberto === "bairro" && styles.filtroCampoAberto]}>
+                <CampoSelecao
+                  label="Bairro"
+                  placeholder="Todos os bairros"
+                  options={bairrosDisponiveis}
+                  value={bairroRascunho}
+                  onChange={definirBairroRascunho}
+                  aberto={campoAberto === "bairro"}
+                  exibirLimpar
+                  aoAlternar={() => definirCampoAberto((atual) => atual === "bairro" ? null : "bairro")}
+                />
+              </View>
+              <View style={[styles.filtroCampo, campoAberto === "categoria" && styles.filtroCampoAberto]}>
+                <CampoSelecao
+                  label="Categoria"
+                  placeholder="Todas as categorias"
+                  options={categoriasDisponiveis}
+                  value={categoriaRascunho}
+                  onChange={definirCategoriaRascunho}
+                  aberto={campoAberto === "categoria"}
+                  exibirLimpar
+                  aoAlternar={() => definirCampoAberto((atual) => atual === "categoria" ? null : "categoria")}
+                />
+              </View>
+            </View>
+            <View style={styles.acoesFiltros}>
+              <Botao
+                label="Limpar"
+                onPress={() => {
+                  definirStatusRascunho("Todas");
+                  definirBairroRascunho("");
+                  definirCategoriaRascunho("");
+                  definirCampoAberto(null);
+                }}
+                variant="ghost"
+                size="sm"
+              />
+              <Botao label="Aplicar filtros" onPress={() => void aplicarFiltros()} size="sm" />
+            </View>
         </View>
 
         <Text style={styles.resultCount}>
@@ -233,10 +346,12 @@ export default function PaginaOcorrencias() {
           </View>
         ) : (
           <View style={styles.emptyState}>
+            <IconeBusca width={26} height={26} accessibilityLabel="Buscar" />
             <Text style={styles.emptyTitle}>Nenhuma ocorrência encontrada</Text>
             <Text style={styles.emptyDescription}>
-              Tente outra palavra ou limpe os filtros para ver todos os relatos.
+              Tente ajustar a busca ou remover algum filtro.
             </Text>
+            <Botao label="Limpar filtros" onPress={limparFiltrosAplicados} variant="outline" size="sm" />
           </View>
         )}
       /> : null}

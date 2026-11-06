@@ -4,7 +4,7 @@ import { cores } from "@/configs/tema";
 export const cartaoOcorrenciaStyles = StyleSheet.create({
   card: {
     padding: 16,
-    borderRadius: 16,
+    borderRadius: 18,
     backgroundColor: cores.surface,
     borderWidth: 1,
     borderColor: cores.borderSoft,
@@ -15,7 +15,9 @@ export const cartaoOcorrenciaStyles = StyleSheet.create({
   categoria: { flexShrink: 1, color: cores.textMuted, fontSize: 12, fontWeight: "600" },
   status: { overflow: "hidden", paddingVertical: 4, paddingHorizontal: 9, borderRadius: 999, fontSize: 11, fontWeight: "700" },
   titulo: { color: cores.primaryDark, fontSize: 17, fontWeight: "700", lineHeight: 23 },
+  localizacao: { flexDirection: "row", alignItems: "center", gap: 5 },
   bairro: { color: cores.textMuted, fontSize: 14 },
+  autor: { color: cores.textSubtle, fontSize: 12 },
   more: { marginTop: 2, color: cores.primary, fontSize: 13, fontWeight: "700" },
 });
 

@@ -9,7 +9,7 @@ export default function LayoutOcorrencias() {
       headerTitleStyle: { fontWeight: "700" },
       contentStyle: { backgroundColor: cores.background },
     }}>
-      <Stack.Screen name="index" options={{ title: "Ocorrências" }} />
+      <Stack.Screen name="index" options={{ title: "Ocorrências", headerTitleAlign: "center" }} />
       <Stack.Screen name="nova" options={{ title: "Nova ocorrência" }} />
       <Stack.Screen name="[id]" options={{ title: "Detalhes da ocorrência" }} />
     </Stack>

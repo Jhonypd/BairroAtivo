@@ -3,6 +3,7 @@ import { Pressable, Text, View } from "react-native";
 import { cores } from "@/configs/tema";
 import type { Ocorrencia } from "../types/Ocorrencia";
 import { cartaoOcorrenciaStyles as styles } from "./CartaoOcorrencia.styles";
+import IconeLocalizacao from "@/shared/icons/location_on_24dp_E3E3E3.svg";
 
 const coresStatus: Record<Ocorrencia["status"], { text: string; background: string }> = {
   Aberta: { text: cores.statusOpen, background: "#FCE8E6" },
@@ -26,8 +27,11 @@ export function CartaoOcorrencia({ ocorrencia }: { ocorrencia: Ocorrencia }) {
         </Text>
       </View>
       <Text style={styles.titulo}>{ocorrencia.titulo}</Text>
-      <Text style={styles.bairro}>{ocorrencia.bairro}</Text>
-      {ocorrencia.nomeAutorPublico ? <Text style={styles.bairro}>Por {ocorrencia.nomeAutorPublico}</Text> : null}
+      <View style={styles.localizacao}>
+        <IconeLocalizacao width={15} height={15} fill={cores.primary} accessibilityLabel="Localização" />
+        <Text style={styles.bairro}>{ocorrencia.bairro}</Text>
+      </View>
+      {ocorrencia.nomeAutorPublico ? <Text style={styles.autor}>Por {ocorrencia.nomeAutorPublico}</Text> : null}
       <Text style={styles.more}>Ver detalhes <Text accessibilityElementsHidden>›</Text></Text>
     </Pressable>
   );

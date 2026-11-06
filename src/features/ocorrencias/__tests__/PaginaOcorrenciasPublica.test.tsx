@@ -13,6 +13,9 @@ jest.mock("expo-router", () => {
 jest.mock("../services/ocorrenciasSupabase", () => ({
   listarOcorrencias: jest.fn().mockResolvedValue([] as never),
 }));
+jest.mock("@/shared/icons/filter_alt_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
+jest.mock("@/shared/icons/search_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
+jest.mock("@/shared/icons/location_on_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
 jest.mock("@/shared/components/NavegacaoInferior", () => ({ NavegacaoInferior: () => null }));
 jest.mock("@/features/autenticacao/contexto/AutenticacaoProvider", () => ({
   useAutenticacao: () => ({ usuario: null, carregando: false }),
