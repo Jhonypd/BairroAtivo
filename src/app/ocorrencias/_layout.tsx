@@ -11,7 +11,7 @@ export default function LayoutOcorrencias() {
     }}>
       <Stack.Screen name="index" options={{ title: "Ocorrências", headerTitleAlign: "center" }} />
       <Stack.Screen name="nova" options={{ title: "Nova ocorrência" }} />
-      <Stack.Screen name="[id]" options={{ title: "Detalhes da ocorrência" }} />
+      <Stack.Screen name="[id]" options={{ headerShown: false }} />
     </Stack>
   );
 }
