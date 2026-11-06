@@ -135,6 +135,67 @@ begin
 end;
 $$;
 
+-- 6. Testa a policy diretamente como a role restrita que executa a RPC.
+-- O primeiro formato deve permitir a linha do autor.
+reset role;
+set local role bairroativo_pb13_rpc_owner;
+select set_config(
+  'request.jwt.claim.sub',
+  current_setting('pb13.test.autor_id', true),
+  true
+);
+select set_config('request.jwt.claims', '', true);
+
+do $$
+begin
+  if not exists (
+    select 1
+    from howviii.ocorrencias as o
+    where o.id = current_setting('pb13.test.ocorrencia_id', true)::uuid
+  ) then
+    raise exception 'Falha: policy não expôs a ocorrência do autor via request.jwt.claim.sub';
+  end if;
+end;
+$$;
+
+-- O segundo formato também deve permitir a linha do autor.
+select set_config('request.jwt.claim.sub', '', true);
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object('sub', current_setting('pb13.test.autor_id', true))::text,
+  true
+);
+
+do $$
+begin
+  if not exists (
+    select 1
+    from howviii.ocorrencias as o
+    where o.id = current_setting('pb13.test.ocorrencia_id', true)::uuid
+  ) then
+    raise exception 'Falha: policy não expôs a ocorrência do autor via request.jwt.claims';
+  end if;
+end;
+$$;
+
+-- Outra identidade sem ocorrências próprias não deve ver linhas pela policy.
+select set_config(
+  'request.jwt.claims',
+  jsonb_build_object('sub', current_setting('pb13.test.outro_usuario_id', true))::text,
+  true
+);
+
+do $$
+declare
+  quantidade bigint;
+begin
+  select count(*) into quantidade from howviii.ocorrencias;
+  if quantidade <> 0 then
+    raise exception 'Falha: policy retornou % ocorrências para a outra identidade; esperado 0', quantidade;
+  end if;
+end;
+$$;
+
 -- Confirma que a chamada anon falha por privilégio, mesmo sem claims.
 reset role;
 set local role anon;
