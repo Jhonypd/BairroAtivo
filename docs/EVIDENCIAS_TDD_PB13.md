@@ -6,7 +6,7 @@ Esta entrega tem uma dependência de banco ainda não aplicada: a listagem priva
 
 ## Evidências dos ciclos
 
-Foram adicionados testes de tela para lista própria, estado vazio e cancelamento explícito de exclusão, além de testes do serviço de RPC, payload de edição, falha simulada de autorização e exclusão sem limpeza manual de relacionamentos. A implementação precedeu esses testes nesta sessão; portanto não há evidência honesta de uma execução Red anterior para estes casos. A suíte final passou: 16 suítes e 75 testes. Não foram presumidos resultados.
+Nesta revisão foram adicionados testes para ID inválido, registro inexistente, falha de consulta, atualização bloqueada pelo RLS e exclusão com zero linhas (caso de outro autor) ou contagem nula. A implementação precedeu esses testes nesta sessão; portanto não há evidência honesta de uma execução Red anterior para estes casos. A suíte final passou: 17 suítes e 80 testes. Não foram presumidos resultados.
 
 | Caso | Teste | Red | Green | Refactor |
 |---|---|---|---|---|
@@ -15,7 +15,9 @@ Foram adicionados testes de tela para lista própria, estado vazio e cancelament
 | Campos editáveis e validações | Serviço de atualização e validação existente da PB09 | Implementação antes do teste | Payload permitido passou; cobertura de limites já existente na PB09 | Pendente |
 | Atualização com sucesso e falha | Serviço de atualização | Implementação antes do teste | Passou | Pendente |
 | Tentativa de editar registro alheio | Erro simulado de autorização; integração real pendente | Implementação antes do teste | Erro simulado passou | Validação DB pendente |
-| Exclusão cancelada, confirmada e falha | Tela e serviço de exclusão | Cancelamento e execução do serviço cobertos; confirmação/falha da tela pendentes | Testes cobertos passaram | Pendente |
+| Tentativa de excluir registro alheio | Outro autor com RLS retornando count 0 | Implementação antes do teste | Passou; count 0 rejeitado | Validação DB pendente |
+| Exclusão sem contagem | count nulo | Implementação antes do teste | Passou; count nulo rejeitado | Validação DB pendente |
+| Exclusão cancelada, confirmada e falha | Tela e serviço de exclusão | Cancelamento coberto; confirmação/falha de tela pendentes | Testes cobertos passaram | Pendente |
 | Atualização da listagem | Retorno ao foco após editar/excluir | Pendente | Indiretamente pela estratégia de foco; teste específico pendente | Pendente |
 | Regressões PB09–PB12 | Suíte existente | Existente | 16 suítes, 75 testes aprovados | Pendente |
 
@@ -26,6 +28,7 @@ Foram adicionados testes de tela para lista própria, estado vazio e cancelament
 - `npm run lint`: passou sem alertas.
 - `git diff --check`: passou.
 - `npx expo-doctor`: 19/20 verificações passaram; falhou somente a compatibilidade de versões de dependências Expo, que já estavam divergentes no `package.json` de `develop`.
+- `npx expo install --check`: confirmou as mesmas 9 versões fora da faixa recomendada pelo SDK 58. Todas são divergências preexistentes; não houve adição/uso de API nova que exija atualizar módulos nativos, por isso nenhum upgrade foi aplicado nesta revisão.
 
 ## Verificação de banco (somente leitura)
 
@@ -34,7 +37,8 @@ Foram adicionados testes de tela para lista própria, estado vazio e cancelament
 - RLS ativo; políticas de `UPDATE` e `DELETE` verificam `autor_id = auth.uid()`.
 - FKs de `fotos_ocorrencias` e `apoios` para ocorrências usam `ON DELETE CASCADE`; não há exclusão manual pelo aplicativo.
 - O papel `authenticated` possui `UPDATE` em `status`, então as permissões atuais permitem mudar status diretamente. A proposta SQL inclui revogar `UPDATE` na tabela e conceder apenas os cinco campos editáveis da PB13. Isso precisa ser revisado e validado para impedir clientes adulterados e preservar fluxos privilegiados futuros.
+- A verificação com `has_column_privilege` confirmou `UPDATE` efetivo em `titulo`, `descricao`, `categoria`, `bairro`, `latitude`, `longitude`, `status` e `nome_publico`; não em `id`, `autor_id`, `total_apoios`, `criado_em` ou `atualizado_em`. `autor_id` não tem `SELECT` efetivo para `authenticated`.
 
 ## SQL pendente
 
-A proposta SQL revoga as permissões amplas e de coluna de `UPDATE` de `authenticated` e concede somente `titulo`, `descricao`, `categoria`, `bairro` e `nome_publico`, removendo assim a edição de `status` e demais colunas internas por clientes comuns. A função de listagem usa `SECURITY DEFINER`, recebe zero parâmetros, fixa `search_path`, deriva o proprietário por `auth.uid()`, projeta apenas campos operacionais e restringe execução a `authenticated`. Risco: função ou grants mal configurados podem ampliar leitura ou interromper operações futuras; revisar, aplicar em ambiente controlado e validar com dois usuários antes de liberar a PB13. Nenhuma mudança no banco foi aplicada durante esta implementação.
+A versão proposta cria uma role `NOLOGIN NOINHERIT NOBYPASSRLS`, sem associação com outras roles, como proprietária da função. Essa role recebe somente `SELECT` das colunas necessárias e uma política RLS adicional que limita a leitura a `autor_id = auth.uid()`; a função repete o filtro, não recebe ID de usuário, usa `search_path = ''` e referencia objetos com schema explícito. O ACL da função revoga execução de `PUBLIC`, `anon` e `authenticated` antes de liberar apenas `authenticated`. Mesmo no schema exposto `howviii`, a função só fica acessível pela role autenticada. O script também restringe UPDATE a cinco colunas. Riscos: requer execução por role administrativa capaz de criar role/policy e transferir propriedade; a política nova e o corte de latitude/longitude podem afetar consumidores não inventariados. Revisar com o responsável do banco, validar com dois usuários e revisar usos de coordenadas antes de aplicar. Nenhuma mudança no banco foi aplicada nesta implementação.

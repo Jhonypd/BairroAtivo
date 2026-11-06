@@ -42,4 +42,11 @@ describe("gerenciamento Supabase de ocorrências", () => {
     expect(excluir.mock.calls[0]).toEqual([{ count: "exact" }]);
     expect(eq.mock.calls[0]).toEqual(["id", "1"]);
   });
+
+  it.each([null, 0])("não considera a exclusão bem-sucedida quando o banco retorna count=%s", async (count) => {
+    const eq = jest.fn(async () => ({ error: null, count }));
+    const excluir = jest.fn().mockReturnValue({ eq });
+    const cliente = { auth: { getUser: jest.fn(async () => ({ data: { user: { id: "outro-usuario" } }, error: null })) }, from: jest.fn().mockReturnValue({ delete: excluir }) } as never;
+    await expect(excluirOcorrencia("1", cliente)).rejects.toThrow("Não foi possível excluir");
+  });
 });

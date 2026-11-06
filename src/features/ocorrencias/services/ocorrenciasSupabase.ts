@@ -175,5 +175,5 @@ export async function excluirOcorrencia(
   if (erroAutenticacao || !autenticacao.user) throw new Error("Faça login para excluir uma ocorrência.");
 
   const { error, count } = await clienteConfigurado.from("ocorrencias").delete({ count: "exact" }).eq("id", id);
-  if (error || count === 0) throw new Error("Não foi possível excluir a ocorrência. Verifique sua conexão e suas permissões.");
+  if (error || count === null || count < 1) throw new Error("Não foi possível excluir a ocorrência. Verifique sua conexão e suas permissões.");
 }

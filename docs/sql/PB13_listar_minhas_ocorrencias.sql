@@ -1,9 +1,9 @@
--- Proposta para revisão: NÃO executar antes da revisão da política de segurança.
--- A função deriva a identidade exclusivamente de auth.uid(), sem aceitar um
--- identificador de usuário como argumento e sem retornar autor_id.
--- Revisão de permissões necessária: hoje authenticated tem UPDATE em status.
--- A revogação da tabela impede que chamadas diretas do cliente mudem status ou
--- campos internos; o GRANT abaixo libera somente os campos editáveis da PB13.
+-- PROPOSTA PARA REVISÃO. NÃO EXECUTAR sem revisão e validação com dois usuários.
+-- Executar como role administrativa com permissão para criar roles/policies.
+-- Tudo é transacional: uma falha reverte todos os ajustes.
+begin;
+
+-- Remove permissões UPDATE em tabela e coluna; reabre apenas os campos PB13.
 revoke update on table howviii.ocorrencias from authenticated;
 do $$
 declare
@@ -27,6 +27,47 @@ $$;
 grant update (titulo, descricao, categoria, bairro, nome_publico)
   on table howviii.ocorrencias to authenticated;
 
+-- Role proprietária da função sem LOGIN, herança ou BYPASSRLS. Ela não deve
+-- ser membro de outras roles nem ter membros, para usuários não poderem SET ROLE.
+do $$
+begin
+  if not exists (select 1 from pg_roles where rolname = 'bairroativo_pb13_rpc_owner') then
+    execute 'create role bairroativo_pb13_rpc_owner nologin noinherit nobypassrls';
+  end if;
+end;
+$$;
+alter role bairroativo_pb13_rpc_owner nologin noinherit nobypassrls;
+
+do $$
+declare
+  id_role oid := (select oid from pg_roles where rolname = 'bairroativo_pb13_rpc_owner');
+begin
+  if exists (
+    select 1 from pg_auth_members
+    where roleid = id_role or member = id_role
+  ) then
+    raise exception 'A role bairroativo_pb13_rpc_owner não pode ter membros ou participar de outras roles';
+  end if;
+end;
+$$;
+
+grant usage, create on schema howviii to bairroativo_pb13_rpc_owner;
+grant usage on schema auth to bairroativo_pb13_rpc_owner;
+grant execute on function auth.uid() to bairroativo_pb13_rpc_owner;
+
+-- Privilegia apenas colunas de resposta e autor_id; nenhuma escrita.
+revoke all on table howviii.ocorrencias from bairroativo_pb13_rpc_owner;
+grant select (id, autor_id, titulo, descricao, categoria, bairro, status, criado_em, nome_publico)
+  on table howviii.ocorrencias to bairroativo_pb13_rpc_owner;
+
+-- Defesa em profundidade: mesmo a role da função só lê linhas do JWT atual.
+drop policy if exists ocorrencias_pb13_rpc_select_own on howviii.ocorrencias;
+create policy ocorrencias_pb13_rpc_select_own
+  on howviii.ocorrencias
+  for select
+  to bairroativo_pb13_rpc_owner
+  using (autor_id = (select auth.uid()));
+
 create or replace function howviii.listar_minhas_ocorrencias()
 returns table (
   id uuid,
@@ -41,7 +82,7 @@ returns table (
 language sql
 stable
 security definer
-set search_path = pg_catalog
+set search_path = ''
 as $$
   select o.id, o.titulo, o.descricao, o.categoria, o.bairro,
          o.status, o.criado_em, o.nome_publico
@@ -50,5 +91,9 @@ as $$
   order by o.criado_em desc;
 $$;
 
-revoke all on function howviii.listar_minhas_ocorrencias() from public, anon;
+alter function howviii.listar_minhas_ocorrencias() owner to bairroativo_pb13_rpc_owner;
+revoke create on schema howviii from bairroativo_pb13_rpc_owner;
+revoke all on function howviii.listar_minhas_ocorrencias() from public, anon, authenticated;
 grant execute on function howviii.listar_minhas_ocorrencias() to authenticated;
+
+commit;
