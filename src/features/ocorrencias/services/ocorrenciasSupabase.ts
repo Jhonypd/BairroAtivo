@@ -22,6 +22,12 @@ const status: Record<StatusOcorrenciaBanco, Ocorrencia["status"]> = {
 };
 
 export function converterOcorrencia(dado: OcorrenciaBanco): Ocorrencia {
+  const caminhoDaImagem = dado.fotos_ocorrencias
+    ?.slice()
+    .sort((a, b) => a.ordem - b.ordem)
+    .map((foto) => foto.caminho_arquivo.trim())
+    .find((caminho) => /^https:\/\//i.test(caminho));
+
   return {
     id: dado.id,
     titulo: dado.titulo,
@@ -38,6 +44,10 @@ export function converterOcorrencia(dado: OcorrenciaBanco): Ocorrencia {
     ...(dado.nome_publico?.trim()
       ? { nomeAutorPublico: dado.nome_publico.trim() }
       : {}),
+    ...(caminhoDaImagem ? { imagemUrl: caminhoDaImagem } : {}),
+    ...(typeof dado.latitude === "number" ? { latitude: dado.latitude } : {}),
+    ...(typeof dado.longitude === "number" ? { longitude: dado.longitude } : {}),
+    ...(typeof dado.total_apoios === "number" ? { totalApoios: dado.total_apoios } : {}),
   };
 }
 
@@ -52,6 +62,7 @@ function exigirCliente(cliente: ClienteOcorrencias | null): ClienteOcorrencias {
 
 const camposPublicos =
   "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico";
+const camposDetalhe = `${camposPublicos},latitude,longitude,total_apoios,fotos_ocorrencias(caminho_arquivo,ordem)`;
 
 export async function cadastrarOcorrencia(
   dados: DadosCadastroOcorrencia,
@@ -123,7 +134,7 @@ export async function buscarOcorrenciaPorId(
 ): Promise<Ocorrencia | null> {
   const { data, error } = await exigirCliente(cliente)
     .from("ocorrencias")
-    .select(camposPublicos)
+    .select(camposDetalhe)
     .eq("id", id)
     .maybeSingle();
 
@@ -131,6 +142,59 @@ export async function buscarOcorrenciaPorId(
     throw new Error("Não foi possível carregar os detalhes da ocorrência.");
   }
   return data ? converterOcorrencia(data as unknown as OcorrenciaBanco) : null;
+}
+
+async function obterUsuarioApoio(cliente: ClienteOcorrencias) {
+  const { data, error } = await cliente.auth.getUser();
+  if (error) throw new Error("Não foi possível validar sua sessão. Tente novamente.");
+  if (!data.user) throw new Error("Entre com Google para acompanhar esta ocorrência.");
+  return data.user;
+}
+
+export async function buscarApoioOcorrencia(
+  ocorrenciaId: string,
+  cliente: ClienteOcorrencias | null = supabase,
+): Promise<boolean> {
+  const clienteConfigurado = exigirCliente(cliente);
+  const usuario = await obterUsuarioApoio(clienteConfigurado);
+  const { data, error } = await clienteConfigurado
+    .from("apoios")
+    .select("ocorrencia_id")
+    .eq("ocorrencia_id", ocorrenciaId)
+    .eq("usuario_id", usuario.id)
+    .maybeSingle();
+
+  if (error) throw new Error("Não foi possível verificar seu acompanhamento.");
+  return Boolean(data);
+}
+
+export async function definirApoioOcorrencia(
+  ocorrenciaId: string,
+  apoiando: boolean,
+  cliente: ClienteOcorrencias | null = supabase,
+): Promise<void> {
+  const clienteConfigurado = exigirCliente(cliente);
+  const usuario = await obterUsuarioApoio(clienteConfigurado);
+
+  if (apoiando) {
+    const { error } = await clienteConfigurado
+      .from("apoios")
+      .insert({ ocorrencia_id: ocorrenciaId, usuario_id: usuario.id });
+
+    // A chave composta do banco protege contra cliques duplicados ou concorrentes.
+    if (error && error.code !== "23505") {
+      throw new Error("Não foi possível acompanhar esta ocorrência. Tente novamente.");
+    }
+    return;
+  }
+
+  const { error } = await clienteConfigurado
+    .from("apoios")
+    .delete()
+    .eq("ocorrencia_id", ocorrenciaId)
+    .eq("usuario_id", usuario.id);
+
+  if (error) throw new Error("Não foi possível retirar seu acompanhamento. Tente novamente.");
 }
 
 export async function listarMinhasOcorrencias(
