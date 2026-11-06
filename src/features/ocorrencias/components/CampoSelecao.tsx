@@ -10,9 +10,10 @@ type Props = {
   onChange: (value: string) => void;
   aberto: boolean;
   aoAlternar: () => void;
+  exibirLimpar?: boolean;
 };
 
-export function CampoSelecao({ label, placeholder, options, value, onChange, aberto, aoAlternar }: Props) {
+export function CampoSelecao({ label, placeholder, options, value, onChange, aberto, aoAlternar, exibirLimpar = false }: Props) {
   const [progressoSeta] = useState(() => new Animated.Value(0));
   const rotacaoSeta = progressoSeta.interpolate({
     inputRange: [0, 1],
@@ -31,48 +32,63 @@ export function CampoSelecao({ label, placeholder, options, value, onChange, abe
   return (
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
-      <Pressable
-        accessibilityRole="button"
-        accessibilityLabel={`${label}: ${value || placeholder}`}
-        accessibilityState={{ expanded: aberto }}
-        onPress={aoAlternar}
-        style={({ pressed }) => [styles.trigger, pressed && styles.pressed]}
-      >
-        <Text style={[styles.value, !value && styles.placeholder]}>{value || placeholder}</Text>
-        <Animated.View
-          accessibilityElementsHidden
-          style={[styles.chevron, { transform: [{ rotate: "45deg" }, { rotate: rotacaoSeta }] }]}
-        />
-      </Pressable>
-      {aberto ? (
-        <View style={styles.options}>
-          <ScrollView
-            nestedScrollEnabled
-            showsVerticalScrollIndicator={false}
-            keyboardShouldPersistTaps="handled"
-            contentContainerStyle={styles.optionsConteudo}
+      <View style={styles.control}>
+        <View style={styles.trigger}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${label}: ${value || placeholder}`}
+            accessibilityState={{ expanded: aberto }}
+            onPress={aoAlternar}
+            style={({ pressed }) => [styles.seletor, pressed && styles.pressed]}
           >
-            {options.map((option) => (
-              <Pressable
-                key={option}
-                accessibilityRole="radio"
-                accessibilityState={{ selected: option === value }}
-                onPress={() => {
-                  onChange(option);
-                  aoAlternar();
-                }}
-                style={({ pressed }) => [
-                  styles.option,
-                  option === value && styles.optionSelected,
-                  pressed && styles.pressed,
-                ]}
-              >
-                <Text style={[styles.optionText, option === value && styles.optionTextSelected]}>{option}</Text>
-              </Pressable>
-            ))}
-          </ScrollView>
+            <Text numberOfLines={1} style={[styles.value, !value && styles.placeholder]}>{value || placeholder}</Text>
+            <Animated.View
+              accessibilityElementsHidden
+              style={[styles.chevron, { transform: [{ rotate: "45deg" }, { rotate: rotacaoSeta }] }]}
+            />
+          </Pressable>
+          {exibirLimpar && value ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Limpar ${label.toLocaleLowerCase("pt-BR")}`}
+              hitSlop={6}
+              onPress={() => onChange("")}
+              style={({ pressed }) => [styles.limpar, pressed && styles.pressed]}
+            >
+              <Text style={styles.iconeLimpar}>×</Text>
+            </Pressable>
+          ) : null}
         </View>
-      ) : null}
+        {aberto ? (
+          <View testID="opcoes-campo-selecao" style={styles.options}>
+            <ScrollView
+              nestedScrollEnabled
+              showsVerticalScrollIndicator={false}
+              keyboardShouldPersistTaps="handled"
+              contentContainerStyle={styles.optionsConteudo}
+            >
+              {options.length > 0 ? options.map((option) => (
+                <Pressable
+                  key={option}
+                  accessibilityRole="radio"
+                  accessibilityState={{ selected: option === value }}
+                  onPress={() => {
+                    onChange(option);
+                    aoAlternar();
+                  }}
+                  style={({ pressed }) => [
+                    styles.option,
+                    option === value && styles.optionSelected,
+                    pressed && styles.pressed,
+                  ]}
+                >
+                  <Text style={[styles.optionText, option === value && styles.optionTextSelected]}>{option}</Text>
+                </Pressable>
+              )) : <Text style={styles.semOpcoes}>Nenhuma opção disponível</Text>}
+            </ScrollView>
+          </View>
+        ) : null}
+      </View>
     </View>
   );
 }

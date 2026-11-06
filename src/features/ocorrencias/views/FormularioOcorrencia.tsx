@@ -8,20 +8,20 @@ import { useAutenticacao } from "@/features/autenticacao/contexto/AutenticacaoPr
 import { cores } from "@/configs/tema";
 import { CampoSelecao } from "../components/CampoSelecao";
 import { bairros, categoriaBancoPorRotulo, categoriasOcorrencia } from "../data/opcoesOcorrencia";
-import { cadastrarOcorrencia } from "../services/ocorrenciasSupabase";
+import { atualizarOcorrencia, cadastrarOcorrencia } from "../services/ocorrenciasSupabase";
 import type { Ocorrencia } from "../types/Ocorrencia";
 import { validarCadastroOcorrencia } from "../validacoes/cadastroOcorrencia";
 import type { DadosCadastroOcorrencia, ErrosCadastroOcorrencia } from "../validacoes/cadastroOcorrencia";
 import { formularioOcorrenciaStyles as styles } from "./FormularioOcorrencia.styles";
 
-export default function FormularioOcorrencia() {
+export default function FormularioOcorrencia({ ocorrenciaInicial }: { ocorrenciaInicial?: Ocorrencia }) {
   const { usuario } = useAutenticacao();
   const { executarComCarregamento } = useCarregamentoGlobal();
-  const [titulo, definirTitulo] = useState("");
-  const [descricao, definirDescricao] = useState("");
-  const [categoriaRotulo, definirCategoriaRotulo] = useState("");
-  const [bairro, definirBairro] = useState("");
-  const [exibirNomePublico, definirExibirNomePublico] = useState(false);
+  const [titulo, definirTitulo] = useState(ocorrenciaInicial?.titulo ?? "");
+  const [descricao, definirDescricao] = useState(ocorrenciaInicial?.descricao ?? "");
+  const [categoriaRotulo, definirCategoriaRotulo] = useState(ocorrenciaInicial?.categoria ?? "");
+  const [bairro, definirBairro] = useState(ocorrenciaInicial?.bairro ?? "");
+  const [exibirNomePublico, definirExibirNomePublico] = useState(Boolean(ocorrenciaInicial?.nomeAutorPublico));
   const [campoAberto, definirCampoAberto] = useState<"categoria" | "bairro" | null>(null);
   const [erros, definirErros] = useState<ErrosCadastroOcorrencia>({});
   const [erroEnvio, definirErroEnvio] = useState<string | null>(null);
@@ -53,8 +53,10 @@ export default function FormularioOcorrencia() {
     definirSalvando(true);
     try {
       const resultado = await executarComCarregamento(
-        () => cadastrarOcorrencia(dados),
-        "Cadastrando ocorrência",
+        () => ocorrenciaInicial
+          ? atualizarOcorrencia(ocorrenciaInicial.id, dados)
+          : cadastrarOcorrencia(dados),
+        ocorrenciaInicial ? "Salvando alterações" : "Cadastrando ocorrência",
       );
       definirOcorrenciaCriada(resultado);
     } catch (erro) {
@@ -75,7 +77,7 @@ export default function FormularioOcorrencia() {
   }
 
   function verListagem() {
-    router.replace("/ocorrencias");
+    router.replace((ocorrenciaInicial ? "/minhas-ocorrencias" : "/ocorrencias") as never);
   }
 
   return (
@@ -83,20 +85,26 @@ export default function FormularioOcorrencia() {
       {ocorrenciaCriada ? (
         <View style={styles.confirmacao}>
           <View style={styles.confirmacaoConteudo}>
-            <Text style={styles.confirmacaoTitulo}>Ocorrência cadastrada!</Text>
+            <Text style={styles.confirmacaoTitulo}>
+              {ocorrenciaInicial ? "Ocorrência atualizada!" : "Ocorrência cadastrada!"}
+            </Text>
             <Text style={styles.confirmacaoDescricao}>
-              “{ocorrenciaCriada.titulo}” foi publicada e já pode ser consultada pela comunidade.
+              “{ocorrenciaCriada.titulo}” {ocorrenciaInicial
+                ? "foi atualizada."
+                : "foi publicada e já pode ser consultada pela comunidade."}
             </Text>
           </View>
-          <Botao label="Ver detalhes" onPress={verDetalhes} fullWidth />
-          <Botao label="Ver ocorrências" onPress={verListagem} variant="outline" fullWidth />
+          {!ocorrenciaInicial ? <Botao label="Ver detalhes" onPress={verDetalhes} fullWidth /> : null}
+          <Botao label={ocorrenciaInicial ? "Voltar às minhas ocorrências" : "Ver ocorrências"} onPress={verListagem} variant="outline" fullWidth />
         </View>
       ) : (
         <ScrollView style={styles.rolagem} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
           <View style={styles.intro}>
-            <Text style={styles.titulo}>Nova ocorrência</Text>
+            <Text style={styles.titulo}>{ocorrenciaInicial ? "Editar ocorrência" : "Nova ocorrência"}</Text>
             <Text style={styles.descricao}>
-              Descreva o problema do seu bairro para publicá-lo no BairroAtivo.
+              {ocorrenciaInicial
+                ? "Atualize os dados do problema registrado."
+                : "Descreva o problema do seu bairro para publicá-lo no BairroAtivo."}
             </Text>
           </View>
 
@@ -182,7 +190,7 @@ export default function FormularioOcorrencia() {
 
           {erroEnvio ? <Text accessibilityRole="alert" style={styles.submitError}>{erroEnvio}</Text> : null}
           <Botao
-            label={salvando ? "Cadastrando..." : "Cadastrar ocorrência"}
+            label={salvando ? "Salvando..." : ocorrenciaInicial ? "Salvar alterações" : "Cadastrar ocorrência"}
             onPress={() => void enviarCadastro()}
             disabled={salvando}
             fullWidth
