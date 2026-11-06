@@ -241,7 +241,7 @@ $$;
 
 -- Confirma que a chamada anon falha por privilégio, mesmo sem claims.
 reset role;
-revoke set option for bairroativo_pb13_rpc_owner from postgres;
+revoke bairroativo_pb13_rpc_owner from postgres granted by postgres;
 
 do $$
 declare
