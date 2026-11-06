@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react-native";
+import { StyleSheet } from "react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import PaginaOcorrencias from "../views/PaginaOcorrencias";
 import { CarregamentoGlobalProvider } from "@/shared/components/ui/CarregamentoGlobal";
@@ -83,6 +84,14 @@ describe("filtros públicos da listagem", () => {
     await escolherFiltro("Categoria", "Buraco na via");
     expect(screen.getByText("Buraco na rua principal")).toBeOnTheScreen();
     expect(screen.queryByText("Lâmpada da praça apagada")).toBeNull();
+  });
+
+  it("abre as opções como menu sobreposto sem aumentar o espaço do filtro", async () => {
+    await abrirListagem();
+    await fireEvent.press(screen.getByRole("button", { name: /Categoria/ }));
+    const opcoes = screen.getByTestId("opcoes-campo-selecao");
+    expect(StyleSheet.flatten(opcoes.props.style).position).toBe("absolute");
+    expect(screen.getByRole("radio", { name: "Buraco na via" })).toBeOnTheScreen();
   });
 
   it("combina bairro, categoria e status", async () => {
