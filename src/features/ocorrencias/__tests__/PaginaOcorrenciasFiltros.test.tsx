@@ -88,9 +88,12 @@ describe("filtros públicos da listagem", () => {
 
   it("abre as opções como menu sobreposto sem aumentar o espaço do filtro", async () => {
     await abrirListagem();
+    await fireEvent.press(screen.getByRole("radio", { name: "Abertas" }));
     await fireEvent.press(screen.getByRole("button", { name: /Categoria/ }));
     const opcoes = screen.getByTestId("opcoes-campo-selecao");
     expect(StyleSheet.flatten(opcoes.props.style).position).toBe("absolute");
+    expect(StyleSheet.flatten(screen.getByTestId("container-filtros-combos").props.style).zIndex).toBeGreaterThan(0);
+    expect(screen.getByText("Filtros: Abertas")).toBeOnTheScreen();
     expect(screen.getByRole("radio", { name: "Buraco na via" })).toBeOnTheScreen();
   });
 

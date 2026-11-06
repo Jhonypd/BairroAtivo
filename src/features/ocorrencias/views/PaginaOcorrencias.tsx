@@ -145,7 +145,10 @@ export default function PaginaOcorrencias() {
           ))}
         </ScrollView>
 
-        <View style={styles.filtrosCampos}>
+        <View
+          testID="container-filtros-combos"
+          style={[styles.filtrosCampos, campoAberto !== null && styles.filtrosCamposAberto]}
+        >
           <View style={[styles.filtroCampo, campoAberto === "bairro" && styles.filtroCampoAberto]}>
             <CampoSelecao
               label="Bairro"

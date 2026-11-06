@@ -14,6 +14,7 @@ export const ocorrenciasStyles = StyleSheet.create({
   filtrosRolagem: { height: 40, flexGrow: 0, flexShrink: 0 },
   filters: { flexDirection: "row", alignItems: "center", gap: 8, paddingRight: 20 },
   filtrosCampos: { flexDirection: "row", alignItems: "flex-start", gap: 10 },
+  filtrosCamposAberto: { zIndex: 6, elevation: 14 },
   filtroCampo: { flex: 1, minWidth: 0 },
   filtroCampoAberto: { zIndex: 4, elevation: 8 },
   filtrosAtivos: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
