@@ -1,5 +1,6 @@
 import { router } from "expo-router";
-import { Pressable, Text, View } from "react-native";
+import { useState } from "react";
+import { Image, Pressable, Text, View } from "react-native";
 import { cores } from "@/configs/tema";
 import type { Ocorrencia } from "../types/Ocorrencia";
 import { cartaoOcorrenciaStyles as styles } from "./CartaoOcorrencia.styles";
@@ -12,27 +13,63 @@ const coresStatus: Record<Ocorrencia["status"], { text: string; background: stri
 };
 
 export function CartaoOcorrencia({ ocorrencia }: { ocorrencia: Ocorrencia }) {
+  const [focado, setFocado] = useState(false);
+  const [sobrevoado, setSobrevoado] = useState(false);
   return (
     <Pressable
       accessibilityRole="button"
       accessibilityLabel={`Ver detalhes de ${ocorrencia.titulo}`}
       accessibilityHint="Abre os detalhes da ocorrência"
       onPress={() => router.push({ pathname: "/ocorrencias/[id]", params: { id: ocorrencia.id } })}
-      style={({ pressed }) => [styles.card, pressed && styles.pressed]}
+      focusable
+      onFocus={() => setFocado(true)}
+      onBlur={() => setFocado(false)}
+      onHoverIn={() => setSobrevoado(true)}
+      onHoverOut={() => setSobrevoado(false)}
+      style={({ pressed, hovered }) => [
+        styles.card,
+        hovered && styles.hovered,
+        focado && styles.focused,
+        pressed && styles.pressed,
+      ]}
     >
       <View style={styles.topLine}>
-        <Text style={styles.categoria}>{ocorrencia.categoria}</Text>
-        <Text style={[styles.status, { color: coresStatus[ocorrencia.status].text, backgroundColor: coresStatus[ocorrencia.status].background }]}>
+        <Text numberOfLines={1} style={styles.categoria}>{ocorrencia.categoria}</Text>
+        <Text numberOfLines={1} style={[styles.status, { color: coresStatus[ocorrencia.status].text, backgroundColor: coresStatus[ocorrencia.status].background }]}>
           {ocorrencia.status}
         </Text>
       </View>
-      <Text style={styles.titulo}>{ocorrencia.titulo}</Text>
-      <View style={styles.localizacao}>
-        <IconeLocalizacao width={15} height={15} fill={cores.primary} accessibilityLabel="Localização" />
-        <Text style={styles.bairro}>{ocorrencia.bairro}</Text>
+      <View style={styles.body}>
+        <View style={styles.conteudo}>
+          <Text numberOfLines={1} style={styles.titulo}>{ocorrencia.titulo}</Text>
+          <View style={styles.localizacao}>
+            <IconeLocalizacao width={15} height={15} fill={cores.primary} accessibilityLabel="Localização" />
+            <Text numberOfLines={1} style={styles.bairro}>{ocorrencia.bairro}</Text>
+          </View>
+          <Text numberOfLines={1} style={styles.autor}>
+            {ocorrencia.nomeAutorPublico ? `Por ${ocorrencia.nomeAutorPublico}` : "Autor não informado"}
+          </Text>
+        </View>
+        {ocorrencia.imagemUrl ? (
+          <Image
+            testID="imagem-ocorrencia"
+            source={{ uri: ocorrencia.imagemUrl }}
+            style={styles.imagem}
+            resizeMode="cover"
+            accessibilityLabel="Foto da ocorrência"
+          />
+        ) : (
+          <View style={styles.imagemVazia} accessible={false} />
+        )}
       </View>
-      {ocorrencia.nomeAutorPublico ? <Text style={styles.autor}>Por {ocorrencia.nomeAutorPublico}</Text> : null}
-      <Text style={styles.more}>Ver detalhes <Text accessibilityElementsHidden>›</Text></Text>
+      <View style={styles.divisor} />
+      <View style={styles.rodape}>
+        <Text numberOfLines={1} style={styles.data} accessibilityLabel={`Data: ${ocorrencia.registradaEm}`}>{ocorrencia.registradaEm}</Text>
+        <View style={styles.acao}>
+          <Text style={styles.more}>Ver detalhes</Text>
+          <Text style={[styles.seta, sobrevoado && styles.setaSobrevoada]} accessibilityElementsHidden>›</Text>
+        </View>
+      </View>
     </Pressable>
   );
 }
