@@ -1,6 +1,7 @@
 -- PROPOSTA PARA REVISÃO. NÃO EXECUTAR sem revisão e validação com dois usuários.
 -- Executar como role administrativa com permissão para criar roles/policies.
 -- Tudo é transacional: uma falha reverte todos os ajustes.
+-- Após revisão, validar os cenários em docs/sql/PB13_verificacoes_identidade.sql.
 begin;
 
 -- Remove permissões UPDATE em tabela e coluna; reabre apenas os campos PB13.
@@ -61,12 +62,25 @@ grant select (id, autor_id, titulo, descricao, categoria, bairro, status, criado
   on table howviii.ocorrencias to bairroativo_pb13_rpc_owner;
 
 -- Defesa em profundidade: mesmo a role da função só lê linhas do JWT atual.
+-- A expressão usa auth.uid() e trata explicitamente os dois formatos de claims
+-- usados pelo PostgREST, tanto na política quanto na função RPC.
 drop policy if exists ocorrencias_pb13_rpc_select_own on howviii.ocorrencias;
 create policy ocorrencias_pb13_rpc_select_own
   on howviii.ocorrencias
   for select
   to bairroativo_pb13_rpc_owner
-  using (autor_id = (select auth.uid()));
+  using (
+    autor_id = (
+      select coalesce(
+        auth.uid(),
+        nullif(current_setting('request.jwt.claim.sub', true), '')::uuid,
+        nullif(
+          nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub',
+          ''
+        )::uuid
+      )
+    )
+  );
 
 create or replace function howviii.listar_minhas_ocorrencias()
 returns table (
@@ -87,7 +101,16 @@ as $$
   select o.id, o.titulo, o.descricao, o.categoria, o.bairro,
          o.status, o.criado_em, o.nome_publico
   from howviii.ocorrencias as o
-  where o.autor_id = (select auth.uid())
+  where o.autor_id = (
+    select coalesce(
+      auth.uid(),
+      nullif(current_setting('request.jwt.claim.sub', true), '')::uuid,
+      nullif(
+        nullif(current_setting('request.jwt.claims', true), '')::jsonb ->> 'sub',
+        ''
+      )::uuid
+    )
+  )
   order by o.criado_em desc;
 $$;
 

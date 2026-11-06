@@ -4,6 +4,8 @@
 
 Esta entrega tem uma dependência de banco ainda não aplicada: a listagem privada chama `howviii.listar_minhas_ocorrencias()`. A coluna `autor_id` não pode ser lida pelos papéis `anon` e `authenticated`, portanto a listagem direta com filtro PostgREST não é válida. A proposta SQL está em `docs/sql/PB13_listar_minhas_ocorrencias.sql` e não foi executada.
 
+A proposta agora resolve a identidade com `auth.uid()` e fallback para `request.jwt.claim.sub` e `request.jwt.claims`, tanto na policy quanto na RPC. Os casos de verificação estão em `docs/sql/PB13_verificacoes_identidade.sql`; ainda não foram executados e aguardam revisão do banco.
+
 ## Evidências dos ciclos
 
 Nesta revisão foram adicionados testes para ID inválido, registro inexistente, falha de consulta, atualização bloqueada pelo RLS e exclusão com zero linhas (caso de outro autor) ou contagem nula. A implementação precedeu esses testes nesta sessão; portanto não há evidência honesta de uma execução Red anterior para estes casos. A suíte final passou: 17 suítes e 80 testes. Não foram presumidos resultados.
