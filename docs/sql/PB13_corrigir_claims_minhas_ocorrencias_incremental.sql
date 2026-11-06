@@ -184,7 +184,7 @@ create policy ocorrencias_pb13_rpc_select_own
 
 -- Retira o único privilégio de schema adicionado pelo script antes de validar.
 revoke create on schema howviii from bairroativo_pb13_rpc_owner;
-revoke set option for bairroativo_pb13_rpc_owner from postgres;
+revoke bairroativo_pb13_rpc_owner from postgres granted by postgres;
 
 -- Pós-condições: proprietário, SECURITY DEFINER, EXECUTE, role da policy e
 -- ausência do CREATE temporário permanecem conforme esperado.
