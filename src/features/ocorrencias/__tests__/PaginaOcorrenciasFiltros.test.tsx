@@ -86,6 +86,25 @@ describe("filtros públicos da listagem", () => {
     expect(screen.queryByText("Lâmpada da praça apagada")).toBeNull();
   });
 
+  it("remove a faixa de filtros ativos e limpa bairro e categoria com seus botões X", async () => {
+    await abrirListagem();
+    await escolherFiltro("Bairro", "Centro");
+    await escolherFiltro("Categoria", "Buraco na via");
+    expect(screen.queryByText(/^Filtros:/)).toBeNull();
+    expect(screen.getByRole("button", { name: "Limpar bairro" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Limpar categoria" })).toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByRole("button", { name: "Limpar categoria" }));
+    expect(screen.getByLabelText("Bairro: Centro")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Categoria: Todas as categorias")).toBeOnTheScreen();
+    expect(screen.getByText("3 ocorrências")).toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByRole("button", { name: "Limpar bairro" }));
+    expect(screen.getByLabelText("Bairro: Todos os bairros")).toBeOnTheScreen();
+    expect(screen.getByText("4 ocorrências")).toBeOnTheScreen();
+    expect(screen.queryByRole("button", { name: "Limpar bairro" })).toBeNull();
+  });
+
   it("abre as opções como menu sobreposto sem aumentar o espaço do filtro", async () => {
     await abrirListagem();
     await fireEvent.press(screen.getByRole("radio", { name: "Abertas" }));
@@ -93,7 +112,7 @@ describe("filtros públicos da listagem", () => {
     const opcoes = screen.getByTestId("opcoes-campo-selecao");
     expect(StyleSheet.flatten(opcoes.props.style).position).toBe("absolute");
     expect(StyleSheet.flatten(screen.getByTestId("container-filtros-combos").props.style).zIndex).toBeGreaterThan(0);
-    expect(screen.getByText("Filtros: Abertas")).toBeOnTheScreen();
+    expect(screen.queryByText(/^Filtros:/)).toBeNull();
     expect(screen.getByRole("radio", { name: "Buraco na via" })).toBeOnTheScreen();
   });
 
@@ -121,7 +140,10 @@ describe("filtros públicos da listagem", () => {
     await escolherFiltro("Categoria", "Buraco na via");
     await fireEvent.press(screen.getByRole("radio", { name: "Abertas" }));
     await fireEvent.changeText(screen.getByLabelText("Buscar ocorrências"), "rua");
-    await fireEvent.press(screen.getByRole("button", { name: "Limpar filtros" }));
+    await fireEvent.changeText(screen.getByLabelText("Buscar ocorrências"), "");
+    await fireEvent.press(screen.getByRole("radio", { name: "Todas" }));
+    await fireEvent.press(screen.getByRole("button", { name: "Limpar bairro" }));
+    await fireEvent.press(screen.getByRole("button", { name: "Limpar categoria" }));
     expect(screen.getByLabelText("Buscar ocorrências").props.value).toBe("");
     expect(screen.getByRole("radio", { name: "Todas" }).props.accessibilityState?.selected).toBe(true);
     expect(screen.getByText("4 ocorrências")).toBeOnTheScreen();

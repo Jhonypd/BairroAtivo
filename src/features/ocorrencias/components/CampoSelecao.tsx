@@ -10,9 +10,10 @@ type Props = {
   onChange: (value: string) => void;
   aberto: boolean;
   aoAlternar: () => void;
+  exibirLimpar?: boolean;
 };
 
-export function CampoSelecao({ label, placeholder, options, value, onChange, aberto, aoAlternar }: Props) {
+export function CampoSelecao({ label, placeholder, options, value, onChange, aberto, aoAlternar, exibirLimpar = false }: Props) {
   const [progressoSeta] = useState(() => new Animated.Value(0));
   const rotacaoSeta = progressoSeta.interpolate({
     inputRange: [0, 1],
@@ -32,19 +33,32 @@ export function CampoSelecao({ label, placeholder, options, value, onChange, abe
     <View style={styles.field}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.control}>
-        <Pressable
-          accessibilityRole="button"
-          accessibilityLabel={`${label}: ${value || placeholder}`}
-          accessibilityState={{ expanded: aberto }}
-          onPress={aoAlternar}
-          style={({ pressed }) => [styles.trigger, pressed && styles.pressed]}
-        >
-          <Text style={[styles.value, !value && styles.placeholder]}>{value || placeholder}</Text>
-          <Animated.View
-            accessibilityElementsHidden
-            style={[styles.chevron, { transform: [{ rotate: "45deg" }, { rotate: rotacaoSeta }] }]}
-          />
-        </Pressable>
+        <View style={styles.trigger}>
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={`${label}: ${value || placeholder}`}
+            accessibilityState={{ expanded: aberto }}
+            onPress={aoAlternar}
+            style={({ pressed }) => [styles.seletor, pressed && styles.pressed]}
+          >
+            <Text numberOfLines={1} style={[styles.value, !value && styles.placeholder]}>{value || placeholder}</Text>
+            <Animated.View
+              accessibilityElementsHidden
+              style={[styles.chevron, { transform: [{ rotate: "45deg" }, { rotate: rotacaoSeta }] }]}
+            />
+          </Pressable>
+          {exibirLimpar && value ? (
+            <Pressable
+              accessibilityRole="button"
+              accessibilityLabel={`Limpar ${label.toLocaleLowerCase("pt-BR")}`}
+              hitSlop={6}
+              onPress={() => onChange("")}
+              style={({ pressed }) => [styles.limpar, pressed && styles.pressed]}
+            >
+              <Text style={styles.iconeLimpar}>×</Text>
+            </Pressable>
+          ) : null}
+        </View>
         {aberto ? (
           <View testID="opcoes-campo-selecao" style={styles.options}>
             <ScrollView

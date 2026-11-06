@@ -17,8 +17,6 @@ export const ocorrenciasStyles = StyleSheet.create({
   filtrosCamposAberto: { zIndex: 6, elevation: 14 },
   filtroCampo: { flex: 1, minWidth: 0 },
   filtroCampoAberto: { zIndex: 4, elevation: 8 },
-  filtrosAtivos: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
-  filtrosSelecionados: { flex: 1, color: cores.primaryDark, fontSize: 12, lineHeight: 17 },
   erroAtualizacao: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8, padding: 10, borderRadius: 12, backgroundColor: "#FCE8E6" },
   erroAtualizacaoTexto: { flex: 1, color: cores.error, fontSize: 12, lineHeight: 17 },
   resultCount: { color: cores.textSubtle, fontSize: 12, fontWeight: "600" },

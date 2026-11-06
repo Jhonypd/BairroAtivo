@@ -68,22 +68,6 @@ export default function PaginaOcorrencias() {
     });
   }, [consulta, filtroBairro, filtroCategoria, filtroStatus, ocorrencias]);
 
-  const filtrosAtivos = [
-    consulta.trim() ? `Busca: ${consulta.trim()}` : "",
-    filtroBairro,
-    filtroCategoria,
-    filtroStatus === "Todas" ? "" : rotulosFiltroStatus[filtroStatus],
-  ].filter(Boolean);
-  const temFiltrosAtivos = filtrosAtivos.length > 0;
-
-  const limparFiltros = useCallback(() => {
-    definirConsulta("");
-    definirFiltroStatus("Todas");
-    definirFiltroBairro("");
-    definirFiltroCategoria("");
-    definirCampoAberto(null);
-  }, []);
-
   const carregarOcorrencias = useCallback(async (atualizacao = false) => {
     const idRequisicao = ++requisicaoAtual.current;
     if (atualizacao) definirAtualizando(true);
@@ -157,6 +141,7 @@ export default function PaginaOcorrencias() {
               value={filtroBairro}
               onChange={definirFiltroBairro}
               aberto={campoAberto === "bairro"}
+              exibirLimpar
               aoAlternar={() => definirCampoAberto((atual) => atual === "bairro" ? null : "bairro")}
             />
           </View>
@@ -168,19 +153,11 @@ export default function PaginaOcorrencias() {
               value={filtroCategoria}
               onChange={definirFiltroCategoria}
               aberto={campoAberto === "categoria"}
+              exibirLimpar
               aoAlternar={() => definirCampoAberto((atual) => atual === "categoria" ? null : "categoria")}
             />
           </View>
         </View>
-
-        {temFiltrosAtivos ? (
-          <View style={styles.filtrosAtivos}>
-            <Text style={styles.filtrosSelecionados} numberOfLines={2}>
-              Filtros: {filtrosAtivos.join(" · ")}
-            </Text>
-            <Botao label="Limpar filtros" onPress={limparFiltros} variant="ghost" size="xs" />
-          </View>
-        ) : null}
 
         <Text style={styles.resultCount}>
           {ocorrenciasVisiveis.length}{" "}
