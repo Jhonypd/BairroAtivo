@@ -140,8 +140,16 @@ export async function listarMinhasOcorrencias(
   const { data: sessao, error: erroSessao } = await clienteConfigurado.auth.getUser();
   if (erroSessao || !sessao.user) throw new Error("Faça login para consultar suas ocorrências.");
 
+  // Diagnóstico temporário: não registrar sessão, tokens, credenciais ou dados da RPC.
+  console.info("[PB13 diagnóstico] usuário autenticado", { usuarioId: sessao.user.id });
   const { data, error } = await clienteConfigurado.rpc("listar_minhas_ocorrencias");
-  if (error) throw new Error("Não foi possível carregar suas ocorrências.");
+  if (error) {
+    console.error("[PB13 diagnóstico] erro na RPC listar_minhas_ocorrencias", {
+      codigo: error.code ?? null,
+      mensagem: error.message,
+    });
+    throw new Error("Não foi possível carregar suas ocorrências.");
+  }
   return ((data ?? []) as unknown as OcorrenciaBanco[]).map(converterOcorrencia);
 }
 

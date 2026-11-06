@@ -9,9 +9,25 @@ describe("gerenciamento Supabase de ocorrências", () => {
   it("consulta a função RPC com a sessão autenticada e sem receber ID de usuário", async () => {
     const rpc = jest.fn(async () => ({ data: [linha], error: null }));
     const cliente = { auth: { getUser: jest.fn(async () => ({ data: { user: { id: "autor-1" } }, error: null })) }, rpc } as never;
+    const diagnostico = jest.spyOn(console, "info").mockImplementation(() => undefined);
     await expect(listarMinhasOcorrencias(cliente)).resolves.toHaveLength(1);
     expect(rpc.mock.calls[0]).toEqual(["listar_minhas_ocorrencias"]);
     expect(rpc).toHaveBeenCalledTimes(1);
+    expect(diagnostico).toHaveBeenCalledWith("[PB13 diagnóstico] usuário autenticado", { usuarioId: "autor-1" });
+    diagnostico.mockRestore();
+  });
+
+  it("registra apenas código e mensagem quando a RPC falha", async () => {
+    const rpc = jest.fn(async () => ({ data: null, error: { code: "PGRST202", message: "Função não encontrada" } }));
+    const cliente = { auth: { getUser: jest.fn(async () => ({ data: { user: { id: "autor-1" } }, error: null })) }, rpc } as never;
+    const diagnostico = jest.spyOn(console, "error").mockImplementation(() => undefined);
+
+    await expect(listarMinhasOcorrencias(cliente)).rejects.toThrow("Não foi possível carregar suas ocorrências.");
+    expect(diagnostico).toHaveBeenCalledWith("[PB13 diagnóstico] erro na RPC listar_minhas_ocorrencias", {
+      codigo: "PGRST202",
+      mensagem: "Função não encontrada",
+    });
+    diagnostico.mockRestore();
   });
 
   it("envia somente os campos editáveis e devolve os dados salvos", async () => {
