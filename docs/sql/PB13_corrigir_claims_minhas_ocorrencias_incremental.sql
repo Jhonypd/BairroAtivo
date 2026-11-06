@@ -6,8 +6,8 @@
 
 begin;
 
--- Pré-condições e salvaguardas. A única associação de role aceita é a concessão
--- da role restrita a postgres, necessária para postgres poder assumir essa role.
+-- Pré-condições e salvaguardas. A única associação de role aceita é o vínculo
+-- administrativo original role_owner -> postgres, sem herança nem SET inicial.
 do $$
 declare
   role_owner oid;
@@ -47,8 +47,20 @@ begin
     select 1
     from pg_catalog.pg_auth_members as m
     where m.roleid = role_owner and m.member = role_postgres
+      and m.admin_option
+      and not m.inherit_option
+      and not m.set_option
   ) then
-    raise exception 'Vínculo de bairroativo_pb13_rpc_owner com postgres ausente; revise a associação antes de aplicar';
+    raise exception 'Vínculo administrativo original com postgres não está no estado esperado';
+  end if;
+
+  if exists (
+    select 1
+    from pg_catalog.pg_auth_members as m
+    where m.roleid = role_owner and m.member = role_postgres
+      and (not m.admin_option or m.inherit_option or m.set_option)
+  ) then
+    raise exception 'O vínculo com postgres tem opções inesperadas; nenhuma alteração foi aplicada';
   end if;
 
   if pg_catalog.has_schema_privilege(role_owner, 'howviii', 'CREATE') then
@@ -97,8 +109,10 @@ begin
 end;
 $$;
 
--- Elevação temporária: o grant e o revoke estão na mesma transação. A execução
--- como a role proprietária garante que ela continue sendo dona da função.
+-- Habilita somente SET ROLE temporariamente. INHERIT permanece FALSE e ADMIN
+-- é omitido para preservar a opção administrativa original. Ambos os REVOKEs
+-- abaixo revertem apenas o privilégio adicionado pelo script.
+grant bairroativo_pb13_rpc_owner to postgres with inherit false, set true;
 grant create on schema howviii to bairroativo_pb13_rpc_owner;
 set local role bairroativo_pb13_rpc_owner;
 
@@ -170,6 +184,7 @@ create policy ocorrencias_pb13_rpc_select_own
 
 -- Retira o único privilégio de schema adicionado pelo script antes de validar.
 revoke create on schema howviii from bairroativo_pb13_rpc_owner;
+revoke set option for bairroativo_pb13_rpc_owner from postgres;
 
 -- Pós-condições: proprietário, SECURITY DEFINER, EXECUTE, role da policy e
 -- ausência do CREATE temporário permanecem conforme esperado.
@@ -200,6 +215,25 @@ begin
   end if;
   if pg_catalog.has_schema_privilege(role_owner, 'howviii', 'CREATE') then
     raise exception 'O privilégio temporário CREATE em howviii não foi revogado';
+  end if;
+  if exists (
+    select 1
+    from pg_catalog.pg_auth_members as m
+    join pg_catalog.pg_roles as r on r.oid = m.member
+    where m.roleid = role_owner
+      and r.rolname = 'postgres'
+      and (not m.admin_option or m.inherit_option or m.set_option)
+  ) or not exists (
+    select 1
+    from pg_catalog.pg_auth_members as m
+    join pg_catalog.pg_roles as r on r.oid = m.member
+    where m.roleid = role_owner
+      and r.rolname = 'postgres'
+      and m.admin_option
+      and not m.inherit_option
+      and not m.set_option
+  ) then
+    raise exception 'O vínculo administrativo original com postgres não foi preservado';
   end if;
   if not exists (
     select 1

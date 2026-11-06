@@ -138,6 +138,49 @@ $$;
 -- 6. Testa a policy diretamente como a role restrita que executa a RPC.
 -- O primeiro formato deve permitir a linha do autor.
 reset role;
+do $$
+declare
+  role_owner oid;
+  role_postgres oid;
+begin
+  if current_user <> 'postgres' then
+    raise exception 'As verificações com SET ROLE precisam ser executadas como postgres';
+  end if;
+
+  select oid into role_owner
+  from pg_catalog.pg_roles
+  where rolname = 'bairroativo_pb13_rpc_owner';
+  select oid into role_postgres
+  from pg_catalog.pg_roles
+  where rolname = 'postgres';
+
+  if not exists (
+    select 1
+    from pg_catalog.pg_auth_members as m
+    where m.roleid = role_owner
+      and m.member = role_postgres
+      and m.admin_option
+      and not m.inherit_option
+      and not m.set_option
+  ) then
+    raise exception 'O vínculo administrativo original não está no estado esperado';
+  end if;
+
+  if exists (
+    select 1
+    from pg_catalog.pg_auth_members as m
+    where m.roleid = role_owner
+      and m.member = role_postgres
+      and (not m.admin_option or m.inherit_option or m.set_option)
+  ) then
+    raise exception 'O vínculo role_owner/postgres tem opções inesperadas';
+  end if;
+end;
+$$;
+
+-- Habilita somente SET ROLE durante as verificações; não habilita INHERIT e
+-- não modifica ADMIN OPTION. O SET OPTION será revogado após o teste da policy.
+grant bairroativo_pb13_rpc_owner to postgres with inherit false, set true;
 set local role bairroativo_pb13_rpc_owner;
 select set_config(
   'request.jwt.claim.sub',
@@ -198,6 +241,44 @@ $$;
 
 -- Confirma que a chamada anon falha por privilégio, mesmo sem claims.
 reset role;
+revoke set option for bairroativo_pb13_rpc_owner from postgres;
+
+do $$
+declare
+  role_owner oid;
+  role_postgres oid;
+begin
+  select oid into role_owner
+  from pg_catalog.pg_roles
+  where rolname = 'bairroativo_pb13_rpc_owner';
+  select oid into role_postgres
+  from pg_catalog.pg_roles
+  where rolname = 'postgres';
+
+  if not exists (
+    select 1
+    from pg_catalog.pg_auth_members as m
+    where m.roleid = role_owner
+      and m.member = role_postgres
+      and m.admin_option
+      and not m.inherit_option
+      and not m.set_option
+  ) then
+    raise exception 'O vínculo administrativo original não foi preservado após revogar SET OPTION';
+  end if;
+
+  if exists (
+    select 1
+    from pg_catalog.pg_auth_members as m
+    where m.roleid = role_owner
+      and m.member = role_postgres
+      and (not m.admin_option or m.inherit_option or m.set_option)
+  ) then
+    raise exception 'As opções originais do vínculo role_owner/postgres foram alteradas';
+  end if;
+end;
+$$;
+
 set local role anon;
 select set_config('request.jwt.claim.sub', '', true);
 select set_config('request.jwt.claims', '', true);
