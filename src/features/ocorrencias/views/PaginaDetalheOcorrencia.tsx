@@ -23,8 +23,9 @@ import IconeCategoria from "@/shared/icons/category_24dp_E3E3E3.svg";
 import IconeData from "@/shared/icons/assignment_24dp_E3E3E3.svg";
 import IconeDescricao from "@/shared/icons/info_24dp_E3E3E3.svg";
 import IconeLocalizacao from "@/shared/icons/location_on_24dp_E3E3E3.svg";
-import IconeNotificacao from "@/shared/icons/notifications_24dp_E3E3E3.svg";
+import IconeMapa from "@/shared/icons/map_24dp_E3E3E3.svg";
 import IconeFoto from "@/shared/icons/photo_library_24dp_E3E3E3.svg";
+import IconeApoiar from "@/shared/icons/thumb_up_24dp_E3E3E3.svg";
 import { buscarApoioOcorrencia, buscarOcorrenciaPorId, definirApoioOcorrencia } from "../services/ocorrenciasSupabase";
 import type { Ocorrencia } from "../types/Ocorrencia";
 import { paginaDetalheOcorrenciaStyles as styles } from "./PaginaDetalheOcorrencia.styles";
@@ -60,14 +61,14 @@ export default function PaginaDetalheOcorrencia() {
   const [carregando, definirCarregando] = useState(true);
   const [erro, definirErro] = useState(false);
   const [menuAberto, definirMenuAberto] = useState(false);
-  const [apoioAtual, definirApoioAtual] = useState<{ usuarioId: string; acompanhando: boolean } | null>(null);
+  const [apoioAtual, definirApoioAtual] = useState<{ usuarioId: string; apoiando: boolean } | null>(null);
   const [carregandoApoio, definirCarregandoApoio] = useState(false);
   const [erroApoio, definirErroApoio] = useState<string | null>(null);
   const insets = useSafeAreaInsets();
   const { executarComCarregamento } = useCarregamentoGlobal();
   const { usuario, carregando: carregandoAuth, autenticando, erro: erroAuth, entrarComGoogle } = useAutenticacao();
   const usuarioId = usuario?.id;
-  const acompanhando = Boolean(usuarioId && apoioAtual?.usuarioId === usuarioId && apoioAtual.acompanhando);
+  const apoiando = Boolean(usuarioId && apoioAtual?.usuarioId === usuarioId && apoioAtual.apoiando);
 
   useEffect(() => {
     let ativa = true;
@@ -83,7 +84,7 @@ export default function PaginaDetalheOcorrencia() {
     let ativa = true;
     if (!id || !usuarioId || carregandoAuth) return () => { ativa = false; };
     buscarApoioOcorrencia(id)
-      .then((resultado) => { if (ativa) definirApoioAtual({ usuarioId, acompanhando: resultado }); })
+      .then((resultado) => { if (ativa) definirApoioAtual({ usuarioId, apoiando: resultado }); })
       .catch(() => { if (ativa) definirErroApoio("Não foi possível verificar seu acompanhamento."); });
     return () => { ativa = false; };
   }, [id, usuarioId, carregandoAuth]);
@@ -104,11 +105,11 @@ export default function PaginaDetalheOcorrencia() {
           return;
         }
         await definirApoioOcorrencia(id, true);
-        definirApoioAtual({ usuarioId: resultado.sessao.user.id, acompanhando: true });
+        definirApoioAtual({ usuarioId: resultado.sessao.user.id, apoiando: true });
         return;
       }
-      await definirApoioOcorrencia(id, !acompanhando);
-      definirApoioAtual({ usuarioId: usuario.id, acompanhando: !acompanhando });
+      await definirApoioOcorrencia(id, !apoiando);
+      definirApoioAtual({ usuarioId: usuario.id, apoiando: !apoiando });
     } catch (erro) {
       definirErroApoio(erro instanceof Error ? erro.message : "Não foi possível atualizar seu acompanhamento.");
     } finally {
@@ -163,7 +164,7 @@ export default function PaginaDetalheOcorrencia() {
   const temCoordenadas = typeof ocorrencia.latitude === "number" && typeof ocorrencia.longitude === "number";
   const conteudoLocalizacao = (
     <>
-      <View style={styles.iconeLocalizacaoCard}><IconeLocalizacao width={20} height={20} fill={cores.surface} /></View>
+      <View style={styles.iconeLocalizacaoCard}><IconeMapa width={20} height={20} fill={cores.surface} /></View>
       <View style={styles.textosLocalizacaoCard}>
         <Text style={styles.localizacaoTitulo}>{temCoordenadas ? `Localização em ${ocorrencia.bairro}` : ocorrencia.bairro}</Text>
         <Text style={styles.localizacaoSubtitulo}>{temCoordenadas ? "Toque para abrir no mapa" : "Coordenadas não informadas"}</Text>
@@ -209,9 +210,9 @@ export default function PaginaDetalheOcorrencia() {
         )}
 
         <View style={styles.blocoAcompanhamento}>
-          <Pressable accessibilityRole="button" accessibilityLabel={acompanhando ? "Deixar de acompanhar ocorrência" : "Acompanhar ocorrência"} accessibilityState={{ disabled: carregandoApoio || autenticando || carregandoAuth }} disabled={carregandoApoio || autenticando || carregandoAuth} onPress={() => void alternarAcompanhamento()} style={[styles.botaoAcompanhamento, acompanhando && styles.botaoAcompanhando]}>
-            {carregandoApoio || autenticando ? <ActivityIndicator color={cores.surface} /> : acompanhando ? <Text style={styles.sino}>✓</Text> : <IconeNotificacao width={20} height={20} fill={cores.surface} />}
-            <Text style={styles.textoAcompanhamento}>{acompanhando ? "Acompanhando" : "Acompanhar ocorrência"}</Text>
+          <Pressable accessibilityRole="button" accessibilityLabel={apoiando ? "Remover apoio da ocorrência" : "Apoiar ocorrência"} accessibilityState={{ disabled: carregandoApoio || autenticando || carregandoAuth }} disabled={carregandoApoio || autenticando || carregandoAuth} onPress={() => void alternarAcompanhamento()} style={[styles.botaoAcompanhamento, apoiando && styles.botaoApoiado]}>
+            {carregandoApoio || autenticando ? <ActivityIndicator color={cores.surface} /> : <IconeApoiar width={20} height={20} fill={cores.surface} />}
+            <Text style={styles.textoAcompanhamento}>{apoiando ? "Apoiado" : "Apoiar ocorrência"}</Text>
           </Pressable>
           {typeof ocorrencia.totalApoios === "number" ? <Text style={styles.contagemApoios}>{ocorrencia.totalApoios} {ocorrencia.totalApoios === 1 ? "apoio" : "apoios"}</Text> : null}
           {erroApoio ? <Text accessibilityRole="alert" style={styles.erroApoio}>{erroApoio}</Text> : null}

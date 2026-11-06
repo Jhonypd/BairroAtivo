@@ -28,7 +28,8 @@ jest.mock("@/shared/icons/category_24dp_E3E3E3.svg", () => ({ __esModule: true, 
 jest.mock("@/shared/icons/assignment_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
 jest.mock("@/shared/icons/info_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
 jest.mock("@/shared/icons/photo_library_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
-jest.mock("@/shared/icons/notifications_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
+jest.mock("@/shared/icons/map_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
+jest.mock("@/shared/icons/thumb_up_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
 jest.mock("@/shared/icons/home_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
 jest.mock("@/shared/icons/add_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
 jest.mock("@/shared/icons/manage_accounts_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
@@ -137,7 +138,7 @@ describe("detalhes da ocorrência", () => {
     expect(buscarMock).not.toHaveBeenCalled();
   });
 
-  it("oferece acompanhamento e inicia o login Google para visitantes", async () => {
+  it("oferece apoio e inicia o login Google para visitantes", async () => {
     const entrarComGoogle = jest.fn(async () => null);
     autenticacaoMock.mockReturnValue({
       usuario: null, autenticado: false, carregando: false, autenticando: false, erro: null,
@@ -148,14 +149,14 @@ describe("detalhes da ocorrência", () => {
 
     await renderDetalhes();
     await act(async () => {
-      fireEvent.press(await screen.findByRole("button", { name: "Acompanhar ocorrência" }));
+      fireEvent.press(await screen.findByRole("button", { name: "Apoiar ocorrência" }));
     });
 
     expect(entrarComGoogle).toHaveBeenCalledTimes(1);
     expect(await screen.findByText("Entre com Google para acompanhar esta ocorrência.")).toBeOnTheScreen();
   });
 
-  it("permite alternar o acompanhamento para o usuário autenticado", async () => {
+  it("permite registrar apoio para o usuário autenticado", async () => {
     autenticacaoMock.mockReturnValue({
       usuario: { id: "usuario-1" } as never, autenticado: true, carregando: false, autenticando: false, erro: null,
       entrarComGoogle: jest.fn(async () => null), sair: jest.fn(async () => undefined),
@@ -165,10 +166,10 @@ describe("detalhes da ocorrência", () => {
 
     await renderDetalhes();
     await act(async () => {
-      fireEvent.press(await screen.findByRole("button", { name: "Acompanhar ocorrência" }));
+      fireEvent.press(await screen.findByRole("button", { name: "Apoiar ocorrência" }));
     });
 
     expect(definirApoioMock).toHaveBeenCalledWith(detalhe.id, true);
-    expect(await screen.findByText("Acompanhando")).toBeOnTheScreen();
+    expect(await screen.findByText("Apoiado")).toBeOnTheScreen();
   });
 });
