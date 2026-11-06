@@ -12,6 +12,8 @@ Esta entrega tem uma dependência de banco ainda não aplicada: a listagem priva
 
 A proposta agora resolve a identidade com `auth.uid()` e fallback para `request.jwt.claim.sub` e `request.jwt.claims`, tanto na policy quanto na RPC. Os casos de verificação estão em `docs/sql/PB13_verificacoes_identidade.sql`; ainda não foram executados e aguardam revisão do banco.
 
+Para o diagnóstico da instalação existente foi preparado `docs/sql/PB13_corrigir_claims_minhas_ocorrencias_incremental.sql`. Ele substitui somente a função e a policy `ocorrencias_pb13_rpc_select_own`; não reatribui o proprietário, não altera grants, não cria role/tabela e não toca em outras policies. O script valida antes e depois que a RPC continua sendo `SECURITY DEFINER`, pertence a `bairroativo_pb13_rpc_owner` e mantém `EXECUTE` negado a `anon` e liberado a `authenticated`. Os testes manuais agora verificam o autor nos dois formatos, outra identidade com `request.jwt.claims` sem receber linhas e visitante `anon` sem poder executar a RPC. O script e os testes não foram executados no banco e aguardam revisão/aplicação manual no SQL Editor.
+
 ## Evidências dos ciclos
 
 Nesta revisão foram adicionados testes para ID inválido, registro inexistente, falha de consulta, atualização bloqueada pelo RLS e exclusão com zero linhas (caso de outro autor) ou contagem nula. A implementação precedeu esses testes nesta sessão; portanto não há evidência honesta de uma execução Red anterior para estes casos. A suíte final passou: 17 suítes e 80 testes. Não foram presumidos resultados.

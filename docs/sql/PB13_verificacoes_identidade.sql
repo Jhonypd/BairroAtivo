@@ -1,6 +1,7 @@
 -- VERIFICAÇÃO MANUAL — NÃO É MIGRAÇÃO.
--- Execute somente depois que PB13_listar_minhas_ocorrencias.sql for revisado e
--- aplicado em ambiente de teste. Requer sessão administrativa (postgres).
+-- Execute somente depois da migração base PB13 e de
+-- PB13_corrigir_claims_minhas_ocorrencias_incremental.sql em ambiente de teste.
+-- Requer sessão administrativa (postgres).
 -- Pré-requisitos: uma ocorrência existente e uma segunda conta autenticada sem
 -- ocorrências próprias. A transação termina em ROLLBACK e não altera dados.
 
@@ -88,13 +89,13 @@ begin
 end;
 $$;
 
--- 3. Outro usuário, sem ocorrências próprias, deve receber zero linhas.
+-- 3. Outra identidade somente em request.jwt.claims deve receber zero linhas.
+select set_config('request.jwt.claim.sub', '', true);
 select set_config(
-  'request.jwt.claim.sub',
-  current_setting('pb13.test.outro_usuario_id', true),
+  'request.jwt.claims',
+  jsonb_build_object('sub', current_setting('pb13.test.outro_usuario_id', true))::text,
   true
 );
-select set_config('request.jwt.claims', '', true);
 
 do $$
 declare
@@ -102,7 +103,7 @@ declare
 begin
   select count(*) into quantidade from howviii.listar_minhas_ocorrencias();
   if quantidade <> 0 then
-    raise exception 'Falha: outro usuário recebeu % ocorrências; esperado 0', quantidade;
+    raise exception 'Falha: outra identidade em request.jwt.claims recebeu % ocorrências; esperado 0', quantidade;
   end if;
 end;
 $$;
