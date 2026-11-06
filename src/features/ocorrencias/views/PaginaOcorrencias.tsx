@@ -6,12 +6,12 @@ import { NavegacaoInferior } from "@/shared/components/NavegacaoInferior";
 import { FiltroStatus } from "../components/FiltroStatus";
 import { CampoSelecao } from "../components/CampoSelecao";
 import { CartaoOcorrencia } from "../components/CartaoOcorrencia";
-import { listarOcorrencias } from "../services/ocorrenciasSupabase";
+import { listarMinhasOcorrencias, listarOcorrencias } from "../services/ocorrenciasSupabase";
 import type { Ocorrencia } from "../types/Ocorrencia";
 import { ocorrenciasStyles as styles } from "./PaginaOcorrencias.styles";
 import { useCarregamentoGlobal } from "@/shared/components/ui/CarregamentoGlobal";
 import { useAutenticacao } from "@/features/autenticacao/contexto/AutenticacaoProvider";
-import { PaginaMinhasOcorrencias } from "./PaginaMinhasOcorrencias";
+import { AcoesOcorrenciaPropria } from "../components/AcoesOcorrenciaPropria";
 import IconeFiltros from "@/shared/icons/filter_alt_24dp_E3E3E3.svg";
 import IconeBusca from "@/shared/icons/search_24dp_E3E3E3.svg";
 import { cores } from "@/configs/tema";
@@ -32,7 +32,7 @@ const rotulosFiltroStatus: Record<FiltroStatusTipo, string> = {
   Resolvida: "Resolvidas",
 };
 
-export default function PaginaOcorrencias() {
+export default function PaginaOcorrencias({ visualizacaoInicial = "todas" }: { visualizacaoInicial?: VisualizacaoOcorrencias } = {}) {
   const [ocorrencias, definirOcorrencias] = useState<Ocorrencia[]>([]);
   const [carregando, definirCarregando] = useState(true);
   const [atualizando, definirAtualizando] = useState(false);
@@ -50,22 +50,31 @@ export default function PaginaOcorrencias() {
   const requisicaoAtual = useRef(0);
   const { executarComCarregamento } = useCarregamentoGlobal();
   const { usuario, carregando: carregandoSessao } = useAutenticacao();
-  const [visualizacao, definirVisualizacao] = useState<VisualizacaoOcorrencias>("todas");
+  const [visualizacao, definirVisualizacao] = useState<VisualizacaoOcorrencias>(visualizacaoInicial);
+  const [origemCarregada, definirOrigemCarregada] = useState<VisualizacaoOcorrencias | null>(null);
+  const [autorCarregado, definirAutorCarregado] = useState<string | null>(null);
+
+  const dadosDaVisualizacaoEstaoCarregados = origemCarregada === visualizacao &&
+    (visualizacao === "todas" || Boolean(usuario && autorCarregado === usuario.id));
+  const ocorrenciasDaVisualizacao = useMemo(
+    () => dadosDaVisualizacaoEstaoCarregados ? ocorrencias : [],
+    [dadosDaVisualizacaoEstaoCarregados, ocorrencias],
+  );
 
   const bairrosDisponiveis = useMemo(
-    () => [...new Set(ocorrencias.map(({ bairro }) => bairro.trim()).filter(Boolean))]
+    () => [...new Set(ocorrenciasDaVisualizacao.map(({ bairro }) => bairro.trim()).filter(Boolean))]
       .sort((a, b) => a.localeCompare(b, "pt-BR")),
-    [ocorrencias],
+    [ocorrenciasDaVisualizacao],
   );
   const categoriasDisponiveis = useMemo(
-    () => [...new Set(ocorrencias.map(({ categoria }) => categoria.trim()).filter(Boolean))]
+    () => [...new Set(ocorrenciasDaVisualizacao.map(({ categoria }) => categoria.trim()).filter(Boolean))]
       .sort((a, b) => a.localeCompare(b, "pt-BR")),
-    [ocorrencias],
+    [ocorrenciasDaVisualizacao],
   );
 
   const ocorrenciasVisiveis = useMemo(() => {
     const consultaNormalizada = consulta.trim().toLocaleLowerCase("pt-BR");
-    return ocorrencias.filter((ocorrencia) => {
+    return ocorrenciasDaVisualizacao.filter((ocorrencia) => {
       const correspondeStatus =
         filtroStatus === "Todas" || ocorrencia.status === filtroStatus;
       const correspondeBairro = !filtroBairro || ocorrencia.bairro === filtroBairro;
@@ -79,7 +88,7 @@ export default function PaginaOcorrencias() {
         textoPesquisavel.includes(consultaNormalizada)
       );
     });
-  }, [consulta, filtroBairro, filtroCategoria, filtroStatus, ocorrencias]);
+  }, [consulta, filtroBairro, filtroCategoria, filtroStatus, ocorrenciasDaVisualizacao]);
 
   const quantidadeFiltrosAtivos =
     Number(filtroStatus !== "Todas") + Number(Boolean(filtroBairro)) + Number(Boolean(filtroCategoria));
@@ -101,16 +110,21 @@ export default function PaginaOcorrencias() {
   }, [filtroBairro, filtroCategoria, filtroStatus]);
 
   const carregarOcorrencias = useCallback(async (atualizacao = false): Promise<boolean> => {
+    if (visualizacao === "minhas" && (!usuario || carregandoSessao)) return false;
     const idRequisicao = ++requisicaoAtual.current;
     if (atualizacao) definirAtualizando(true);
     else definirCarregando(true);
     definirErro(null);
     try {
       const resultado = await executarComCarregamento(
-        listarOcorrencias,
+        visualizacao === "minhas" ? listarMinhasOcorrencias : listarOcorrencias,
         atualizacao ? "Atualizando ocorrências" : "Carregando ocorrências",
       );
-      if (idRequisicao === requisicaoAtual.current) definirOcorrencias(resultado);
+      if (idRequisicao === requisicaoAtual.current) {
+        definirOcorrencias(resultado);
+        definirOrigemCarregada(visualizacao);
+        definirAutorCarregado(visualizacao === "minhas" ? usuario?.id ?? null : null);
+      }
       else return false;
       return true;
     } catch {
@@ -124,7 +138,7 @@ export default function PaginaOcorrencias() {
         definirAtualizando(false);
       }
     }
-  }, [executarComCarregamento]);
+  }, [carregandoSessao, executarComCarregamento, usuario, visualizacao]);
 
   const aplicarFiltros = useCallback(async () => {
     const atualizou = await carregarOcorrencias(true);
@@ -147,9 +161,15 @@ export default function PaginaOcorrencias() {
   }, []);
 
   useFocusEffect(useCallback(() => {
+    if (carregandoSessao) return;
+    if (visualizacao === "minhas" && !usuario) {
+      definirOcorrencias([]);
+      definirCarregando(false);
+      return;
+    }
     void carregarOcorrencias();
     return () => { requisicaoAtual.current += 1; };
-  }, [carregarOcorrencias]));
+  }, [carregandoSessao, carregarOcorrencias, usuario, visualizacao]));
 
   return (
     <View style={styles.tela}>
@@ -168,7 +188,12 @@ export default function PaginaOcorrencias() {
               key={aba}
               accessibilityRole="tab"
               accessibilityState={{ selected: visualizacao === aba }}
-              onPress={() => definirVisualizacao(aba)}
+              onPress={() => {
+                if (aba === visualizacao) return;
+                definirCarregando(true);
+                definirErro(null);
+                definirVisualizacao(aba);
+              }}
               style={[styles.abaVisualizacao, visualizacao === aba && styles.abaVisualizacaoAtiva]}
             >
               <Text style={[styles.rotuloAba, visualizacao === aba && styles.rotuloAbaAtiva]}>
@@ -177,8 +202,6 @@ export default function PaginaOcorrencias() {
             </Pressable>
           ))}
         </View>
-
-        {visualizacao === "todas" ? <>
 
         <View style={styles.buscaLinha}>
           <View style={styles.buscaCampo}>
@@ -297,10 +320,11 @@ export default function PaginaOcorrencias() {
         </View>
 
         <Text style={styles.resultCount}>
-          {ocorrenciasVisiveis.length}{" "}
-          {ocorrenciasVisiveis.length === 1 ? "ocorrência" : "ocorrências"}
+          {visualizacao === "minhas" && !usuario
+            ? "Entre para consultar sua lista pessoal"
+            : `${ocorrenciasVisiveis.length} ${ocorrenciasVisiveis.length === 1 ? "ocorrência" : "ocorrências"}`}
         </Text>
-        {erro && ocorrencias.length > 0 ? (
+        {erro && ocorrenciasDaVisualizacao.length > 0 ? (
           <View style={styles.erroAtualizacao}>
             <Text style={styles.erroAtualizacaoTexto}>
               Não foi possível atualizar. Os resultados exibidos podem estar desatualizados.
@@ -308,29 +332,36 @@ export default function PaginaOcorrencias() {
             <Botao label="Tentar novamente" onPress={() => void carregarOcorrencias()} variant="outline" size="xs" />
           </View>
         ) : null}
-        </> : null}
       </View>
 
-      {visualizacao === "minhas" ? (
-        carregandoSessao ? (
-          <Text accessibilityRole="progressbar" style={[styles.resultCount, styles.avisoLogin]}>Verificando sua conta…</Text>
-        ) : usuario ? (
-          <PaginaMinhasOcorrencias mostrarNavegacao={false} />
-        ) : (
-          <View style={styles.avisoLogin}>
-            <Text style={styles.emptyTitle}>Entre para ver suas ocorrências</Text>
-            <Text style={styles.emptyDescription}>Acesse com sua conta Google para consultar, editar e excluir os registros que você cadastrou. A lista pública continua disponível na opção Todas as ocorrências.</Text>
-            <Botao label="Entrar com Google" onPress={() => router.push("/login" as never)} />
-          </View>
-        )
+      {visualizacao === "minhas" && carregandoSessao ? (
+        <Text accessibilityRole="progressbar" style={[styles.resultCount, styles.avisoLogin]}>Verificando sua conta…</Text>
       ) : null}
 
-      {visualizacao === "todas" ? <FlatList
+      {visualizacao === "minhas" && !carregandoSessao && !usuario ? (
+        <View style={styles.avisoLogin}>
+          <Text style={styles.emptyTitle}>Entre para ver suas ocorrências</Text>
+          <Text style={styles.emptyDescription}>Acesse com sua conta Google para consultar, editar e excluir os registros que você cadastrou. A lista pública continua disponível na opção Todas as ocorrências.</Text>
+          <Botao label="Entrar com Google" onPress={() => router.push("/login" as never)} />
+        </View>
+      ) : null}
+
+      {(visualizacao === "todas" || (Boolean(usuario) && !carregandoSessao)) ? <FlatList
         style={styles.listaOcorrencias}
         contentContainerStyle={styles.list}
         data={ocorrenciasVisiveis}
         keyExtractor={(ocorrencia) => ocorrencia.id}
-        renderItem={({ item }) => <CartaoOcorrencia ocorrencia={item} />}
+        renderItem={({ item }) => (
+          <View style={styles.itemLista}>
+            <CartaoOcorrencia ocorrencia={item} />
+            {visualizacao === "minhas" ? (
+              <AcoesOcorrenciaPropria
+                ocorrencia={item}
+                aoExcluir={(id) => definirOcorrencias((atuais) => atuais.filter(({ id: atualId }) => atualId !== id))}
+              />
+            ) : null}
+          </View>
+        )}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={atualizando} onRefresh={() => void carregarOcorrencias(true)} />}
         ListEmptyComponent={carregando ? undefined : erro ? (
@@ -339,10 +370,10 @@ export default function PaginaOcorrencias() {
             <Text style={styles.emptyDescription}>{erro}</Text>
             <Botao label="Tentar novamente" onPress={() => void carregarOcorrencias()} variant="outline" size="sm" />
           </View>
-        ) : ocorrencias.length === 0 ? (
+        ) : ocorrenciasDaVisualizacao.length === 0 ? (
           <View style={styles.emptyState}>
-            <Text style={styles.emptyTitle}>Nenhuma ocorrência cadastrada</Text>
-            <Text style={styles.emptyDescription}>Quando a comunidade publicar ocorrências, elas aparecerão aqui.</Text>
+            <Text style={styles.emptyTitle}>{visualizacao === "minhas" ? "Você ainda não cadastrou ocorrências" : "Nenhuma ocorrência cadastrada"}</Text>
+            <Text style={styles.emptyDescription}>{visualizacao === "minhas" ? "Quando você cadastrar ocorrências, elas aparecerão aqui." : "Quando a comunidade publicar ocorrências, elas aparecerão aqui."}</Text>
           </View>
         ) : (
           <View style={styles.emptyState}>
@@ -356,11 +387,11 @@ export default function PaginaOcorrencias() {
         )}
       /> : null}
 
-      {visualizacao === "todas" ? <View style={styles.rodapeConteudo}>
+      <View style={styles.rodapeConteudo}>
         <Text style={styles.disclaimer}>
           O BairroAtivo não é um serviço oficial da prefeitura.
         </Text>
-      </View> : null}
+      </View>
       <NavegacaoInferior ativa="ocorrencias" />
     </View>
   );

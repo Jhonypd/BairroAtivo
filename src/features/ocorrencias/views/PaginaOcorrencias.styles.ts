@@ -43,6 +43,7 @@ export const ocorrenciasStyles = StyleSheet.create({
   erroAtualizacaoTexto: { flex: 1, color: cores.error, fontSize: 12, lineHeight: 17 },
   resultCount: { color: cores.textSubtle, fontSize: 12, fontWeight: "600" },
   list: { paddingHorizontal: 20, paddingTop: 8, paddingBottom: 12, gap: 12, flexGrow: 1 },
+  itemLista: { gap: 8 },
   emptyState: { padding: 20, borderRadius: 16, backgroundColor: cores.surface, gap: 10, alignItems: "flex-start" },
   emptySearchIcon: { color: cores.primary, fontSize: 28, lineHeight: 32 },
   emptyTitle: { color: cores.primaryDark, fontSize: 17, fontWeight: "700" },

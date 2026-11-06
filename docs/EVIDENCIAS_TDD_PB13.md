@@ -4,6 +4,8 @@
 
 Na reorganização de navegação, a aba **Ocorrências** passou a oferecer **Todas as ocorrências** e **Minhas ocorrências** em um seletor no topo. A listagem pública preserva busca e filtros; a visualização privada continua usando `listarMinhasOcorrencias()` e exige sessão. Visitantes recebem uma chamada para entrar com Google dentro da visualização privada, sem perder o acesso público. A aba **Perfil** agora abre uma tela própria com dados básicos da conta e logout. Esta alteração é somente de interface/navegação; não modifica RLS nem estrutura do banco.
 
+As duas opções usam a mesma tela e os mesmos controles de busca, status, bairro, categoria, contagem, cards e navegação. A troca de opção muda a origem dos dados (`listarOcorrencias()` ou `listarMinhasOcorrencias()`); editar e excluir são exibidos apenas nos cards da lista autenticada. A rota legada `/minhas-ocorrencias` abre essa mesma tela já na opção privada.
+
 Com base no protótipo Figma, os filtros públicos agora ficam em painel recolhido por padrão. O painel mantém rascunhos temporários, descarta as mudanças ao fechar e aplica os novos valores somente depois de uma atualização bem-sucedida da listagem. A confirmação usa a consulta real já existente e o overlay global anuncia “Atualizando ocorrências”, com o módulo oficial `expo-blur` (`~58.0.5`) e alvo de desfoque no Android; não foi introduzido atraso ou serviço simulado. O estado vazio permite limpar busca e filtros efetivos.
 
 Esta entrega tem uma dependência de banco ainda não aplicada: a listagem privada chama `howviii.listar_minhas_ocorrencias()`. A coluna `autor_id` não pode ser lida pelos papéis `anon` e `authenticated`, portanto a listagem direta com filtro PostgREST não é válida. A proposta SQL está em `docs/sql/PB13_listar_minhas_ocorrencias.sql` e não foi executada.
@@ -29,7 +31,7 @@ Nesta revisão foram adicionados testes para ID inválido, registro inexistente,
 
 ## Verificações de código
 
-- Após os ajustes visuais do protótipo: `npm test -- --runInBand` passou (18 suítes, 90 testes), incluindo estado temporário dos filtros, descarte ao fechar, aplicação somente após atualização, falha de atualização, loading global, navegação Todas/Minhas e Perfil.
+- Após os ajustes visuais e a unificação das listas: `npm test -- --runInBand` passou (18 suítes, 91 testes), incluindo estado temporário dos filtros, descarte ao fechar, aplicação somente após atualização, falha de atualização, loading global, troca para a RPC autenticada mantendo os mesmos controles e navegação do Perfil.
 - `npm run typecheck`: passou.
 - `npm run lint`: passou sem alertas.
 - `npx expo export --platform web`: exportação do app concluída para as 12 rotas.
