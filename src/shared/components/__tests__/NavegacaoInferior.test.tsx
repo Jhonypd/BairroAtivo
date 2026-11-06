@@ -17,4 +17,10 @@ describe("navegação de cadastro", () => {
     fireEvent.press(screen.getByRole("button", { name: "Registrar" }));
     expect(router.push).toHaveBeenCalledWith("/ocorrencias/nova");
   });
+
+  it("abre Perfil em tela própria sem redirecionar para Minhas ocorrências", async () => {
+    await render(<NavegacaoInferior ativa="ocorrencias" />);
+    fireEvent.press(screen.getByRole("button", { name: "Perfil" }));
+    expect(router.push).toHaveBeenCalledWith("/perfil");
+  });
 });

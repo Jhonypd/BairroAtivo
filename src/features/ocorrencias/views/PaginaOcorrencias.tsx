@@ -1,6 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from "react";
-import { useFocusEffect } from "expo-router";
-import { FlatList, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
+import { router, useFocusEffect } from "expo-router";
+import { FlatList, Pressable, RefreshControl, ScrollView, Text, TextInput, View } from "react-native";
 import { Botao } from "@/shared/components/ui/Botao";
 import { NavegacaoInferior } from "@/shared/components/NavegacaoInferior";
 import { FiltroStatus } from "../components/FiltroStatus";
@@ -10,6 +10,10 @@ import { listarOcorrencias } from "../services/ocorrenciasSupabase";
 import type { Ocorrencia } from "../types/Ocorrencia";
 import { ocorrenciasStyles as styles } from "./PaginaOcorrencias.styles";
 import { useCarregamentoGlobal } from "@/shared/components/ui/CarregamentoGlobal";
+import { useAutenticacao } from "@/features/autenticacao/contexto/AutenticacaoProvider";
+import { PaginaMinhasOcorrencias } from "./PaginaMinhasOcorrencias";
+
+type VisualizacaoOcorrencias = "todas" | "minhas";
 
 const filtrosStatus = [
   "Todas",
@@ -38,6 +42,8 @@ export default function PaginaOcorrencias() {
   const [campoAberto, definirCampoAberto] = useState<"bairro" | "categoria" | null>(null);
   const requisicaoAtual = useRef(0);
   const { executarComCarregamento } = useCarregamentoGlobal();
+  const { usuario, carregando: carregandoSessao } = useAutenticacao();
+  const [visualizacao, definirVisualizacao] = useState<VisualizacaoOcorrencias>("todas");
 
   const bairrosDisponiveis = useMemo(
     () => [...new Set(ocorrencias.map(({ bairro }) => bairro.trim()).filter(Boolean))]
@@ -102,6 +108,24 @@ export default function PaginaOcorrencias() {
             Veja o que está acontecendo nos bairros.
           </Text>
         </View>
+
+        <View style={styles.seletorVisualizacao} accessibilityRole="tablist">
+          {(["todas", "minhas"] as const).map((aba) => (
+            <Pressable
+              key={aba}
+              accessibilityRole="tab"
+              accessibilityState={{ selected: visualizacao === aba }}
+              onPress={() => definirVisualizacao(aba)}
+              style={[styles.abaVisualizacao, visualizacao === aba && styles.abaVisualizacaoAtiva]}
+            >
+              <Text style={[styles.rotuloAba, visualizacao === aba && styles.rotuloAbaAtiva]}>
+                {aba === "todas" ? "Todas as ocorrências" : "Minhas ocorrências"}
+              </Text>
+            </Pressable>
+          ))}
+        </View>
+
+        {visualizacao === "todas" ? <>
 
         <TextInput
           value={consulta}
@@ -171,9 +195,24 @@ export default function PaginaOcorrencias() {
             <Botao label="Tentar novamente" onPress={() => void carregarOcorrencias()} variant="outline" size="xs" />
           </View>
         ) : null}
+        </> : null}
       </View>
 
-      <FlatList
+      {visualizacao === "minhas" ? (
+        carregandoSessao ? (
+          <Text accessibilityRole="progressbar" style={[styles.resultCount, styles.avisoLogin]}>Verificando sua conta…</Text>
+        ) : usuario ? (
+          <PaginaMinhasOcorrencias mostrarNavegacao={false} />
+        ) : (
+          <View style={styles.avisoLogin}>
+            <Text style={styles.emptyTitle}>Entre para ver suas ocorrências</Text>
+            <Text style={styles.emptyDescription}>Acesse com sua conta Google para consultar, editar e excluir os registros que você cadastrou. A lista pública continua disponível na opção Todas as ocorrências.</Text>
+            <Botao label="Entrar com Google" onPress={() => router.push("/login" as never)} />
+          </View>
+        )
+      ) : null}
+
+      {visualizacao === "todas" ? <FlatList
         style={styles.listaOcorrencias}
         contentContainerStyle={styles.list}
         data={ocorrenciasVisiveis}
@@ -200,13 +239,13 @@ export default function PaginaOcorrencias() {
             </Text>
           </View>
         )}
-      />
+      /> : null}
 
-      <View style={styles.rodapeConteudo}>
+      {visualizacao === "todas" ? <View style={styles.rodapeConteudo}>
         <Text style={styles.disclaimer}>
           O BairroAtivo não é um serviço oficial da prefeitura.
         </Text>
-      </View>
+      </View> : null}
       <NavegacaoInferior ativa="ocorrencias" />
     </View>
   );

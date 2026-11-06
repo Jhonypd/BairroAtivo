@@ -2,6 +2,8 @@
 
 ## Estado
 
+Na reorganização de navegação, a aba **Ocorrências** passou a oferecer **Todas as ocorrências** e **Minhas ocorrências** em um seletor no topo. A listagem pública preserva busca e filtros; a visualização privada continua usando `listarMinhasOcorrencias()` e exige sessão. Visitantes recebem uma chamada para entrar com Google dentro da visualização privada, sem perder o acesso público. A aba **Perfil** agora abre uma tela própria com dados básicos da conta e logout. Esta alteração é somente de interface/navegação; não modifica RLS nem estrutura do banco.
+
 Esta entrega tem uma dependência de banco ainda não aplicada: a listagem privada chama `howviii.listar_minhas_ocorrencias()`. A coluna `autor_id` não pode ser lida pelos papéis `anon` e `authenticated`, portanto a listagem direta com filtro PostgREST não é válida. A proposta SQL está em `docs/sql/PB13_listar_minhas_ocorrencias.sql` e não foi executada.
 
 A proposta agora resolve a identidade com `auth.uid()` e fallback para `request.jwt.claim.sub` e `request.jwt.claims`, tanto na policy quanto na RPC. Os casos de verificação estão em `docs/sql/PB13_verificacoes_identidade.sql`; ainda não foram executados e aguardam revisão do banco.
@@ -25,12 +27,11 @@ Nesta revisão foram adicionados testes para ID inválido, registro inexistente,
 
 ## Verificações de código
 
-- `npm test -- --runInBand`: passou (16 suítes, 75 testes).
+- Após a reorganização da navegação: `npm test -- --runInBand` passou (18 suítes, 87 testes), incluindo seleção Todas/Minhas para visitante, retorno à listagem pública, navegação para Perfil e apresentação/logout da conta.
 - `npm run typecheck`: passou.
 - `npm run lint`: passou sem alertas.
 - `git diff --check`: passou.
-- `npx expo-doctor`: 19/20 verificações passaram; falhou somente a compatibilidade de versões de dependências Expo, que já estavam divergentes no `package.json` de `develop`.
-- `npx expo install --check`: confirmou as mesmas 9 versões fora da faixa recomendada pelo SDK 58. Todas são divergências preexistentes; não houve adição/uso de API nova que exija atualizar módulos nativos, por isso nenhum upgrade foi aplicado nesta revisão.
+- `npx expo-doctor`: 19/20 verificações passaram. A verificação pendente é a compatibilidade de dependências Expo: `react-native-safe-area-context` (esperado `~5.11.1`, instalado `5.10.1`) e oito divergências de patch (`@expo/ui`, `expo`, `expo-constants`, `expo-dev-client`, `expo-linking`, `expo-router`, `expo-splash-screen` e `jest-expo`). Não foram feitos upgrades, pois esta mudança não adiciona dependências nem altera APIs nativas.
 
 ## Verificação de banco (somente leitura)
 

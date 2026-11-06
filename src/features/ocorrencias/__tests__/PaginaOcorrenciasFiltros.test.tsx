@@ -10,6 +10,9 @@ import type { Ocorrencia } from "../types/Ocorrencia";
 let mockFocarTela: (() => void | (() => void)) | null = null;
 
 jest.mock("../services/ocorrenciasSupabase", () => ({ listarOcorrencias: jest.fn() }));
+jest.mock("@/features/autenticacao/contexto/AutenticacaoProvider", () => ({
+  useAutenticacao: () => ({ usuario: null, carregando: false }),
+}));
 jest.mock("@/shared/components/NavegacaoInferior", () => {
   const React = jest.requireActual<typeof import("react")>("react");
   const { Pressable, Text } = jest.requireActual<typeof import("react-native")>("react-native");

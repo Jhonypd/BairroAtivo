@@ -8,7 +8,6 @@ import IconeInicio from "@/shared/icons/home_24dp_E3E3E3.svg";
 import IconeOcorrencias from "@/shared/icons/assignment_24dp_E3E3E3.svg";
 import IconeAdicionar from "@/shared/icons/add_24dp_E3E3E3.svg";
 import IconePerfil from "@/shared/icons/manage_accounts_24dp_E3E3E3.svg";
-import { useAutenticacao } from "@/features/autenticacao/contexto/AutenticacaoProvider";
 
 type Aba = "inicio" | "ocorrencias" | "registrar" | "perfil";
 
@@ -40,13 +39,12 @@ const itens: {
     chave: "perfil",
     rotulo: "Perfil",
     Icone: IconePerfil,
-    rota: "/login",
+    rota: "/perfil",
   },
 ];
 
 export function NavegacaoInferior({ ativa }: { ativa: Aba }) {
   const insets = useSafeAreaInsets();
-  const { usuario } = useAutenticacao();
 
   return (
     <View style={[styles.barra, { paddingBottom: Math.max(insets.bottom, 6) }]}>
@@ -58,7 +56,7 @@ export function NavegacaoInferior({ ativa }: { ativa: Aba }) {
           accessibilityState={{ selected: item.chave === ativa }}
           onPress={() => {
             if (item.chave === ativa) return;
-            router.push((item.chave === "perfil" && usuario ? "/minhas-ocorrencias" : item.rota) as never);
+            router.push(item.rota as never);
           }}
           style={styles.item}
         >

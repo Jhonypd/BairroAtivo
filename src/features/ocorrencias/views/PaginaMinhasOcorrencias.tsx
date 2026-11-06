@@ -8,7 +8,7 @@ import type { Ocorrencia } from "../types/Ocorrencia";
 import { excluirOcorrencia, listarMinhasOcorrencias } from "../services/ocorrenciasSupabase";
 import { CartaoOcorrencia } from "../components/CartaoOcorrencia";
 
-export function PaginaMinhasOcorrencias() {
+export function PaginaMinhasOcorrencias({ mostrarNavegacao = true }: { mostrarNavegacao?: boolean }) {
   const [ocorrencias, definirOcorrencias] = useState<Ocorrencia[]>([]);
   const [carregando, definirCarregando] = useState(true);
   const [erro, definirErro] = useState<string | null>(null);
@@ -54,6 +54,6 @@ export function PaginaMinhasOcorrencias() {
         </View>
       </View>) : null}
     </ScrollView>
-    <NavegacaoInferior ativa="perfil" />
+    {mostrarNavegacao ? <NavegacaoInferior ativa="ocorrencias" /> : null}
   </View>;
 }
