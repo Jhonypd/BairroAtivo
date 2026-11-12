@@ -1,4 +1,8 @@
--- PROPOSTA PARA REVISÃO. NÃO EXECUTAR sem revisão e validação com dois usuários.
+-- SCRIPT DE INSTALAÇÃO INICIAL, mantido como referência histórica.
+-- Não executar sobre uma instalação que já tenha listar_minhas_ocorrencias().
+-- Para adicionar total_apoios à RPC existente, revise a migração incremental
+-- PB13_adicionar_total_apoios_rpc_incremental.sql.
+-- NÃO EXECUTAR sem revisão e validação com dois usuários.
 -- Executar como role administrativa com permissão para criar roles/policies.
 -- Tudo é transacional: uma falha reverte todos os ajustes.
 -- Após revisão, validar os cenários em docs/sql/PB13_verificacoes_identidade.sql.
