@@ -19,6 +19,7 @@ jest.mock("../services/ocorrenciasSupabase", () => ({
 jest.mock("@/shared/icons/filter_alt_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
 jest.mock("@/shared/icons/search_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
 jest.mock("@/shared/icons/location_on_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
+jest.mock("@/shared/icons/ellipsis-vertical.svg", () => ({ __esModule: true, default: () => null }));
 jest.mock("@/shared/components/NavegacaoInferior", () => ({ NavegacaoInferior: () => null }));
 jest.mock("@/features/autenticacao/contexto/AutenticacaoProvider", () => ({
   useAutenticacao: () => ({ usuario: mockUsuarioAtual, carregando: false }),
@@ -74,8 +75,7 @@ describe("consulta pública sem autenticação", () => {
     expect(await screen.findByText("Buraco cadastrado por mim")).toBeOnTheScreen();
     expect(screen.getByLabelText("Buscar ocorrências")).toBeOnTheScreen();
     expect(screen.getByRole("button", { name: /^Filtros/ })).toBeOnTheScreen();
-    expect(screen.getByRole("button", { name: "Editar" })).toBeOnTheScreen();
-    expect(screen.getByRole("button", { name: "Excluir" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Abrir opções de Buraco cadastrado por mim" })).toBeOnTheScreen();
     expect(servico.listarOcorrencias).toHaveBeenCalledTimes(1);
     expect(servico.listarMinhasOcorrencias).toHaveBeenCalledTimes(1);
   });

@@ -14,33 +14,33 @@ A proposta agora resolve a identidade com `auth.uid()` e fallback para `request.
 
 Para o diagnóstico da instalação existente foi preparado `docs/sql/PB13_corrigir_claims_minhas_ocorrencias_incremental.sql`. Ele substitui somente a função e a policy `ocorrencias_pb13_rpc_select_own`; não reatribui o proprietário, não altera grants, não cria role/tabela e não toca em outras policies. O script valida antes e depois que a RPC continua sendo `SECURITY DEFINER`, pertence a `bairroativo_pb13_rpc_owner` e mantém `EXECUTE` negado a `anon` e liberado a `authenticated`. Os testes manuais agora verificam o autor nos dois formatos, outra identidade com `request.jwt.claims` sem receber linhas e visitante `anon` sem poder executar a RPC. O script e os testes não foram executados no banco e aguardam revisão/aplicação manual no SQL Editor.
 
-## Evidências dos ciclos
+## Evidências da validação — 11/11/2026
 
-Nesta revisão foram adicionados testes para ID inválido, registro inexistente, falha de consulta, atualização bloqueada pelo RLS e exclusão com zero linhas (caso de outro autor) ou contagem nula. A implementação precedeu esses testes nesta sessão; portanto não há evidência honesta de uma execução Red anterior para estes casos. A suíte final passou: 17 suítes e 80 testes. Não foram presumidos resultados.
+Não foi executada uma nova sequência TDD Red-Green-Refactor durante esta validação. O trabalho desta sessão revisou e completou os testes do PR; a evidência abaixo registra somente execuções observadas.
 
-| Caso | Teste | Red | Green | Refactor |
-|---|---|---|---|---|
-| Visitante bloqueado | Proteção da rota privada (teste existente) | Existente | Incluído na suíte final; passou | Pendente |
-| Listagem própria e lista vazia | Serviço RPC e tela Minhas ocorrências | Implementação antes do teste | Coberto; passou | Pendente |
-| Campos editáveis e validações | Serviço de atualização e validação existente da PB09 | Implementação antes do teste | Payload permitido passou; cobertura de limites já existente na PB09 | Pendente |
-| Atualização com sucesso e falha | Serviço de atualização | Implementação antes do teste | Passou | Pendente |
-| Tentativa de editar registro alheio | Erro simulado de autorização; integração real pendente | Implementação antes do teste | Erro simulado passou | Validação DB pendente |
-| Tentativa de excluir registro alheio | Outro autor com RLS retornando count 0 | Implementação antes do teste | Passou; count 0 rejeitado | Validação DB pendente |
-| Exclusão sem contagem | count nulo | Implementação antes do teste | Passou; count nulo rejeitado | Validação DB pendente |
-| Exclusão cancelada, confirmada e falha | Tela e serviço de exclusão | Cancelamento coberto; confirmação/falha de tela pendentes | Testes cobertos passaram | Pendente |
-| Atualização da listagem | Retorno ao foco após editar/excluir | Pendente | Indiretamente pela estratégia de foco; teste específico pendente | Pendente |
-| Regressões PB09–PB12 | Suíte existente | Existente | 16 suítes, 75 testes aprovados | Pendente |
+| Área | Evidência automatizada executada | Resultado |
+|---|---|---|
+| Acesso e listagem | Visitante redirecionado no componente de proteção; lista privada autentica antes de chamar a RPC; estado vazio e falha da RPC tratados | Passou |
+| Edição | Rota com ID inválido, registro inexistente e falha de consulta; payload contém somente os campos editáveis; falha de atualização/autorização não confirma sucesso | Passou |
+| Exclusão | Confirmação, cancelamento, sucesso removendo o card e falha preservando o item; serviço rejeita `count` zero ou nulo | Passou |
+| Sem sessão | Listagem, atualização e exclusão não chamam a operação de dados sem usuário autenticado | Passou |
+| Tentativa sobre registro de terceiro | Erro de atualização simulado e exclusão com `count` zero; isso verifica o tratamento no cliente, não executa nem comprova RLS real | Passou como simulação; RLS real pendente |
+| Regressões do aplicativo | Suíte Jest completa, incluindo autenticação, filtros, detalhes e rotas | 19 suítes e 103 testes aprovados |
+
+Na suíte foram corrigidos os testes da lista privada para fornecer `SafeAreaProvider`, mockar os ícones do menu usado pelos cards e acompanhar o painel de ações atual (em lugar do fluxo antigo baseado em `Alert`). Foram acrescentados cenários de navegação para editar, confirmar/cancelar/falhar ao excluir e ausência de sessão nas operações de listagem, edição e exclusão.
+
+O usuário informou que já validou manualmente listagem pessoal, edição, exclusão e bloqueio de operações de outros usuários. Essa validação manual não foi repetida nesta sessão. As tentativas de terceiro nos testes Jest são respostas simuladas do serviço e não substituem um ensaio integrado com duas contas e políticas RLS.
 
 ## Verificações de código
 
-- Após os ajustes visuais e a unificação das listas: `npm test -- --runInBand` passou (18 suítes, 91 testes), incluindo estado temporário dos filtros, descarte ao fechar, aplicação somente após atualização, falha de atualização, loading global, troca para a RPC autenticada mantendo os mesmos controles e navegação do Perfil.
+- `npm test -- --runInBand`: passou, 19 suítes e 103 testes.
+- `npm run lint`: passou, sem erros ou alertas.
 - `npm run typecheck`: passou.
-- `npm run lint`: passou sem alertas.
-- `npx expo export --platform web`: exportação do app concluída para as 12 rotas.
+- `npx expo-doctor`: 19/20 verificações passaram. A única verificação reprovada foi compatibilidade de dependências. O relatório apontou `react-native-safe-area-context` esperado `~5.11.1` (instalado `5.10.1`) e divergências de patch em `@expo/ui`, `expo`, `expo-blur`, `expo-constants`, `expo-dev-client`, `expo-font`, `expo-linking`, `expo-router`, `expo-secure-store`, `expo-splash-screen`, `expo-status-bar`, `expo-symbols`, `expo-web-browser` e `jest-expo`. Nenhuma dependência foi atualizada nesta revisão.
 - `git diff --check`: passou.
-- `npx expo-doctor`: 19/20 verificações passaram. A verificação pendente é a compatibilidade de dependências Expo: `react-native-safe-area-context` (esperado `~5.11.1`, instalado `5.10.1`) e oito divergências de patch (`@expo/ui`, `expo`, `expo-constants`, `expo-dev-client`, `expo-linking`, `expo-router`, `expo-splash-screen` e `jest-expo`). Não foram feitos upgrades, pois esta mudança não adiciona dependências nem altera APIs nativas.
+- `npx expo export --platform web` não foi executado nesta validação; o resultado anterior de 12 rotas não foi revalidado.
 
-## Verificação de banco (somente leitura)
+## Verificação de banco — registro anterior, não revalidado nesta sessão
 
 - Projeto `ADS-UNIVALI`, schema `howviii`, tabela `ocorrencias` verificados.
 - `autor_id` não consta nas permissões `SELECT` de `anon` nem `authenticated`.
@@ -48,6 +48,8 @@ Nesta revisão foram adicionados testes para ID inválido, registro inexistente,
 - FKs de `fotos_ocorrencias` e `apoios` para ocorrências usam `ON DELETE CASCADE`; não há exclusão manual pelo aplicativo.
 - O papel `authenticated` possui `UPDATE` em `status`, então as permissões atuais permitem mudar status diretamente. A proposta SQL inclui revogar `UPDATE` na tabela e conceder apenas os cinco campos editáveis da PB13. Isso precisa ser revisado e validado para impedir clientes adulterados e preservar fluxos privilegiados futuros.
 - A verificação com `has_column_privilege` confirmou `UPDATE` efetivo em `titulo`, `descricao`, `categoria`, `bairro`, `latitude`, `longitude`, `status` e `nome_publico`; não em `id`, `autor_id`, `total_apoios`, `criado_em` ou `atualizado_em`. `autor_id` não tem `SELECT` efetivo para `authenticated`.
+
+Nesta validação, por instrução, não foi executado SQL nem feita alteração no Supabase. Os itens acima são resultados registrados antes desta sessão e devem ser reconfirmados se o schema ou os grants tiverem mudado.
 
 ## SQL pendente
 

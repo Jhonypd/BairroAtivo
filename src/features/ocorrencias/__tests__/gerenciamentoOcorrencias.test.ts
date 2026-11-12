@@ -6,6 +6,13 @@ const dados: DadosCadastroOcorrencia = { titulo: "Buraco atualizado", descricao:
 const linha = { id: "1", titulo: dados.titulo, descricao: dados.descricao, categoria: "buraco", bairro: "Centro", status: "aberta", criado_em: "2026-10-30T10:00:00Z", nome_publico: null };
 
 describe("gerenciamento Supabase de ocorrências", () => {
+  it("não consulta a lista pessoal sem uma sessão autenticada", async () => {
+    const rpc = jest.fn();
+    const cliente = { auth: { getUser: jest.fn(async () => ({ data: { user: null }, error: null })) }, rpc } as never;
+    await expect(listarMinhasOcorrencias(cliente)).rejects.toThrow("Faça login para consultar suas ocorrências.");
+    expect(rpc).not.toHaveBeenCalled();
+  });
+
   it("consulta a função RPC com a sessão autenticada e sem receber ID de usuário", async () => {
     const rpc = jest.fn(async () => ({ data: [linha], error: null }));
     const cliente = { auth: { getUser: jest.fn(async () => ({ data: { user: { id: "autor-1" } }, error: null })) }, rpc } as never;
@@ -50,6 +57,13 @@ describe("gerenciamento Supabase de ocorrências", () => {
     await expect(atualizarOcorrencia("1", dados, cliente)).rejects.toThrow("Não foi possível atualizar");
   });
 
+  it("não tenta atualizar sem uma sessão autenticada", async () => {
+    const from = jest.fn();
+    const cliente = { auth: { getUser: jest.fn(async () => ({ data: { user: null }, error: null })) }, from } as never;
+    await expect(atualizarOcorrencia("1", dados, cliente)).rejects.toThrow("Faça login para editar uma ocorrência.");
+    expect(from).not.toHaveBeenCalled();
+  });
+
   it("envia exclusão ao banco sem apagar relacionamentos manualmente", async () => {
     const eq = jest.fn(async () => ({ error: null, count: 1 }));
     const excluir = jest.fn().mockReturnValue({ eq });
@@ -57,6 +71,13 @@ describe("gerenciamento Supabase de ocorrências", () => {
     await expect(excluirOcorrencia("1", cliente)).resolves.toBeUndefined();
     expect(excluir.mock.calls[0]).toEqual([{ count: "exact" }]);
     expect(eq.mock.calls[0]).toEqual(["id", "1"]);
+  });
+
+  it("não tenta excluir sem uma sessão autenticada", async () => {
+    const from = jest.fn();
+    const cliente = { auth: { getUser: jest.fn(async () => ({ data: { user: null }, error: null })) }, from } as never;
+    await expect(excluirOcorrencia("1", cliente)).rejects.toThrow("Faça login para excluir uma ocorrência.");
+    expect(from).not.toHaveBeenCalled();
   });
 
   it.each([null, 0])("não considera a exclusão bem-sucedida quando o banco retorna count=%s", async (count) => {
