@@ -54,6 +54,7 @@ const detalhe: Ocorrencia = {
   registradaEm: "12 de nov. de 2024",
   nomeAutorPublico: "João Silva",
   imagemUrl: "https://exemplo.invalid/foto.jpg",
+  totalApoios: 2,
 };
 
 describe("detalhes da ocorrência", () => {
@@ -171,5 +172,32 @@ describe("detalhes da ocorrência", () => {
 
     expect(definirApoioMock).toHaveBeenCalledWith(detalhe.id, true);
     expect(await screen.findByText("Apoiado")).toBeOnTheScreen();
+    expect(screen.getByText("3")).toBeOnTheScreen();
+  });
+
+  it("aguarda a consulta do apoio existente antes de permitir alterná-lo", async () => {
+    let concluirBusca: ((valor: boolean) => void) | undefined;
+    buscarApoioMock.mockReturnValue(new Promise((resolve) => { concluirBusca = resolve; }));
+    autenticacaoMock.mockReturnValue({
+      usuario: { id: "usuario-1" } as never, autenticado: true, carregando: false, autenticando: false, erro: null,
+      entrarComGoogle: jest.fn(async () => null), sair: jest.fn(async () => undefined),
+    });
+    parametrosMock.mockReturnValue({ id: detalhe.id } as never);
+    buscarMock.mockResolvedValue(detalhe);
+
+    await renderDetalhes();
+
+    const botao = await screen.findByRole("button", { name: "Apoiar ocorrência" });
+    expect(botao).toBeDisabled();
+    expect(definirApoioMock).not.toHaveBeenCalled();
+
+    await act(async () => concluirBusca?.(true));
+    const botaoRemover = await screen.findByRole("button", { name: "Remover apoio da ocorrência" });
+    expect(botaoRemover).toBeEnabled();
+
+    await act(async () => fireEvent.press(botaoRemover));
+
+    expect(definirApoioMock).toHaveBeenCalledWith(detalhe.id, false);
+    expect(await screen.findByText("1")).toBeOnTheScreen();
   });
 });

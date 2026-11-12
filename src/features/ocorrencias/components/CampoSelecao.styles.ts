@@ -3,6 +3,7 @@ import { cores } from "@/configs/tema";
 
 export const campoSelecaoStyles = StyleSheet.create({
   field: { gap: 8 },
+  fieldAberto: { position: "relative", zIndex: 30, elevation: 20 },
   control: { position: "relative", zIndex: 10 },
   label: { color: cores.primaryDark, fontSize: 14, fontWeight: "700" },
   trigger: {

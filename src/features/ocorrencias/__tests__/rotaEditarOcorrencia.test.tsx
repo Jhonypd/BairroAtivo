@@ -2,7 +2,7 @@ import { render, screen } from "@testing-library/react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import { useLocalSearchParams } from "expo-router";
 import { buscarOcorrenciaPorId } from "@/features/ocorrencias/services/ocorrenciasSupabase";
-import RotaEditarOcorrencia from "../[id]";
+import RotaEditarOcorrencia from "@/app/ocorrencias/editar/[id]";
 
 jest.mock("expo-router", () => ({ Stack: { Screen: () => null }, useLocalSearchParams: jest.fn() }));
 jest.mock("@/features/autenticacao/components/ProtecaoAutenticacao", () => ({ ProtecaoAutenticacao: ({ children }: { children: React.ReactNode }) => children }));

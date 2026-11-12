@@ -6,6 +6,7 @@ import IconeOpcoes from "@/shared/icons/ellipsis-vertical.svg";
 import type { Ocorrencia } from "../types/Ocorrencia";
 import { cartaoOcorrenciaStyles as styles } from "./CartaoOcorrencia.styles";
 import IconeLocalizacao from "@/shared/icons/location_on_24dp_E3E3E3.svg";
+import IconeApoio from "@/shared/icons/thumb_up_24dp_E3E3E3.svg";
 
 const coresStatus: Record<Ocorrencia["status"], { text: string; background: string }> = {
   Aberta: { text: cores.statusOpen, background: "#FCE8E6" },
@@ -73,6 +74,10 @@ export function CartaoOcorrencia({ ocorrencia, mostrarOpcoes = false, aoAbrirOpc
         <View style={styles.divisor} />
         <View style={styles.rodape}>
           <Text numberOfLines={1} style={styles.data} accessibilityLabel={`Data: ${ocorrencia.registradaEm}`}>{ocorrencia.registradaEm}</Text>
+          <View style={styles.contadorApoios} accessibilityRole="text" accessibilityLabel={`${ocorrencia.totalApoios ?? 0} apoios`}>
+            <IconeApoio width={13} height={13} fill={cores.textSubtle} />
+            <Text style={styles.textoContadorApoios}>{ocorrencia.totalApoios ?? 0}</Text>
+          </View>
           <View style={styles.acao}>
             <Text style={styles.more}>Ver detalhes</Text>
             <Text style={[styles.seta, sobrevoado && styles.setaSobrevoada]} accessibilityElementsHidden>›</Text>

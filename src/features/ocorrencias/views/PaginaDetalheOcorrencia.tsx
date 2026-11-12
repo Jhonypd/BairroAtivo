@@ -1,5 +1,5 @@
 import { Stack, router, useLocalSearchParams } from "expo-router";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
   Image,
@@ -57,18 +57,20 @@ function LinhaInformacao({ Icone, titulo, valor }: {
 export default function PaginaDetalheOcorrencia() {
   const { id: idRota } = useLocalSearchParams<{ id?: string | string[] }>();
   const id = Array.isArray(idRota) ? idRota[0] : idRota;
+  const { usuario, carregando: carregandoAuth, autenticando, erro: erroAuth, entrarComGoogle } = useAutenticacao();
+  const usuarioId = usuario?.id;
   const [ocorrencia, definirOcorrencia] = useState<Ocorrencia | null>(null);
   const [carregando, definirCarregando] = useState(true);
   const [erro, definirErro] = useState(false);
   const [menuAberto, definirMenuAberto] = useState(false);
   const [apoioAtual, definirApoioAtual] = useState<{ usuarioId: string; apoiando: boolean } | null>(null);
-  const [carregandoApoio, definirCarregandoApoio] = useState(false);
+  const [carregandoApoio, definirCarregandoApoio] = useState(Boolean(usuarioId && !carregandoAuth));
   const [erroApoio, definirErroApoio] = useState<string | null>(null);
+  const consultaApoioPendente = useRef(false);
   const insets = useSafeAreaInsets();
   const { executarComCarregamento } = useCarregamentoGlobal();
-  const { usuario, carregando: carregandoAuth, autenticando, erro: erroAuth, entrarComGoogle } = useAutenticacao();
-  const usuarioId = usuario?.id;
   const apoiando = Boolean(usuarioId && apoioAtual?.usuarioId === usuarioId && apoioAtual.apoiando);
+  const apoioEmCarregamento = Boolean(usuarioId && carregandoApoio);
 
   useEffect(() => {
     let ativa = true;
@@ -83,18 +85,39 @@ export default function PaginaDetalheOcorrencia() {
   useEffect(() => {
     let ativa = true;
     if (!id || !usuarioId || carregandoAuth) return () => { ativa = false; };
-    buscarApoioOcorrencia(id)
-      .then((resultado) => { if (ativa) definirApoioAtual({ usuarioId, apoiando: resultado }); })
-      .catch(() => { if (ativa) definirErroApoio("Não foi possível verificar seu acompanhamento."); });
-    return () => { ativa = false; };
+    consultaApoioPendente.current = true;
+    void Promise.resolve()
+      .then(() => {
+        if (!ativa) return null;
+        definirCarregandoApoio(true);
+        return buscarApoioOcorrencia(id);
+      })
+      .then((resultado) => { if (ativa && resultado !== null) definirApoioAtual({ usuarioId, apoiando: resultado }); })
+      .catch(() => { if (ativa) definirErroApoio("Não foi possível verificar seu acompanhamento."); })
+      .finally(() => {
+        if (ativa) {
+          consultaApoioPendente.current = false;
+          definirCarregandoApoio(false);
+        }
+      });
+    return () => {
+      ativa = false;
+      consultaApoioPendente.current = false;
+    };
   }, [id, usuarioId, carregandoAuth]);
 
   function voltarParaOcorrencias() {
     router.replace("/ocorrencias");
   }
 
+  function ajustarContagemApoios(incremento: number) {
+    definirOcorrencia((atual) => atual
+      ? { ...atual, totalApoios: Math.max(0, (atual.totalApoios ?? 0) + incremento) }
+      : atual);
+  }
+
   async function alternarAcompanhamento() {
-    if (!id || carregandoApoio || autenticando || carregandoAuth) return;
+    if (!id || (usuarioId && (carregandoApoio || consultaApoioPendente.current)) || autenticando || carregandoAuth) return;
     definirErroApoio(null);
     definirCarregandoApoio(true);
     try {
@@ -106,10 +129,13 @@ export default function PaginaDetalheOcorrencia() {
         }
         await definirApoioOcorrencia(id, true);
         definirApoioAtual({ usuarioId: resultado.sessao.user.id, apoiando: true });
+        ajustarContagemApoios(1);
         return;
       }
-      await definirApoioOcorrencia(id, !apoiando);
-      definirApoioAtual({ usuarioId: usuario.id, apoiando: !apoiando });
+      const vaiApoiar = !apoiando;
+      await definirApoioOcorrencia(id, vaiApoiar);
+      definirApoioAtual({ usuarioId: usuario.id, apoiando: vaiApoiar });
+      ajustarContagemApoios(vaiApoiar ? 1 : -1);
     } catch (erro) {
       definirErroApoio(erro instanceof Error ? erro.message : "Não foi possível atualizar seu acompanhamento.");
     } finally {
@@ -210,11 +236,25 @@ export default function PaginaDetalheOcorrencia() {
         )}
 
         <View style={styles.blocoAcompanhamento}>
-          <Pressable accessibilityRole="button" accessibilityLabel={apoiando ? "Remover apoio da ocorrência" : "Apoiar ocorrência"} accessibilityState={{ disabled: carregandoApoio || autenticando || carregandoAuth }} disabled={carregandoApoio || autenticando || carregandoAuth} onPress={() => void alternarAcompanhamento()} style={[styles.botaoAcompanhamento, apoiando && styles.botaoApoiado]}>
-            {carregandoApoio || autenticando ? <ActivityIndicator color={cores.surface} /> : <IconeApoiar width={20} height={20} fill={cores.surface} />}
+          <Pressable
+            accessibilityRole="button"
+            accessibilityLabel={apoiando ? "Remover apoio da ocorrência" : "Apoiar ocorrência"}
+            accessibilityValue={typeof ocorrencia.totalApoios === "number"
+              ? { text: `${ocorrencia.totalApoios} ${ocorrencia.totalApoios === 1 ? "apoio" : "apoios"}` }
+              : undefined}
+            accessibilityState={{ disabled: apoioEmCarregamento || autenticando || carregandoAuth }}
+            disabled={apoioEmCarregamento || autenticando || carregandoAuth}
+            onPress={() => void alternarAcompanhamento()}
+            style={[styles.botaoAcompanhamento, apoiando && styles.botaoApoiado]}
+          >
+            {apoioEmCarregamento || autenticando ? <ActivityIndicator color={cores.surface} /> : <IconeApoiar width={20} height={20} fill={cores.surface} />}
             <Text style={styles.textoAcompanhamento}>{apoiando ? "Apoiado" : "Apoiar ocorrência"}</Text>
+            {typeof ocorrencia.totalApoios === "number" ? (
+              <View style={styles.badgeApoios}>
+                <Text style={styles.badgeApoiosTexto}>{ocorrencia.totalApoios}</Text>
+              </View>
+            ) : null}
           </Pressable>
-          {typeof ocorrencia.totalApoios === "number" ? <Text style={styles.contagemApoios}>{ocorrencia.totalApoios} {ocorrencia.totalApoios === 1 ? "apoio" : "apoios"}</Text> : null}
           {erroApoio ? <Text accessibilityRole="alert" style={styles.erroApoio}>{erroApoio}</Text> : null}
         </View>
 

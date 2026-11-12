@@ -26,7 +26,6 @@ export default function FormularioOcorrencia({ ocorrenciaInicial }: { ocorrencia
   const [erros, definirErros] = useState<ErrosCadastroOcorrencia>({});
   const [erroEnvio, definirErroEnvio] = useState<string | null>(null);
   const [salvando, definirSalvando] = useState(false);
-  const [ocorrenciaCriada, definirOcorrenciaCriada] = useState<Ocorrencia | null>(null);
   const envioEmAndamento = useRef(false);
 
   const nomePerfil = typeof usuario?.user_metadata.full_name === "string"
@@ -58,7 +57,11 @@ export default function FormularioOcorrencia({ ocorrenciaInicial }: { ocorrencia
           : cadastrarOcorrencia(dados),
         ocorrenciaInicial ? "Salvando alterações" : "Cadastrando ocorrência",
       );
-      definirOcorrenciaCriada(resultado);
+      if (ocorrenciaInicial) {
+        router.replace({ pathname: "/ocorrencias/[id]", params: { id: resultado.id } });
+        return;
+      }
+      router.replace("/ocorrencias" as never);
     } catch (erro) {
       definirErroEnvio(
         erro instanceof Error
@@ -71,34 +74,9 @@ export default function FormularioOcorrencia({ ocorrenciaInicial }: { ocorrencia
     }
   }
 
-  function verDetalhes() {
-    if (!ocorrenciaCriada) return;
-    router.replace({ pathname: "/ocorrencias/[id]", params: { id: ocorrenciaCriada.id } });
-  }
-
-  function verListagem() {
-    router.replace((ocorrenciaInicial ? "/minhas-ocorrencias" : "/ocorrencias") as never);
-  }
-
   return (
     <View style={styles.tela}>
-      {ocorrenciaCriada ? (
-        <View style={styles.confirmacao}>
-          <View style={styles.confirmacaoConteudo}>
-            <Text style={styles.confirmacaoTitulo}>
-              {ocorrenciaInicial ? "Alterações salvas!" : "Ocorrência cadastrada!"}
-            </Text>
-            <Text style={styles.confirmacaoDescricao}>
-              “{ocorrenciaCriada.titulo}” {ocorrenciaInicial
-                ? "foi atualizada."
-                : "foi publicada e já pode ser consultada pela comunidade."}
-            </Text>
-          </View>
-          {!ocorrenciaInicial ? <Botao label="Ver detalhes" onPress={verDetalhes} fullWidth /> : null}
-          <Botao label={ocorrenciaInicial ? "Voltar às minhas ocorrências" : "Ver ocorrências"} onPress={verListagem} variant="outline" fullWidth />
-        </View>
-      ) : (
-        <ScrollView style={styles.rolagem} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.rolagem} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
           <View style={styles.intro}>
             <Text style={styles.titulo}>{ocorrenciaInicial ? "Editar ocorrência" : "Nova ocorrência"}</Text>
             <Text style={styles.descricao}>
@@ -142,7 +120,7 @@ export default function FormularioOcorrencia({ ocorrenciaInicial }: { ocorrencia
             {erros.descricao ? <Text style={styles.fieldError}>{erros.descricao}</Text> : null}
           </View>
 
-          <View style={styles.field}>
+          <View style={[styles.field, campoAberto === "categoria" && styles.fieldAberto]}>
             <CampoSelecao
               label="Categoria *"
               placeholder="Selecione uma categoria"
@@ -155,7 +133,7 @@ export default function FormularioOcorrencia({ ocorrenciaInicial }: { ocorrencia
             {erros.categoria ? <Text style={styles.fieldError}>{erros.categoria}</Text> : null}
           </View>
 
-          <View style={styles.field}>
+          <View style={[styles.field, campoAberto === "bairro" && styles.fieldAberto]}>
             <CampoSelecao
               label="Bairro *"
               placeholder="Selecione um bairro"
@@ -196,8 +174,7 @@ export default function FormularioOcorrencia({ ocorrenciaInicial }: { ocorrencia
             fullWidth
             size="lg"
           />
-        </ScrollView>
-      )}
+      </ScrollView>
       <NavegacaoInferior ativa="registrar" />
     </View>
   );

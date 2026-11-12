@@ -61,8 +61,8 @@ function exigirCliente(cliente: ClienteOcorrencias | null): ClienteOcorrencias {
 }
 
 const camposPublicos =
-  "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico";
-const camposDetalhe = `${camposPublicos},latitude,longitude,total_apoios,fotos_ocorrencias(caminho_arquivo,ordem)`;
+  "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico,total_apoios";
+const camposDetalhe = `${camposPublicos},latitude,longitude,fotos_ocorrencias(caminho_arquivo,ordem)`;
 
 export async function cadastrarOcorrencia(
   dados: DadosCadastroOcorrencia,

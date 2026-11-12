@@ -53,7 +53,7 @@ describe("integração pública de ocorrências", () => {
 
     expect(tabela).toHaveBeenCalledWith("ocorrencias");
     expect(selecionar).toHaveBeenCalledWith(
-      "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico",
+      "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico,total_apoios",
     );
     expect(ordenar).toHaveBeenCalledWith("criado_em", { ascending: false });
   });

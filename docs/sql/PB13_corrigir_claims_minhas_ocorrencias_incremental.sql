@@ -1,4 +1,6 @@
--- PROPOSTA INCREMENTAL PARA REVISÃO E EXECUÇÃO MANUAL NO SQL EDITOR.
+-- REGISTRO HISTÓRICO: correção de claims informada como já aplicada.
+-- NÃO EXECUTAR NOVAMENTE. Mantido somente para auditoria da alteração anterior.
+-- Para adicionar total_apoios à RPC existente, use a migração incremental própria.
 -- Atualiza somente howviii.listar_minhas_ocorrencias() e a policy
 -- howviii.ocorrencias_pb13_rpc_select_own. Não altera linhas de ocorrências.
 -- Todo o script é transacional: qualquer erro antes do COMMIT exige ROLLBACK.

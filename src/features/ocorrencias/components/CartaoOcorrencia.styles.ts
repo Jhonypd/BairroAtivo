@@ -43,6 +43,8 @@ export const cartaoOcorrenciaStyles = StyleSheet.create({
   divisor: { height: 1, marginHorizontal: -13, backgroundColor: cores.borderSoft },
   rodape: { flexDirection: "row", alignItems: "center", justifyContent: "space-between", gap: 8 },
   data: { flex: 1, minWidth: 0, color: cores.textSubtle, fontSize: 10 },
+  contadorApoios: { flexDirection: "row", alignItems: "center", gap: 3, flexShrink: 0 },
+  textoContadorApoios: { color: cores.textSubtle, fontSize: 10, fontWeight: "600" },
   acao: { flexDirection: "row", alignItems: "center", gap: 3, flexShrink: 0 },
   more: { color: cores.primary, fontSize: 12, fontWeight: "700" },
   seta: { color: cores.primary, fontSize: 17, lineHeight: 19, marginTop: -1 },

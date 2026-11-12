@@ -30,7 +30,7 @@ export function CampoSelecao({ label, placeholder, options, value, onChange, abe
   }, [aberto, progressoSeta]);
 
   return (
-    <View style={styles.field}>
+    <View style={[styles.field, aberto && styles.fieldAberto]}>
       <Text style={styles.label}>{label}</Text>
       <View style={styles.control}>
         <View style={styles.trigger}>
