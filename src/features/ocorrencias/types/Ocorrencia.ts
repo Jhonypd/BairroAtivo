@@ -9,6 +9,10 @@ export type Ocorrencia = {
   status: StatusOcorrencia;
   registradaEm: string;
   nomeAutorPublico?: string;
+  imagemUrl?: string | null;
+  latitude?: number;
+  longitude?: number;
+  totalApoios?: number;
 };
 
 

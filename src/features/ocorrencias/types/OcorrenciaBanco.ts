@@ -19,4 +19,8 @@ export type OcorrenciaBanco = {
   status: StatusOcorrenciaBanco;
   criado_em: string;
   nome_publico: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  total_apoios?: number;
+  fotos_ocorrencias?: { caminho_arquivo: string; ordem: number }[] | null;
 };
