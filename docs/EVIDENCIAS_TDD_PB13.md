@@ -19,7 +19,7 @@ Os seguintes resultados são desta revisão; nenhum teste é declarado aprovado 
 | `npm test -- --runInBand` | Passou: 19 suítes, 103 testes. |
 | `npm run lint` | Passou, sem erros nem alertas. |
 | `npm run typecheck` | Passou (`tsc --noEmit`). |
-| `npx expo-doctor` | 19/20 verificações. Falhou apenas compatibilidade de versões: `react-native-safe-area-context` 5.10.1 vs. ~5.11.1 e divergências de patch em 14 pacotes do SDK 58. Nenhuma dependência foi alterada. |
+| `npx expo-doctor` | 19/20 verificações. Falhou apenas compatibilidade de versões: `react-native-safe-area-context` 5.10.1 vs. ~5.11.1; divergências de patch em `@expo/ui`, `expo`, `expo-blur`, `expo-constants`, `expo-dev-client`, `expo-font`, `expo-linking`, `expo-router`, `expo-secure-store`, `expo-splash-screen`, `expo-status-bar`, `expo-symbols`, `expo-web-browser` e `jest-expo`. Nenhuma dependência foi alterada. |
 | `npx expo export --platform web` | Passou: exportou 12 rotas estáticas, incluindo `/ocorrencias/editar/[id]`; o teste movido não aparece como rota. Metro descartou um cache ilegível e refez a varredura antes de exportar. |
 | `git diff --check` | Passou. |
 
