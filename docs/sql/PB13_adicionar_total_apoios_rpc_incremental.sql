@@ -213,10 +213,14 @@ begin
 end;
 $$;
 
--- Concede CREATE apenas durante a substituição. SET SESSION AUTHORIZATION como
--- superuser define o proprietário sem alterar a associação persistente da role.
+-- A sessão postgres não é SUPERUSER no Supabase. O vínculo administrativo
+-- preexistente tem SET FALSE; criar um segundo GRANT temporário, concedido
+-- por postgres com SET TRUE, permite SET LOCAL ROLE apenas nesta transação.
+-- A função recriada terá como owner a role restrita; o GRANT temporário será
+-- removido explicitamente, preservando o vínculo original de supabase_admin.
+grant bairroativo_pb13_rpc_owner to postgres with inherit false, set true;
 grant create on schema howviii to bairroativo_pb13_rpc_owner;
-set session authorization bairroativo_pb13_rpc_owner;
+set local role bairroativo_pb13_rpc_owner;
 
 drop function howviii.listar_minhas_ocorrencias() restrict;
 
@@ -265,8 +269,9 @@ $$;
 revoke all on function howviii.listar_minhas_ocorrencias() from public, anon, authenticated;
 grant execute on function howviii.listar_minhas_ocorrencias() to authenticated;
 
-reset session authorization;
+reset role;
 revoke create on schema howviii from bairroativo_pb13_rpc_owner;
+revoke bairroativo_pb13_rpc_owner from postgres granted by postgres;
 
 -- Confirma owner, SECURITY DEFINER, formato de retorno, leitura JWT, RLS intacta
 -- e privilégios após recriar a função.
