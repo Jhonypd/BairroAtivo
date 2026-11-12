@@ -86,7 +86,7 @@ export default function FormularioOcorrencia({ ocorrenciaInicial }: { ocorrencia
         <View style={styles.confirmacao}>
           <View style={styles.confirmacaoConteudo}>
             <Text style={styles.confirmacaoTitulo}>
-              {ocorrenciaInicial ? "Ocorrência atualizada!" : "Ocorrência cadastrada!"}
+              {ocorrenciaInicial ? "Alterações salvas!" : "Ocorrência cadastrada!"}
             </Text>
             <Text style={styles.confirmacaoDescricao}>
               “{ocorrenciaCriada.titulo}” {ocorrenciaInicial

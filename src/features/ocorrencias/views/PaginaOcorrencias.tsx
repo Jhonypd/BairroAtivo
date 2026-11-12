@@ -53,6 +53,7 @@ export default function PaginaOcorrencias({ visualizacaoInicial = "todas" }: { v
   const [visualizacao, definirVisualizacao] = useState<VisualizacaoOcorrencias>(visualizacaoInicial);
   const [origemCarregada, definirOrigemCarregada] = useState<VisualizacaoOcorrencias | null>(null);
   const [autorCarregado, definirAutorCarregado] = useState<string | null>(null);
+  const [ocorrenciaSelecionada, definirOcorrenciaSelecionada] = useState<Ocorrencia | null>(null);
 
   const dadosDaVisualizacaoEstaoCarregados = origemCarregada === visualizacao &&
     (visualizacao === "todas" || Boolean(usuario && autorCarregado === usuario.id));
@@ -352,15 +353,11 @@ export default function PaginaOcorrencias({ visualizacaoInicial = "todas" }: { v
         data={ocorrenciasVisiveis}
         keyExtractor={(ocorrencia) => ocorrencia.id}
         renderItem={({ item }) => (
-          <View style={styles.itemLista}>
-            <CartaoOcorrencia ocorrencia={item} />
-            {visualizacao === "minhas" ? (
-              <AcoesOcorrenciaPropria
-                ocorrencia={item}
-                aoExcluir={(id) => definirOcorrencias((atuais) => atuais.filter(({ id: atualId }) => atualId !== id))}
-              />
-            ) : null}
-          </View>
+          <CartaoOcorrencia
+            ocorrencia={item}
+            mostrarOpcoes={visualizacao === "minhas"}
+            aoAbrirOpcoes={() => definirOcorrenciaSelecionada(item)}
+          />
         )}
         keyboardShouldPersistTaps="handled"
         refreshControl={<RefreshControl refreshing={atualizando} onRefresh={() => void carregarOcorrencias(true)} />}
@@ -392,6 +389,15 @@ export default function PaginaOcorrencias({ visualizacaoInicial = "todas" }: { v
           O BairroAtivo não é um serviço oficial da prefeitura.
         </Text>
       </View>
+      <AcoesOcorrenciaPropria
+        key={ocorrenciaSelecionada?.id ?? "nenhuma-ocorrencia"}
+        ocorrencia={ocorrenciaSelecionada}
+        aoFechar={() => definirOcorrenciaSelecionada(null)}
+        aoExcluir={(id) => {
+          definirOcorrencias((atuais) => atuais.filter(({ id: atualId }) => atualId !== id));
+          definirOcorrenciaSelecionada(null);
+        }}
+      />
       <NavegacaoInferior ativa="ocorrencias" />
     </View>
   );
