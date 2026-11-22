@@ -43,8 +43,8 @@ export function CarregamentoGlobalProvider({ children }: PropsWithChildren) {
           tint="light"
           style={StyleSheet.absoluteFill}
         >
-          <View style={styles.overlay} accessibilityViewIsModal accessibilityRole="status" accessibilityLiveRegion="polite">
-            <ActivityIndicator size="large" color={cores.primary} accessibilityLabel={mensagem} />
+          <View style={styles.overlay} accessibilityViewIsModal accessibilityLiveRegion="polite">
+            <ActivityIndicator size="large" color={cores.primary} accessibilityLabel={mensagem} accessibilityRole="progressbar" />
             <Text style={styles.mensagem}>{mensagem}</Text>
             <Text style={styles.auxiliar}>Aguarde um instante...</Text>
           </View>
