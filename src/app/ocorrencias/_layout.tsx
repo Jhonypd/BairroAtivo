@@ -10,6 +10,7 @@ export default function LayoutOcorrencias() {
       contentStyle: { backgroundColor: cores.background },
     }}>
       <Stack.Screen name="index" options={{ title: "Ocorrências", headerTitleAlign: "center" }} />
+      <Stack.Screen name="mapa" options={{ title: "Mapa de ocorrências", headerTitleAlign: "center" }} />
       <Stack.Screen name="nova" options={{ title: "Nova ocorrência" }} />
       <Stack.Screen name="[id]" options={{ headerShown: false }} />
     </Stack>

@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { router } from "expo-router";
-import { Animated, Easing, Image, Modal, Pressable, ScrollView, Text, View } from "react-native";
+import { ActivityIndicator, Animated, Easing, Image, Modal, Pressable, ScrollView, Text, View } from "react-native";
 import Svg, { Defs, LinearGradient, Rect, Stop } from "react-native-svg";
 import { StatusBar } from "expo-status-bar";
 import { SafeAreaView } from "react-native-safe-area-context";
@@ -12,17 +12,50 @@ import IconeNotificacoes from "@/shared/icons/notifications_24dp_E3E3E3.svg";
 import { cores } from "@/configs/tema";
 import { paginaInicialStyles as styles } from "./PaginaInicial.styles";
 import { useAutenticacao } from "@/features/autenticacao/contexto/AutenticacaoProvider";
+import { CartaoOcorrencia } from "@/features/ocorrencias/components/CartaoOcorrencia";
+import { listarOcorrencias } from "@/features/ocorrencias/services/ocorrenciasSupabase";
+import type { Ocorrencia } from "@/features/ocorrencias/types/Ocorrencia";
+import { buscarCidadeDoUsuario, ehSchemaCidadeIndisponivel, obterCidadePublicaPadrao } from "@/shared/services/cidadesSupabase";
 
 const ilustracaoBairro = require("../../../../assets/images/splash-background.jpg");
 
 export default function PaginaInicial() {
   const { usuario, carregando, autenticando, erro, sair } = useAutenticacao();
   const [menuPerfilAberto, definirMenuPerfilAberto] = useState(false);
+  const [dadosRecentes, definirDadosRecentes] = useState<{
+    usuarioId: string | null;
+    estado: "carregando" | "erro" | "pronto";
+    ocorrencias: Ocorrencia[];
+  }>({ usuarioId: null, estado: "carregando", ocorrencias: [] });
   const [progressoSeta] = useState(() => new Animated.Value(0));
   const rotacaoSeta = progressoSeta.interpolate({
     inputRange: [0, 1],
     outputRange: ["0deg", "180deg"],
   });
+
+  useEffect(() => {
+    let ativo = true;
+    void (async () => {
+      try {
+        let recentes: Ocorrencia[];
+        try {
+          const cidadePerfil = usuario ? await buscarCidadeDoUsuario(usuario.id) : null;
+          const cidade = cidadePerfil ?? await obterCidadePublicaPadrao();
+          recentes = await listarOcorrencias({ cidadeIbge: cidade.codigoIbge });
+        } catch (falha) {
+          if (!ehSchemaCidadeIndisponivel(falha)) throw falha;
+          recentes = await listarOcorrencias();
+        }
+        if (ativo) definirDadosRecentes({ usuarioId: usuario?.id ?? null, estado: "pronto", ocorrencias: recentes.slice(0, 3) });
+      } catch {
+        if (ativo) definirDadosRecentes({ usuarioId: usuario?.id ?? null, estado: "erro", ocorrencias: [] });
+      }
+    })();
+    return () => { ativo = false; };
+  }, [usuario, usuario?.id]);
+  const recentesAtuais = dadosRecentes.usuarioId === (usuario?.id ?? null)
+    ? dadosRecentes
+    : { usuarioId: usuario?.id ?? null, estado: "carregando" as const, ocorrencias: [] };
   const nomePerfil = typeof usuario?.user_metadata.full_name === "string"
     ? usuario.user_metadata.full_name
     : typeof usuario?.user_metadata.name === "string"
@@ -187,21 +220,20 @@ export default function PaginaInicial() {
 
         <View style={styles.recentesCabecalho}>
           <Text style={styles.recentesTitulo}>Ocorrências recentes</Text>
-          <Text style={styles.verTodas}>Ver todas</Text>
+          <Pressable accessibilityRole="link" onPress={() => router.push("/ocorrencias")}>
+            <Text style={styles.verTodas}>Ver todas</Text>
+          </Pressable>
         </View>
-        {carregando ? null : usuario ? (
+        {recentesAtuais.estado === "carregando" ? <ActivityIndicator accessibilityLabel="Carregando ocorrências recentes" color={cores.primary} /> : recentesAtuais.estado === "erro" ? (
           <View style={styles.vazio}>
-            <Text style={styles.vazioTexto}>
-              Seu histórico de ocorrências aparecerá aqui.
-            </Text>
+            <Text style={styles.vazioTexto}>Não foi possível carregar as ocorrências recentes. Tente novamente mais tarde.</Text>
+          </View>
+        ) : recentesAtuais.ocorrencias.length > 0 ? (
+          <View style={{ gap: 12 }}>
+            {recentesAtuais.ocorrencias.map((ocorrencia) => <CartaoOcorrencia key={ocorrencia.id} ocorrencia={ocorrencia} />)}
           </View>
         ) : (
-          <View style={styles.vazio}>
-            <Text style={styles.vazioTexto}>
-              Faça login para ver seu histórico de ocorrências.
-            </Text>
-            <Botao label="Entrar" href="/login" variant="ghost" size="sm" />
-          </View>
+          <View style={styles.vazio}><Text style={styles.vazioTexto}>Ainda não há ocorrências recentes nesta cidade.</Text></View>
         )}
       </ScrollView>
       <Modal

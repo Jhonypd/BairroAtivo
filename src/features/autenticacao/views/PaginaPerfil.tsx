@@ -1,14 +1,22 @@
-import { useState } from "react";
-import { Image, ScrollView, Text, View } from "react-native";
+import { useEffect, useState } from "react";
+import { Image, Pressable, ScrollView, Text, View } from "react-native";
 import { router } from "expo-router";
 import { cores } from "@/configs/tema";
 import { Botao } from "@/shared/components/ui/Botao";
 import { NavegacaoInferior } from "@/shared/components/NavegacaoInferior";
 import { useAutenticacao } from "../contexto/AutenticacaoProvider";
+import { buscarCidadeDoUsuario, definirCidadeDoUsuario, ehSchemaCidadeIndisponivel, listarCidadesDisponiveis } from "@/shared/services/cidadesSupabase";
+import type { Cidade } from "@/shared/services/cidadesSupabase";
 
 export default function PaginaPerfil() {
   const { usuario, carregando, autenticando, erro, sair } = useAutenticacao();
   const [erroSaida, definirErroSaida] = useState<string | null>(null);
+  const [cidade, definirCidade] = useState<Cidade | null>(null);
+  const [cidadesDisponiveis, definirCidadesDisponiveis] = useState<Cidade[]>([]);
+  const [carregandoCidade, definirCarregandoCidade] = useState(Boolean(usuario?.id));
+  const [salvandoCidade, definirSalvandoCidade] = useState(false);
+  const [erroCidade, definirErroCidade] = useState<string | null>(null);
+  const [alterandoCidade, definirAlterandoCidade] = useState(false);
   const nome = typeof usuario?.user_metadata.full_name === "string"
     ? usuario.user_metadata.full_name
     : typeof usuario?.user_metadata.name === "string"
@@ -19,6 +27,29 @@ export default function PaginaPerfil() {
     : typeof usuario?.user_metadata.picture === "string"
       ? usuario.user_metadata.picture
       : null;
+
+  useEffect(() => {
+    if (!usuario?.id) return;
+    let ativa = true;
+    Promise.all([buscarCidadeDoUsuario(usuario.id), listarCidadesDisponiveis()])
+      .then(([cidadeAtual, disponiveis]) => { if (ativa) { definirCidade(cidadeAtual); definirCidadesDisponiveis(disponiveis); } })
+      .catch((falha: unknown) => {
+        if (!ativa) return;
+        definirErroCidade(ehSchemaCidadeIndisponivel(falha)
+          ? "O catálogo de cidades ainda não foi ativado no banco. Depois da atualização, a escolha aparecerá automaticamente ao entrar no app."
+          : falha instanceof Error ? falha.message : "Não foi possível carregar as cidades.");
+      })
+      .finally(() => { if (ativa) definirCarregandoCidade(false); });
+    return () => { ativa = false; };
+  }, [usuario?.id]);
+
+  async function selecionarCidade(codigoIbge: number) {
+    if (!usuario?.id) return;
+    definirSalvandoCidade(true); definirErroCidade(null);
+    try { definirCidade(await definirCidadeDoUsuario(usuario.id, codigoIbge)); definirAlterandoCidade(false); }
+    catch (falha) { definirErroCidade(falha instanceof Error ? falha.message : "Não foi possível salvar sua cidade."); }
+    finally { definirSalvandoCidade(false); }
+  }
 
   async function encerrarSessao() {
     definirErroSaida(null);
@@ -39,6 +70,24 @@ export default function PaginaPerfil() {
             )}
             <Text style={{ color: cores.primaryDark, fontSize: 20, fontWeight: "700", textAlign: "center" }}>{nome}</Text>
             {usuario.email ? <Text style={{ color: cores.textMuted, textAlign: "center" }}>{usuario.email}</Text> : null}
+            <View style={{ width: "100%", gap: 10, padding: 16, borderRadius: 14, backgroundColor: cores.background }}>
+              <Text style={{ color: cores.primaryDark, fontSize: 16, fontWeight: "700" }}>Minha cidade</Text>
+              {carregandoCidade ? <Text accessibilityRole="progressbar" style={{ color: cores.textMuted }}>Carregando cidade…</Text> : cidade && !alterandoCidade ? (
+                <View style={{ gap: 8 }}>
+                  <Text style={{ color: cores.textMuted }}>{cidade.nome}, {cidade.uf}</Text>
+                  <Text style={{ color: cores.textMuted, fontSize: 12, lineHeight: 18 }}>Sua cidade fica vinculada ao perfil. Os bairros, relatos e mapa são filtrados por ela.</Text>
+                  <Pressable accessibilityRole="button" onPress={() => definirAlterandoCidade(true)}><Text style={{ color: cores.primary, fontWeight: "700" }}>Alterar minha cidade</Text></Pressable>
+                </View>
+              ) : (
+                <View style={{ gap: 8 }}>
+                  <Text style={{ color: cores.textMuted, lineHeight: 20 }}>Toque na sua cidade na lista abaixo. No primeiro acesso, esta escolha também aparece automaticamente em um popup.</Text>
+                  {cidadesDisponiveis.map((opcao) => <Pressable key={opcao.codigoIbge} accessibilityRole="button" disabled={salvandoCidade} onPress={() => void selecionarCidade(opcao.codigoIbge)} style={{ minHeight: 48, justifyContent: "center", paddingHorizontal: 12, borderRadius: 10, backgroundColor: cores.surface, borderWidth: 1, borderColor: cores.border }}><Text style={{ color: cores.primaryDark, fontWeight: "700" }}>{opcao.nome}, {opcao.uf}</Text></Pressable>)}
+                  {cidadesDisponiveis.length === 0 && !erroCidade ? <Text style={{ color: cores.textMuted }}>Ainda não há cidades cadastradas.</Text> : null}
+                  {alterandoCidade ? <Pressable accessibilityRole="button" onPress={() => definirAlterandoCidade(false)}><Text style={{ color: cores.primary }}>Cancelar alteração</Text></Pressable> : null}
+                </View>
+              )}
+              {erroCidade ? <Text accessibilityRole="alert" style={{ color: cores.error }}>{erroCidade}</Text> : null}
+            </View>
             <Botao label={autenticando ? "Saindo…" : "Sair da conta"} onPress={() => void encerrarSessao()} disabled={autenticando} variant="outline" />
             {erro ?? erroSaida ? <Text accessibilityRole="alert" style={{ color: cores.error }}>{erroSaida ?? erro}</Text> : null}
           </View>

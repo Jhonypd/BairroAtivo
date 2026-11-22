@@ -13,8 +13,11 @@ const dadosValidos: DadosCadastroOcorrencia = {
   titulo: "Buraco na rua principal",
   descricao: "Há uma cratera grande perto da praça.",
   categoria: "buraco",
-  bairro: "Centro",
+  bairro: "Centro I",
   nomePublico: null,
+  cidadeIbge: 4202909,
+  latitude: -27.096,
+  longitude: -48.917,
 };
 
 describe("validação de cadastro de ocorrência", () => {
@@ -54,6 +57,12 @@ describe("validação de cadastro de ocorrência", () => {
       bairro: expect.any(String),
       nomePublico: expect.any(String),
     }));
+  });
+
+  it("exige coordenadas válidas e rejeita coordenada parcial ou fora da faixa", () => {
+    expect(validarCadastroOcorrencia({ ...dadosValidos, latitude: -27.59, longitude: -48.51 })).toEqual({});
+    expect(validarCadastroOcorrencia({ ...dadosValidos, latitude: -27.59, longitude: null })).toHaveProperty("localizacao");
+    expect(validarCadastroOcorrencia({ ...dadosValidos, latitude: 91, longitude: 181 })).toHaveProperty("localizacao");
   });
 
   it("rejeita os mínimos definidos no banco após remover espaços", () => {
@@ -131,9 +140,12 @@ describe("cadastro no Supabase", () => {
       bairro: dadosValidos.bairro,
       autor_id: "usuario-auth-1",
       nome_publico: null,
+      cidade_ibge: dadosValidos.cidadeIbge,
+      latitude: dadosValidos.latitude,
+      longitude: dadosValidos.longitude,
     });
     expect(cliente.select).toHaveBeenCalledWith(
-      "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico,total_apoios",
+      "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico,total_apoios,cidade_ibge",
     );
   });
 

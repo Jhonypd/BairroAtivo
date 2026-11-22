@@ -3,12 +3,14 @@ import { SafeAreaProvider } from "react-native-safe-area-context";
 import { cores } from "@/configs/tema";
 import { CarregamentoGlobalProvider } from "@/shared/components/ui/CarregamentoGlobal";
 import { AutenticacaoProvider } from "@/features/autenticacao/contexto/AutenticacaoProvider";
+import { SeletorCidadeEntrada } from "@/features/autenticacao/components/SeletorCidadeEntrada";
 
 export default function RootLayout() {
   return (
     <SafeAreaProvider>
       <CarregamentoGlobalProvider>
         <AutenticacaoProvider>
+          <SeletorCidadeEntrada />
           <Stack
             screenOptions={{
               headerStyle: { backgroundColor: cores.background },

@@ -8,12 +8,14 @@ import type {
   StatusOcorrenciaBanco,
 } from "../types/OcorrenciaBanco";
 import type { DadosCadastroOcorrencia } from "../validacoes/cadastroOcorrencia";
+import { ehSchemaCidadeIndisponivel } from "@/shared/services/cidadesSupabase";
 
 export type FiltrosOcorrencia = {
   titulo?: string;
   bairro?: string;
   categoria?: CategoriaOcorrenciaBanco;
   status?: StatusOcorrenciaBanco;
+  cidadeIbge?: number;
 };
 
 const status: Record<StatusOcorrenciaBanco, Ocorrencia["status"]> = {
@@ -48,6 +50,7 @@ export function converterOcorrencia(dado: OcorrenciaBanco): Ocorrencia {
     ...(caminhoDaImagem ? { imagemUrl: caminhoDaImagem } : {}),
     ...(typeof dado.latitude === "number" ? { latitude: dado.latitude } : {}),
     ...(typeof dado.longitude === "number" ? { longitude: dado.longitude } : {}),
+    ...(typeof dado.cidade_ibge === "number" ? { cidadeIbge: dado.cidade_ibge } : {}),
     ...(typeof dado.total_apoios === "number" ? { totalApoios: dado.total_apoios } : {}),
   };
 }
@@ -62,9 +65,13 @@ function exigirCliente(cliente: ClienteOcorrencias | null): ClienteOcorrencias {
 }
 
 const camposPublicos =
+  "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico,total_apoios,cidade_ibge";
+const camposPublicosLegados =
   "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico,total_apoios";
-const camposLista = `${camposPublicos},fotos_ocorrencias(caminho_arquivo,ordem)`;
+const camposLista = `${camposPublicos},latitude,longitude,fotos_ocorrencias(caminho_arquivo,ordem)`;
+const camposListaLegados = `${camposPublicosLegados},latitude,longitude,fotos_ocorrencias(caminho_arquivo,ordem)`;
 const camposDetalhe = `${camposPublicos},latitude,longitude,fotos_ocorrencias(caminho_arquivo,ordem)`;
+const camposDetalheLegados = `${camposPublicosLegados},latitude,longitude,fotos_ocorrencias(caminho_arquivo,ordem)`;
 const bucketFotos = "fotos-ocorrencias";
 const limiteFotosPorEnvio = 5;
 const limiteTamanhoFoto = 5 * 1024 * 1024;
@@ -195,6 +202,9 @@ export async function cadastrarOcorrencia(
       bairro: dados.bairro.trim(),
       autor_id: autenticacao.user.id,
       nome_publico: dados.nomePublico?.trim() || null,
+      latitude: dados.latitude ?? null,
+      longitude: dados.longitude ?? null,
+      cidade_ibge: dados.cidadeIbge,
     })
     .select(camposPublicos)
     .single();
@@ -220,48 +230,46 @@ export async function listarOcorrencias(
   filtros: FiltrosOcorrencia = {},
   cliente: ClienteOcorrencias | null = supabase,
 ): Promise<Ocorrencia[]> {
-  let consulta = exigirCliente(cliente)
-    .from("ocorrencias")
-    .select(camposLista)
-    .order("criado_em", { ascending: false });
+  const clienteConfigurado = exigirCliente(cliente);
+  const consultar = async (campos: string, filtrarCidade: boolean) => {
+    let consulta = clienteConfigurado.from("ocorrencias").select(campos).order("criado_em", { ascending: false });
+    if (filtrarCidade && filtros.cidadeIbge) consulta = consulta.eq("cidade_ibge", filtros.cidadeIbge);
+    if (filtros.titulo?.trim()) consulta = consulta.ilike("titulo", `%${filtros.titulo.trim()}%`);
+    if (filtros.bairro?.trim()) consulta = consulta.ilike("bairro", `%${filtros.bairro.trim()}%`);
+    if (filtros.categoria) consulta = consulta.eq("categoria", filtros.categoria);
+    if (filtros.status) consulta = consulta.eq("status", filtros.status);
+    return consulta;
+  };
 
-  if (filtros.titulo?.trim()) {
-    consulta = consulta.ilike("titulo", `%${filtros.titulo.trim()}%`);
+  let resposta = await consultar(camposLista, true);
+  if (resposta.error && ehSchemaCidadeIndisponivel(resposta.error)) {
+    resposta = await consultar(camposListaLegados, false);
   }
-  if (filtros.bairro?.trim()) {
-    consulta = consulta.ilike("bairro", `%${filtros.bairro.trim()}%`);
-  }
-  if (filtros.categoria) {
-    consulta = consulta.eq("categoria", filtros.categoria);
-  }
-  if (filtros.status) {
-    consulta = consulta.eq("status", filtros.status);
-  }
-
-  const { data, error } = await consulta;
+  const { data, error } = resposta;
   if (error) {
     throw new Error("Não foi possível carregar as ocorrências.");
   }
 
-  return adicionarPrimeirasFotosAssinadas(data as unknown as OcorrenciaBanco[], exigirCliente(cliente));
+  return adicionarPrimeirasFotosAssinadas(data as unknown as OcorrenciaBanco[], clienteConfigurado);
 }
 
 export async function buscarOcorrenciaPorId(
   id: string,
   cliente: ClienteOcorrencias | null = supabase,
 ): Promise<Ocorrencia | null> {
-  const { data, error } = await exigirCliente(cliente)
-    .from("ocorrencias")
-    .select(camposDetalhe)
-    .eq("id", id)
-    .maybeSingle();
+  const clienteConfigurado = exigirCliente(cliente);
+  let resposta = await clienteConfigurado.from("ocorrencias").select(camposDetalhe).eq("id", id).maybeSingle();
+  if (resposta.error && ehSchemaCidadeIndisponivel(resposta.error)) {
+    resposta = await clienteConfigurado.from("ocorrencias").select(camposDetalheLegados).eq("id", id).maybeSingle();
+  }
+  const { data, error } = resposta;
 
   if (error) {
     throw new Error("Não foi possível carregar os detalhes da ocorrência.");
   }
   if (!data) return null;
   const registro = data as unknown as OcorrenciaBanco;
-  return adicionarUrlsAssinadas(converterOcorrencia(registro), registro, exigirCliente(cliente));
+  return adicionarUrlsAssinadas(converterOcorrencia(registro), registro, clienteConfigurado);
 }
 
 async function obterUsuarioApoio(cliente: ClienteOcorrencias) {
@@ -353,6 +361,8 @@ export async function atualizarOcorrencia(
     categoria: dados.categoria,
     bairro: dados.bairro.trim(),
     nome_publico: dados.nomePublico?.trim() || null,
+    latitude: dados.latitude ?? null,
+    longitude: dados.longitude ?? null,
   }).eq("id", id).select(camposPublicos).single();
 
   if (error || !data) throw new Error("Não foi possível atualizar a ocorrência. Verifique sua conexão e suas permissões.");

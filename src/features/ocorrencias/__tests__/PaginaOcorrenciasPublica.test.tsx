@@ -16,6 +16,10 @@ jest.mock("../services/ocorrenciasSupabase", () => ({
   listarOcorrencias: jest.fn().mockResolvedValue([] as never),
   listarMinhasOcorrencias: jest.fn().mockResolvedValue([] as never),
 }));
+jest.mock("@/shared/services/cidadesSupabase", () => ({
+  buscarCidadeDoUsuario: jest.fn(async () => null),
+  obterCidadePublicaPadrao: jest.fn(async () => ({ codigoIbge: 4202909, nome: "Brusque", uf: "SC" })),
+}));
 jest.mock("@/shared/icons/filter_alt_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
 jest.mock("@/shared/icons/search_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
 jest.mock("@/shared/icons/location_on_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));

@@ -6,6 +6,7 @@ import { cadastrarOcorrencia } from "../services/ocorrenciasSupabase";
 import type { Ocorrencia } from "../types/Ocorrencia";
 import { router } from "expo-router";
 import * as ImagePicker from "expo-image-picker";
+import { capturarLocalizacaoAtual } from "@/shared/services/localizacaoDispositivo";
 
 jest.mock("@/features/autenticacao/contexto/AutenticacaoProvider", () => ({
   useAutenticacao: jest.fn(),
@@ -14,6 +15,12 @@ jest.mock("../services/ocorrenciasSupabase", () => ({
   cadastrarOcorrencia: jest.fn(),
   validarFotosOcorrencia: jest.fn(() => null),
 }));
+jest.mock("@/shared/services/cidadesSupabase", () => ({
+  buscarCidadeDoUsuario: jest.fn(async () => ({ codigoIbge: 4202909, nome: "Brusque", uf: "SC" })),
+  listarBairrosDaCidade: jest.fn(async () => ["Centro I", "Centro II", "Guarani"]),
+  sugerirBairro: jest.fn(async () => undefined),
+}));
+jest.mock("@/shared/services/localizacaoDispositivo", () => ({ capturarLocalizacaoAtual: jest.fn(async () => ({ latitude: -27.096, longitude: -48.917 })) }));
 jest.mock("@/shared/components/ui/CarregamentoGlobal", () => ({
   useCarregamentoGlobal: () => ({
     executarComCarregamento: (operacao: () => Promise<unknown>) => operacao(),
@@ -36,12 +43,14 @@ jest.mock("@/shared/icons/photo_library_24dp_E3E3E3.svg", () => ({
   default: () => null,
 }));
 
+jest.mock("@/shared/icons/info_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
+
 const ocorrenciaCriada: Ocorrencia = {
   id: "ocorrencia-1",
   titulo: "Buraco no Centro",
   descricao: "Cratera grande perto da praça.",
   categoria: "Buraco na via",
-  bairro: "Centro",
+  bairro: "Centro I",
   status: "Aberta",
   registradaEm: "30 de out. de 2026",
 };
@@ -52,7 +61,7 @@ async function preencherFormulario() {
   await fireEvent.press(screen.getByLabelText("Categoria *: Selecione uma categoria"));
   await fireEvent.press(screen.getByText("Buraco na via"));
   await fireEvent.press(screen.getByLabelText("Bairro *: Selecione um bairro"));
-  await fireEvent.press(screen.getByText("Centro"));
+  await fireEvent.press(await screen.findByText("Centro I"));
 }
 
 describe("formulário de cadastro de ocorrência", () => {
@@ -97,9 +106,29 @@ describe("formulário de cadastro de ocorrência", () => {
     expect(cadastrarOcorrencia).toHaveBeenCalledWith(expect.objectContaining({
       titulo: "Buraco no Centro",
       categoria: "buraco",
-      bairro: "Centro",
+      bairro: "Centro I",
       nomePublico: null,
     }), undefined, []);
+  });
+
+  it("captura a localização automaticamente sem pedir coordenadas à pessoa", async () => {
+    jest.mocked(cadastrarOcorrencia).mockResolvedValue(ocorrenciaCriada);
+    await render(<FormularioOcorrencia />);
+    await preencherFormulario();
+    await fireEvent.press(screen.getByText("Cadastrar ocorrência"));
+    await waitFor(() => expect(cadastrarOcorrencia).toHaveBeenCalledWith(expect.objectContaining({ latitude: -27.096, longitude: -48.917, cidadeIbge: 4202909 }), undefined, []));
+  });
+
+  it("permite marcar o ponto no mapa quando o GPS não estiver disponível", async () => {
+    jest.mocked(capturarLocalizacaoAtual).mockRejectedValueOnce(new Error("Permissão negada"));
+    jest.mocked(cadastrarOcorrencia).mockResolvedValue(ocorrenciaCriada);
+    await render(<FormularioOcorrencia />);
+    await preencherFormulario();
+    await fireEvent.press(await screen.findByText("Marcar o local no mapa"));
+    await fireEvent.press(screen.getByTestId("mapa-seletor-localizacao"), { nativeEvent: { coordinate: { latitude: -27.59, longitude: -48.51 } } });
+    await fireEvent.press(screen.getByText("Confirmar local"));
+    await fireEvent.press(screen.getByText("Cadastrar ocorrência"));
+    await waitFor(() => expect(cadastrarOcorrencia).toHaveBeenCalledWith(expect.objectContaining({ latitude: -27.59, longitude: -48.51 }), undefined, []));
   });
 
   it("anexa foto da galeria após solicitar permissão", async () => {

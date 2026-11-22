@@ -19,6 +19,7 @@ export const ocorrenciasStyles = StyleSheet.create({
   titulo: { color: cores.primaryDark, fontSize: 24, fontWeight: "800", lineHeight: 31 },
   descricao: { color: cores.textMuted, fontSize: 14, lineHeight: 21 },
   search: { flex: 1, minWidth: 0, minHeight: 46, paddingRight: 12, color: cores.primaryDark, fontSize: 14 },
+  botaoMapa: { minHeight: 48, alignItems: "center", justifyContent: "center", paddingHorizontal: 11, borderRadius: 14, backgroundColor: cores.surface, borderWidth: 1, borderColor: cores.border },
   botaoFiltros: { minHeight: 48, flexDirection: "row", alignItems: "center", justifyContent: "center", gap: 5, paddingHorizontal: 11, borderRadius: 14, backgroundColor: cores.surface, borderWidth: 1, borderColor: cores.border },
   rotuloBotaoFiltros: { color: cores.primaryDark, fontSize: 12, fontWeight: "700" },
   contadorFiltros: { minWidth: 17, height: 17, alignItems: "center", justifyContent: "center", paddingHorizontal: 4, borderRadius: 9, backgroundColor: cores.primary },

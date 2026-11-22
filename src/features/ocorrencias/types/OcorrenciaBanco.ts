@@ -21,6 +21,7 @@ export type OcorrenciaBanco = {
   nome_publico: string | null;
   latitude?: number | null;
   longitude?: number | null;
+  cidade_ibge?: number;
   total_apoios?: number;
   fotos_ocorrencias?: { caminho_arquivo: string; ordem: number }[] | null;
 };

@@ -7,10 +7,13 @@ export type DadosCadastroOcorrencia = {
   categoria: CategoriaOcorrenciaBanco | "";
   bairro: string;
   nomePublico: string | null;
+  latitude?: number | null;
+  longitude?: number | null;
+  cidadeIbge?: number | null;
 };
 
 export type ErrosCadastroOcorrencia = Partial<
-  Record<keyof DadosCadastroOcorrencia, string>
+  Record<keyof DadosCadastroOcorrencia | "localizacao" | "cidade", string>
 >;
 
 export function validarCadastroOcorrencia(
@@ -34,6 +37,20 @@ export function validarCadastroOcorrencia(
 
   if (bairro.length < 2) erros.bairro = "Informe um bairro com pelo menos 2 caracteres.";
   else if (bairro.length > 120) erros.bairro = "O bairro deve ter no máximo 120 caracteres.";
+
+  if (!Number.isInteger(dados.cidadeIbge) || (dados.cidadeIbge ?? 0) <= 0) {
+    erros.cidade = "Defina sua cidade no perfil antes de registrar uma ocorrência.";
+  }
+
+  const latitude = dados.latitude ?? null;
+  const longitude = dados.longitude ?? null;
+  if (latitude === null && longitude === null) {
+    erros.localizacao = "Ative a localização do aparelho para continuar.";
+  } else if ((latitude === null) !== (longitude === null)) {
+    erros.localizacao = "A localização está incompleta. Tente novamente.";
+  } else if (latitude !== null && longitude !== null && (!Number.isFinite(latitude) || !Number.isFinite(longitude) || latitude < -90 || latitude > 90 || longitude < -180 || longitude > 180)) {
+    erros.localizacao = "Informe coordenadas válidas.";
+  }
 
   if (dados.nomePublico !== null && nomePublico.length < 2) {
     erros.nomePublico = "O nome público deve ter pelo menos 2 caracteres.";

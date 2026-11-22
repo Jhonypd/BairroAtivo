@@ -44,7 +44,7 @@ describe("gerenciamento Supabase de ocorrências", () => {
     const update = jest.fn().mockReturnValue({ eq });
     const cliente = { auth: { getUser: jest.fn(async () => ({ data: { user: { id: "autor-1" } }, error: null })) }, from: jest.fn().mockReturnValue({ update }) } as never;
     await expect(atualizarOcorrencia("1", dados, cliente)).resolves.toMatchObject({ titulo: dados.titulo });
-    expect(update).toHaveBeenCalledWith({ titulo: "Buraco atualizado", descricao: "Cratera na via central.", categoria: "buraco", bairro: "Centro", nome_publico: null });
+    expect(update).toHaveBeenCalledWith({ titulo: "Buraco atualizado", descricao: "Cratera na via central.", categoria: "buraco", bairro: "Centro", nome_publico: null, latitude: null, longitude: null });
     expect(eq.mock.calls[0]).toEqual(["id", "1"]);
   });
 

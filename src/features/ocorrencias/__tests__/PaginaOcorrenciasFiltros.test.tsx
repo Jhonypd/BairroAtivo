@@ -10,6 +10,10 @@ import type { Ocorrencia } from "../types/Ocorrencia";
 let mockFocarTela: (() => void | (() => void)) | null = null;
 
 jest.mock("../services/ocorrenciasSupabase", () => ({ listarOcorrencias: jest.fn() }));
+jest.mock("@/shared/services/cidadesSupabase", () => ({
+  buscarCidadeDoUsuario: jest.fn(async () => null),
+  obterCidadePublicaPadrao: jest.fn(async () => ({ codigoIbge: 4202909, nome: "Brusque", uf: "SC" })),
+}));
 jest.mock("@/shared/icons/filter_alt_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
 jest.mock("@/shared/icons/search_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
 jest.mock("@/shared/icons/location_on_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
@@ -89,6 +93,7 @@ describe("filtros públicos da listagem", () => {
 
   it("mantém a lista até aplicar o bairro escolhido", async () => {
     await abrirListagem();
+    expect(listarMock).toHaveBeenCalledWith(expect.objectContaining({ cidadeIbge: 4202909 }));
     await escolherFiltro("Bairro", "Jardim América");
     expect(screen.getByText("4 ocorrências")).toBeOnTheScreen();
     await aplicarFiltros();

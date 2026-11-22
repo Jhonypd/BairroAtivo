@@ -13,6 +13,7 @@ export type Ocorrencia = {
   imagensUrl?: string[];
   latitude?: number;
   longitude?: number;
+  cidadeIbge?: number;
   totalApoios?: number;
 };
 

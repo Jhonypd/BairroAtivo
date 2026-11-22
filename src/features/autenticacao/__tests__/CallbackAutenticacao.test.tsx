@@ -24,8 +24,8 @@ describe("CallbackAutenticacao", () => {
     concluir({ user: { id: "usuario-1" } } as Session);
   });
 
-  it("redireciona para o início quando a sessão é criada", async () => {
-    mockConcluir.mockResolvedValue({} as Awaited<ReturnType<typeof concluirLoginComCodigo>>);
+  it("redireciona à tela inicial após o login, onde a seleção de cidade aparece", async () => {
+    mockConcluir.mockResolvedValue({ user: { id: "usuario-1" } } as Awaited<ReturnType<typeof concluirLoginComCodigo>>);
     await render(<CallbackAutenticacao codigo="codigo-google" />);
     await waitFor(() => expect(mockReplace).toHaveBeenCalledWith("/inicio"));
   });

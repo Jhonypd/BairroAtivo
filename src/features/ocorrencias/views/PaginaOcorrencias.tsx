@@ -15,6 +15,7 @@ import { AcoesOcorrenciaPropria } from "../components/AcoesOcorrenciaPropria";
 import IconeFiltros from "@/shared/icons/filter_alt_24dp_E3E3E3.svg";
 import IconeBusca from "@/shared/icons/search_24dp_E3E3E3.svg";
 import { cores } from "@/configs/tema";
+import { buscarCidadeDoUsuario, ehSchemaCidadeIndisponivel, obterCidadePublicaPadrao } from "@/shared/services/cidadesSupabase";
 
 type VisualizacaoOcorrencias = "todas" | "minhas";
 
@@ -117,10 +118,17 @@ export default function PaginaOcorrencias({ visualizacaoInicial = "todas" }: { v
     else definirCarregando(true);
     definirErro(null);
     try {
-      const resultado = await executarComCarregamento(
-        visualizacao === "minhas" ? listarMinhasOcorrencias : listarOcorrencias,
-        atualizacao ? "Atualizando ocorrências" : "Carregando ocorrências",
-      );
+      const resultado = await executarComCarregamento(async () => {
+        if (visualizacao === "minhas") return listarMinhasOcorrencias();
+        try {
+          const cidadeDoPerfil = usuario ? await buscarCidadeDoUsuario(usuario.id) : null;
+          const cidade = cidadeDoPerfil ?? await obterCidadePublicaPadrao();
+          return listarOcorrencias({ cidadeIbge: cidade.codigoIbge });
+        } catch (falha) {
+          if (ehSchemaCidadeIndisponivel(falha)) return listarOcorrencias();
+          throw falha;
+        }
+      }, atualizacao ? "Atualizando ocorrências" : "Carregando ocorrências");
       if (idRequisicao === requisicaoAtual.current) {
         definirOcorrencias(resultado);
         definirOrigemCarregada(visualizacao);
@@ -217,6 +225,9 @@ export default function PaginaOcorrencias({ visualizacaoInicial = "todas" }: { v
               returnKeyType="search"
             />
           </View>
+          <Pressable accessibilityRole="button" accessibilityLabel="Ver ocorrências no mapa" onPress={() => router.push("/ocorrencias/mapa" as never)} style={styles.botaoMapa}>
+            <Text style={styles.rotuloBotaoFiltros}>Mapa</Text>
+          </Pressable>
           <Pressable
             accessibilityRole="button"
             accessibilityLabel={`Filtros${quantidadeFiltrosAtivos ? `, ${quantidadeFiltrosAtivos} ativos` : ""}`}

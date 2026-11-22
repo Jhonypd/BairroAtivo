@@ -46,6 +46,12 @@
           "microphonePermission": false
         }
       ],
+      [
+        "expo-location",
+        {
+          "locationWhenInUsePermission": "Permitir que o BairroAtivo capture o local do problema ao registrar uma ocorrência. A localização não é acompanhada em segundo plano."
+        }
+      ],
       "expo-font",
       "expo-web-browser",
       "expo-secure-store"

@@ -1,6 +1,7 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import {
   cadastrarOcorrencia,
+  buscarOcorrenciaPorId,
   converterOcorrencia,
   listarOcorrencias,
   validarFotosOcorrencia,
@@ -106,9 +107,37 @@ describe("integração pública de ocorrências", () => {
 
     expect(tabela).toHaveBeenCalledWith("ocorrencias");
     expect(selecionar).toHaveBeenCalledWith(
-      "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico,total_apoios,fotos_ocorrencias(caminho_arquivo,ordem)",
+      "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico,total_apoios,cidade_ibge,latitude,longitude,fotos_ocorrencias(caminho_arquivo,ordem)",
     );
     expect(ordenar).toHaveBeenCalledWith("criado_em", { ascending: false });
+  });
+
+  it("recupera a listagem sem filtro de cidade quando o banco ainda não tem a migration", async () => {
+    const consultaComCidade = { eq: jest.fn().mockReturnThis(), order: jest.fn(), then: (resolve: (valor: unknown) => void) => resolve({ data: null, error: { code: "42703", message: "column ocorrencias.cidade_ibge does not exist" } }) };
+    consultaComCidade.order.mockReturnValue(consultaComCidade as never);
+    const consultaLegada = { order: jest.fn(), then: (resolve: (valor: unknown) => void) => resolve({ data: [], error: null }) };
+    consultaLegada.order.mockReturnValue(consultaLegada as never);
+    const selecionar = jest.fn().mockReturnValueOnce(consultaComCidade).mockReturnValueOnce(consultaLegada);
+    const tabela = jest.fn().mockReturnValue({ select: selecionar });
+
+    await expect(listarOcorrencias({ cidadeIbge: 4202909 }, { from: tabela } as never)).resolves.toEqual([]);
+
+    expect(selecionar).toHaveBeenNthCalledWith(2, "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico,total_apoios,latitude,longitude,fotos_ocorrencias(caminho_arquivo,ordem)");
+    expect(consultaComCidade.eq).toHaveBeenCalledWith("cidade_ibge", 4202909);
+  });
+
+  it("recupera os detalhes sem o campo de cidade no schema atual", async () => {
+    const linhaLegada = {
+      id: "ocorrencia-1", titulo: "Buraco na rua", descricao: "Cratera na esquina da rua principal.",
+      categoria: "buraco", bairro: "Centro", status: "aberta", criado_em: "2026-10-28T15:00:00.000Z", nome_publico: null,
+    };
+    const consultaAtual = { eq: jest.fn().mockReturnThis(), maybeSingle: jest.fn().mockResolvedValue({ data: null, error: { code: "42703", message: "column ocorrencias.cidade_ibge does not exist" } } as never) };
+    const consultaLegada = { eq: jest.fn().mockReturnThis(), maybeSingle: jest.fn().mockResolvedValue({ data: linhaLegada, error: null } as never) };
+    const selecionar = jest.fn().mockReturnValueOnce(consultaAtual).mockReturnValueOnce(consultaLegada);
+    const tabela = jest.fn().mockReturnValue({ select: selecionar });
+
+    await expect(buscarOcorrenciaPorId("ocorrencia-1", { from: tabela } as never)).resolves.toMatchObject({ id: "ocorrencia-1", titulo: "Buraco na rua" });
+    expect(selecionar).toHaveBeenNthCalledWith(2, "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico,total_apoios,latitude,longitude,fotos_ocorrencias(caminho_arquivo,ordem)");
   });
 
   it("assina a primeira foto vinculada para exibição no cartão da listagem", async () => {
