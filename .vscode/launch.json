@@ -1,0 +1,20 @@
+{
+  "version": "0.2.0",
+  "configurations": [
+    {
+      "name": "BairroAtivo: depurar Web no Chrome",
+      "type": "pwa-chrome",
+      "request": "launch",
+      "url": "http://localhost:8091/inicio",
+      "webRoot": "${workspaceFolder}",
+      "preLaunchTask": "BairroAtivo: iniciar Expo Web"
+    },
+    {
+      "name": "BairroAtivo: iniciar servidor para Android",
+      "type": "node-terminal",
+      "request": "launch",
+      "command": "npx expo start --dev-client",
+      "cwd": "${workspaceFolder}"
+    }
+  ]
+}

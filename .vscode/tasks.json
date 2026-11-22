@@ -1,0 +1,24 @@
+{
+  "version": "2.0.0",
+  "tasks": [
+    {
+      "label": "BairroAtivo: iniciar Expo Web",
+      "type": "shell",
+      "command": "npx expo start --web --localhost --port 8091",
+      "options": {
+        "cwd": "${workspaceFolder}",
+        "env": { "BROWSER": "none" }
+      },
+      "isBackground": true,
+      "problemMatcher": {
+        "owner": "expo",
+        "pattern": { "regexp": "^(.*)$", "message": 1 },
+        "background": {
+          "activeOnStart": true,
+          "beginsPattern": "Starting Metro Bundler",
+          "endsPattern": "Waiting on http://localhost:8091"
+        }
+      }
+    }
+  ]
+}
