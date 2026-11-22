@@ -39,7 +39,7 @@ const itens: {
     chave: "perfil",
     rotulo: "Perfil",
     Icone: IconePerfil,
-    rota: "/login",
+    rota: "/perfil",
   },
 ];
 

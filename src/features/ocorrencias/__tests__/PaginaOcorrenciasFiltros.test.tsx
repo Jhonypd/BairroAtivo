@@ -1,4 +1,5 @@
 import { act, fireEvent, render, screen, waitFor } from "@testing-library/react-native";
+import { StyleSheet } from "react-native";
 import { beforeEach, describe, expect, it, jest } from "@jest/globals";
 import PaginaOcorrencias from "../views/PaginaOcorrencias";
 import { CarregamentoGlobalProvider } from "@/shared/components/ui/CarregamentoGlobal";
@@ -9,6 +10,12 @@ import type { Ocorrencia } from "../types/Ocorrencia";
 let mockFocarTela: (() => void | (() => void)) | null = null;
 
 jest.mock("../services/ocorrenciasSupabase", () => ({ listarOcorrencias: jest.fn() }));
+jest.mock("@/shared/icons/filter_alt_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
+jest.mock("@/shared/icons/search_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
+jest.mock("@/shared/icons/location_on_24dp_E3E3E3.svg", () => ({ __esModule: true, default: () => null }));
+jest.mock("@/features/autenticacao/contexto/AutenticacaoProvider", () => ({
+  useAutenticacao: () => ({ usuario: null, carregando: false }),
+}));
 jest.mock("@/shared/components/NavegacaoInferior", () => {
   const React = jest.requireActual<typeof import("react")>("react");
   const { Pressable, Text } = jest.requireActual<typeof import("react-native")>("react-native");
@@ -59,8 +66,18 @@ async function abrirListagem() {
 }
 
 async function escolherFiltro(rotuloCampo: string, valor: string) {
+  if (!screen.getByRole("button", { name: /^Filtros/ }).props.accessibilityState?.expanded) {
+    await fireEvent.press(screen.getByRole("button", { name: /^Filtros/ }));
+  }
   await fireEvent.press(screen.getByRole("button", { name: new RegExp(rotuloCampo) }));
   await fireEvent.press(screen.getByRole("radio", { name: valor }));
+}
+
+async function aplicarFiltros() {
+  const chamadas = listarMock.mock.calls.length;
+  await fireEvent.press(screen.getByRole("button", { name: "Aplicar filtros" }));
+  await waitFor(() => expect(listarMock).toHaveBeenCalledTimes(chamadas + 1));
+  await waitFor(() => expect(screen.getByRole("button", { name: /^Filtros/ }).props.accessibilityState?.expanded).toBe(false));
 }
 
 describe("filtros públicos da listagem", () => {
@@ -70,9 +87,11 @@ describe("filtros públicos da listagem", () => {
     listarMock.mockResolvedValue(registros);
   });
 
-  it("filtra por bairro escolhido entre os registros do banco", async () => {
+  it("mantém a lista até aplicar o bairro escolhido", async () => {
     await abrirListagem();
     await escolherFiltro("Bairro", "Jardim América");
+    expect(screen.getByText("4 ocorrências")).toBeOnTheScreen();
+    await aplicarFiltros();
     expect(screen.getByText("Lâmpada da praça apagada")).toBeOnTheScreen();
     expect(screen.queryByText("Buraco na rua principal")).toBeNull();
     expect(screen.getByText("1 ocorrência")).toBeOnTheScreen();
@@ -81,8 +100,47 @@ describe("filtros públicos da listagem", () => {
   it("filtra por categoria existente nos registros", async () => {
     await abrirListagem();
     await escolherFiltro("Categoria", "Buraco na via");
+    await aplicarFiltros();
     expect(screen.getByText("Buraco na rua principal")).toBeOnTheScreen();
     expect(screen.queryByText("Lâmpada da praça apagada")).toBeNull();
+  });
+
+  it("mantém filtros ativos até aplicar e limpa apenas o rascunho", async () => {
+    await abrirListagem();
+    await escolherFiltro("Bairro", "Centro");
+    await escolherFiltro("Categoria", "Buraco na via");
+    expect(screen.getByText("4 ocorrências")).toBeOnTheScreen();
+    await aplicarFiltros();
+    expect(screen.queryByText(/^Filtros:/)).toBeNull();
+    expect(screen.getByText("2 filtros ativos · Centro · Buraco na via")).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole("button", { name: /^Filtros/ }));
+    expect(screen.getByRole("button", { name: "Limpar bairro" })).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: "Limpar categoria" })).toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByRole("button", { name: "Limpar categoria" }));
+    expect(screen.getByLabelText("Bairro: Centro")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Categoria: Todas as categorias")).toBeOnTheScreen();
+    expect(screen.getByText("1 ocorrência")).toBeOnTheScreen();
+    await aplicarFiltros();
+    expect(screen.getByText("3 ocorrências")).toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByRole("button", { name: /^Filtros/ }));
+    await fireEvent.press(screen.getByRole("button", { name: "Limpar bairro" }));
+    expect(screen.getByLabelText("Bairro: Todos os bairros")).toBeOnTheScreen();
+    expect(screen.getByText("3 ocorrências")).toBeOnTheScreen();
+    await aplicarFiltros();
+    expect(screen.getByText("4 ocorrências")).toBeOnTheScreen();
+  });
+
+  it("abre as opções como menu sobreposto sem aumentar o espaço do filtro", async () => {
+    await abrirListagem();
+    await fireEvent.press(screen.getByRole("button", { name: /^Filtros/ }));
+    await fireEvent.press(screen.getByRole("radio", { name: "Abertas" }));
+    await fireEvent.press(screen.getByRole("button", { name: /Categoria/ }));
+    const opcoes = screen.getByTestId("opcoes-campo-selecao");
+    expect(StyleSheet.flatten(opcoes.props.style).position).toBe("absolute");
+    expect(StyleSheet.flatten(screen.getByTestId("container-filtros-combos").props.style).zIndex).toBeGreaterThan(0);
+    expect(screen.getByRole("radio", { name: "Buraco na via" })).toBeOnTheScreen();
   });
 
   it("combina bairro, categoria e status", async () => {
@@ -90,6 +148,7 @@ describe("filtros públicos da listagem", () => {
     await escolherFiltro("Bairro", "Centro");
     await escolherFiltro("Categoria", "Buraco na via");
     await fireEvent.press(screen.getByRole("radio", { name: "Em andamento" }));
+    await aplicarFiltros();
     expect(screen.getByText("Buraco na rua principal")).toBeOnTheScreen();
     expect(screen.getByText("1 ocorrência")).toBeOnTheScreen();
   });
@@ -97,6 +156,7 @@ describe("filtros públicos da listagem", () => {
   it("combina busca textual com os filtros selecionados", async () => {
     await abrirListagem();
     await escolherFiltro("Bairro", "Centro");
+    await aplicarFiltros();
     await fireEvent.changeText(screen.getByLabelText("Buscar ocorrências"), "calçada");
     expect(screen.getByText("Calçada danificada na rua das Flores")).toBeOnTheScreen();
     expect(screen.queryByText("Buraco na rua principal")).toBeNull();
@@ -108,17 +168,53 @@ describe("filtros públicos da listagem", () => {
     await escolherFiltro("Bairro", "Centro");
     await escolherFiltro("Categoria", "Buraco na via");
     await fireEvent.press(screen.getByRole("radio", { name: "Abertas" }));
+    await aplicarFiltros();
     await fireEvent.changeText(screen.getByLabelText("Buscar ocorrências"), "rua");
-    await fireEvent.press(screen.getByRole("button", { name: "Limpar filtros" }));
-    expect(screen.getByLabelText("Buscar ocorrências").props.value).toBe("");
-    expect(screen.getByRole("radio", { name: "Todas" }).props.accessibilityState?.selected).toBe(true);
+    await fireEvent.press(screen.getByRole("button", { name: /^Filtros/ }));
+    await fireEvent.press(screen.getByRole("button", { name: "Limpar" }));
+    expect(screen.getByLabelText("Buscar ocorrências").props.value).toBe("rua");
+    await aplicarFiltros();
+    expect(screen.getByLabelText("Buscar ocorrências").props.value).toBe("rua");
+    await fireEvent.changeText(screen.getByLabelText("Buscar ocorrências"), "");
     expect(screen.getByText("4 ocorrências")).toBeOnTheScreen();
+  });
+
+  it("descarta rascunhos ao fechar e reabrir o painel", async () => {
+    await abrirListagem();
+    await escolherFiltro("Bairro", "Centro");
+    expect(screen.getByText("4 ocorrências")).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole("button", { name: "Fechar filtros" }));
+    await fireEvent.press(screen.getByRole("button", { name: /^Filtros/ }));
+    expect(screen.getByLabelText("Bairro: Todos os bairros")).toBeOnTheScreen();
+  });
+
+  it("mantém painel e filtros aplicados se a atualização falhar", async () => {
+    await abrirListagem();
+    await escolherFiltro("Bairro", "Centro");
+    listarMock.mockRejectedValueOnce(new Error("offline"));
+    await fireEvent.press(screen.getByRole("button", { name: "Aplicar filtros" }));
+    expect(await screen.findByText(/Os resultados exibidos podem estar desatualizados/)).toBeOnTheScreen();
+    expect(screen.getByRole("button", { name: /^Filtros/ }).props.accessibilityState?.expanded).toBe(true);
+    expect(screen.getByText("4 ocorrências")).toBeOnTheScreen();
+  });
+
+  it("exibe loading global durante a atualização dos filtros", async () => {
+    await abrirListagem();
+    await fireEvent.press(screen.getByRole("button", { name: /^Filtros/ }));
+    let concluir!: (resultado: Ocorrencia[]) => void;
+    listarMock.mockReturnValueOnce(new Promise((resolve) => { concluir = resolve; }));
+    await fireEvent.press(screen.getByRole("button", { name: "Aplicar filtros" }));
+    expect(await screen.findByText("Atualizando ocorrências")).toBeOnTheScreen();
+    expect(screen.getByText("Aguarde um instante...")).toBeOnTheScreen();
+    await act(async () => { concluir(registros); });
+    await waitFor(() => expect(screen.getByRole("button", { name: /^Filtros/ }).props.accessibilityState?.expanded).toBe(false));
   });
 
   it("diferencia ausência de correspondências de banco sem registros", async () => {
     await abrirListagem();
     await escolherFiltro("Bairro", "Jardim América");
     await escolherFiltro("Categoria", "Buraco na via");
+    await aplicarFiltros();
     expect(screen.getByText("Nenhuma ocorrência encontrada")).toBeOnTheScreen();
   });
 

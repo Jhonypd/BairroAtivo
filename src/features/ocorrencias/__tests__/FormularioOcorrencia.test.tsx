@@ -79,34 +79,19 @@ describe("formulário de cadastro de ocorrência", () => {
     expect(screen.getByLabelText("Descrição da ocorrência")).toHaveProp("value", "Cratera grande perto da praça.");
   });
 
-  it("confirma o cadastro e oferece acesso à ocorrência publicada", async () => {
+  it("redireciona para a lista após cadastrar a ocorrência", async () => {
     jest.mocked(cadastrarOcorrencia).mockResolvedValue(ocorrenciaCriada);
     await render(<FormularioOcorrencia />);
     await preencherFormulario();
     await fireEvent.press(screen.getByText("Cadastrar ocorrência"));
 
-    expect(await screen.findByText("Ocorrência cadastrada!" )).toBeOnTheScreen();
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith("/ocorrencias"));
     expect(cadastrarOcorrencia).toHaveBeenCalledWith(expect.objectContaining({
       titulo: "Buraco no Centro",
       categoria: "buraco",
       bairro: "Centro",
       nomePublico: null,
     }));
-    await fireEvent.press(screen.getByText("Ver detalhes"));
-    expect(router.replace).toHaveBeenCalledWith({
-      pathname: "/ocorrencias/[id]",
-      params: { id: "ocorrencia-1" },
-    });
-  });
-
-  it("permite voltar à listagem após a confirmação", async () => {
-    jest.mocked(cadastrarOcorrencia).mockResolvedValue(ocorrenciaCriada);
-    await render(<FormularioOcorrencia />);
-    await preencherFormulario();
-    await fireEvent.press(screen.getByText("Cadastrar ocorrência"));
-    expect(await screen.findByText("Ocorrência cadastrada!")).toBeOnTheScreen();
-    await fireEvent.press(screen.getByText("Ver ocorrências"));
-    expect(router.replace).toHaveBeenCalledWith("/ocorrencias");
   });
 
   it("não envia duas vezes enquanto a primeira requisição está pendente", async () => {
@@ -120,7 +105,7 @@ describe("formulário de cadastro de ocorrência", () => {
 
     await waitFor(() => expect(cadastrarOcorrencia).toHaveBeenCalledTimes(1));
     await act(async () => concluir(ocorrenciaCriada));
-    expect(await screen.findByText("Ocorrência cadastrada!")).toBeOnTheScreen();
+    await waitFor(() => expect(router.replace).toHaveBeenCalledWith("/ocorrencias"));
   });
 
   it("não envia nome público sem consentimento e permite exibi-lo por escolha", async () => {

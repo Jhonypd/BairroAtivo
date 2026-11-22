@@ -8,25 +8,24 @@ import { useAutenticacao } from "@/features/autenticacao/contexto/AutenticacaoPr
 import { cores } from "@/configs/tema";
 import { CampoSelecao } from "../components/CampoSelecao";
 import { bairros, categoriaBancoPorRotulo, categoriasOcorrencia } from "../data/opcoesOcorrencia";
-import { cadastrarOcorrencia } from "../services/ocorrenciasSupabase";
+import { atualizarOcorrencia, cadastrarOcorrencia } from "../services/ocorrenciasSupabase";
 import type { Ocorrencia } from "../types/Ocorrencia";
 import { validarCadastroOcorrencia } from "../validacoes/cadastroOcorrencia";
 import type { DadosCadastroOcorrencia, ErrosCadastroOcorrencia } from "../validacoes/cadastroOcorrencia";
 import { formularioOcorrenciaStyles as styles } from "./FormularioOcorrencia.styles";
 
-export default function FormularioOcorrencia() {
+export default function FormularioOcorrencia({ ocorrenciaInicial }: { ocorrenciaInicial?: Ocorrencia }) {
   const { usuario } = useAutenticacao();
   const { executarComCarregamento } = useCarregamentoGlobal();
-  const [titulo, definirTitulo] = useState("");
-  const [descricao, definirDescricao] = useState("");
-  const [categoriaRotulo, definirCategoriaRotulo] = useState("");
-  const [bairro, definirBairro] = useState("");
-  const [exibirNomePublico, definirExibirNomePublico] = useState(false);
+  const [titulo, definirTitulo] = useState(ocorrenciaInicial?.titulo ?? "");
+  const [descricao, definirDescricao] = useState(ocorrenciaInicial?.descricao ?? "");
+  const [categoriaRotulo, definirCategoriaRotulo] = useState(ocorrenciaInicial?.categoria ?? "");
+  const [bairro, definirBairro] = useState(ocorrenciaInicial?.bairro ?? "");
+  const [exibirNomePublico, definirExibirNomePublico] = useState(Boolean(ocorrenciaInicial?.nomeAutorPublico));
   const [campoAberto, definirCampoAberto] = useState<"categoria" | "bairro" | null>(null);
   const [erros, definirErros] = useState<ErrosCadastroOcorrencia>({});
   const [erroEnvio, definirErroEnvio] = useState<string | null>(null);
   const [salvando, definirSalvando] = useState(false);
-  const [ocorrenciaCriada, definirOcorrenciaCriada] = useState<Ocorrencia | null>(null);
   const envioEmAndamento = useRef(false);
 
   const nomePerfil = typeof usuario?.user_metadata.full_name === "string"
@@ -53,10 +52,16 @@ export default function FormularioOcorrencia() {
     definirSalvando(true);
     try {
       const resultado = await executarComCarregamento(
-        () => cadastrarOcorrencia(dados),
-        "Cadastrando ocorrência",
+        () => ocorrenciaInicial
+          ? atualizarOcorrencia(ocorrenciaInicial.id, dados)
+          : cadastrarOcorrencia(dados),
+        ocorrenciaInicial ? "Salvando alterações" : "Cadastrando ocorrência",
       );
-      definirOcorrenciaCriada(resultado);
+      if (ocorrenciaInicial) {
+        router.replace({ pathname: "/ocorrencias/[id]", params: { id: resultado.id } });
+        return;
+      }
+      router.replace("/ocorrencias" as never);
     } catch (erro) {
       definirErroEnvio(
         erro instanceof Error
@@ -69,34 +74,15 @@ export default function FormularioOcorrencia() {
     }
   }
 
-  function verDetalhes() {
-    if (!ocorrenciaCriada) return;
-    router.replace({ pathname: "/ocorrencias/[id]", params: { id: ocorrenciaCriada.id } });
-  }
-
-  function verListagem() {
-    router.replace("/ocorrencias");
-  }
-
   return (
     <View style={styles.tela}>
-      {ocorrenciaCriada ? (
-        <View style={styles.confirmacao}>
-          <View style={styles.confirmacaoConteudo}>
-            <Text style={styles.confirmacaoTitulo}>Ocorrência cadastrada!</Text>
-            <Text style={styles.confirmacaoDescricao}>
-              “{ocorrenciaCriada.titulo}” foi publicada e já pode ser consultada pela comunidade.
-            </Text>
-          </View>
-          <Botao label="Ver detalhes" onPress={verDetalhes} fullWidth />
-          <Botao label="Ver ocorrências" onPress={verListagem} variant="outline" fullWidth />
-        </View>
-      ) : (
-        <ScrollView style={styles.rolagem} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.rolagem} contentContainerStyle={styles.container} keyboardShouldPersistTaps="handled">
           <View style={styles.intro}>
-            <Text style={styles.titulo}>Nova ocorrência</Text>
+            <Text style={styles.titulo}>{ocorrenciaInicial ? "Editar ocorrência" : "Nova ocorrência"}</Text>
             <Text style={styles.descricao}>
-              Descreva o problema do seu bairro para publicá-lo no BairroAtivo.
+              {ocorrenciaInicial
+                ? "Atualize os dados do problema registrado."
+                : "Descreva o problema do seu bairro para publicá-lo no BairroAtivo."}
             </Text>
           </View>
 
@@ -134,7 +120,7 @@ export default function FormularioOcorrencia() {
             {erros.descricao ? <Text style={styles.fieldError}>{erros.descricao}</Text> : null}
           </View>
 
-          <View style={styles.field}>
+          <View style={[styles.field, campoAberto === "categoria" && styles.fieldAberto]}>
             <CampoSelecao
               label="Categoria *"
               placeholder="Selecione uma categoria"
@@ -147,7 +133,7 @@ export default function FormularioOcorrencia() {
             {erros.categoria ? <Text style={styles.fieldError}>{erros.categoria}</Text> : null}
           </View>
 
-          <View style={styles.field}>
+          <View style={[styles.field, campoAberto === "bairro" && styles.fieldAberto]}>
             <CampoSelecao
               label="Bairro *"
               placeholder="Selecione um bairro"
@@ -182,14 +168,13 @@ export default function FormularioOcorrencia() {
 
           {erroEnvio ? <Text accessibilityRole="alert" style={styles.submitError}>{erroEnvio}</Text> : null}
           <Botao
-            label={salvando ? "Cadastrando..." : "Cadastrar ocorrência"}
+            label={salvando ? "Salvando..." : ocorrenciaInicial ? "Salvar alterações" : "Cadastrar ocorrência"}
             onPress={() => void enviarCadastro()}
             disabled={salvando}
             fullWidth
             size="lg"
           />
-        </ScrollView>
-      )}
+      </ScrollView>
       <NavegacaoInferior ativa="registrar" />
     </View>
   );
