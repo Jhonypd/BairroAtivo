@@ -52,4 +52,13 @@ describe("CartaoOcorrencia", () => {
     expect(queryByLabelText("Foto da ocorrência")).toBeNull();
     expect(getByText("Autor não informado")).toBeTruthy();
   });
+
+  it("usa a primeira imagem recebida na coleção quando imagemUrl não está preenchida", async () => {
+    const primeiraImagem = "https://exemplo.invalid/primeira-foto.jpg";
+    const { getByLabelText } = await render(
+      <CartaoOcorrencia ocorrencia={{ ...ocorrencia, imagemUrl: undefined, imagensUrl: [primeiraImagem, "https://exemplo.invalid/segunda-foto.jpg"] }} />,
+    );
+
+    expect(getByLabelText("Foto da ocorrência").props.source).toEqual({ uri: primeiraImagem });
+  });
 });

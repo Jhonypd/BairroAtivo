@@ -5,12 +5,14 @@ import { useAutenticacao } from "@/features/autenticacao/contexto/AutenticacaoPr
 import { cadastrarOcorrencia } from "../services/ocorrenciasSupabase";
 import type { Ocorrencia } from "../types/Ocorrencia";
 import { router } from "expo-router";
+import * as ImagePicker from "expo-image-picker";
 
 jest.mock("@/features/autenticacao/contexto/AutenticacaoProvider", () => ({
   useAutenticacao: jest.fn(),
 }));
 jest.mock("../services/ocorrenciasSupabase", () => ({
   cadastrarOcorrencia: jest.fn(),
+  validarFotosOcorrencia: jest.fn(() => null),
 }));
 jest.mock("@/shared/components/ui/CarregamentoGlobal", () => ({
   useCarregamentoGlobal: () => ({
@@ -19,6 +21,12 @@ jest.mock("@/shared/components/ui/CarregamentoGlobal", () => ({
 }));
 jest.mock("@/shared/components/NavegacaoInferior", () => ({ NavegacaoInferior: () => null }));
 jest.mock("expo-router", () => ({ router: { push: jest.fn(), replace: jest.fn() } }));
+jest.mock("expo-image-picker", () => ({
+  requestMediaLibraryPermissionsAsync: jest.fn(),
+  requestCameraPermissionsAsync: jest.fn(),
+  launchImageLibraryAsync: jest.fn(),
+  launchCameraAsync: jest.fn(),
+}));
 jest.mock("@/shared/icons/camera_alt_24dp_E3E3E3.svg", () => ({
   __esModule: true,
   default: () => null,
@@ -91,7 +99,28 @@ describe("formulário de cadastro de ocorrência", () => {
       categoria: "buraco",
       bairro: "Centro",
       nomePublico: null,
-    }));
+    }), undefined, []);
+  });
+
+  it("anexa foto da galeria após solicitar permissão", async () => {
+    jest.mocked(ImagePicker.requestMediaLibraryPermissionsAsync).mockResolvedValue({ granted: true } as never);
+    jest.mocked(ImagePicker.launchImageLibraryAsync).mockResolvedValue({
+      canceled: false,
+      assets: [{ uri: "file:///foto.jpg", mimeType: "image/jpeg", fileSize: 1024, fileName: "foto.jpg", width: 10, height: 10, type: "image" }],
+    } as never);
+    jest.mocked(cadastrarOcorrencia).mockResolvedValue(ocorrenciaCriada);
+    await render(<FormularioOcorrencia />);
+
+    await fireEvent.press(screen.getByLabelText("Selecionar fotos da galeria"));
+    expect(await screen.findByLabelText("Foto selecionada 1")).toBeOnTheScreen();
+    await preencherFormulario();
+    await fireEvent.press(screen.getByText("Cadastrar ocorrência"));
+
+    await waitFor(() => expect(cadastrarOcorrencia).toHaveBeenCalledWith(
+      expect.objectContaining({ titulo: "Buraco no Centro" }),
+      undefined,
+      [expect.objectContaining({ uri: "file:///foto.jpg", mimeType: "image/jpeg", fileSize: 1024 })],
+    ));
   });
 
   it("não envia duas vezes enquanto a primeira requisição está pendente", async () => {
@@ -117,6 +146,6 @@ describe("formulário de cadastro de ocorrência", () => {
 
     await waitFor(() => expect(cadastrarOcorrencia).toHaveBeenCalledWith(expect.objectContaining({
       nomePublico: "Ana Silva",
-    })));
+    }), undefined, []));
   });
 });

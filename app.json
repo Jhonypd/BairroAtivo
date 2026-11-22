@@ -38,6 +38,14 @@
           "resizeMode": "contain"
         }
       ],
+      [
+        "expo-image-picker",
+        {
+          "photosPermission": "Permitir que o BairroAtivo selecione fotos para registrar problemas no bairro.",
+          "cameraPermission": "Permitir que o BairroAtivo fotografe problemas no bairro.",
+          "microphonePermission": false
+        }
+      ],
       "expo-font",
       "expo-web-browser",
       "expo-secure-store"

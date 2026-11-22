@@ -23,6 +23,7 @@ type Propriedades = {
 export function CartaoOcorrencia({ ocorrencia, mostrarOpcoes = false, aoAbrirOpcoes }: Propriedades) {
   const [focado, setFocado] = useState(false);
   const [sobrevoado, setSobrevoado] = useState(false);
+  const imagemUrl = ocorrencia.imagemUrl ?? ocorrencia.imagensUrl?.[0];
   return (
     <View style={styles.card}>
       <Pressable
@@ -59,10 +60,10 @@ export function CartaoOcorrencia({ ocorrencia, mostrarOpcoes = false, aoAbrirOpc
               {ocorrencia.nomeAutorPublico ? `Por ${ocorrencia.nomeAutorPublico}` : "Autor não informado"}
             </Text>
           </View>
-          {ocorrencia.imagemUrl ? (
+          {imagemUrl ? (
             <Image
               testID="imagem-ocorrencia"
-              source={{ uri: ocorrencia.imagemUrl }}
+              source={{ uri: imagemUrl }}
               style={styles.imagem}
               resizeMode="cover"
               accessibilityLabel="Foto da ocorrência"

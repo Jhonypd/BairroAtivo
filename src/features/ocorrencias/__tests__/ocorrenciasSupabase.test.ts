@@ -1,10 +1,63 @@
 import { describe, expect, it, jest } from "@jest/globals";
 import {
+  cadastrarOcorrencia,
   converterOcorrencia,
   listarOcorrencias,
+  validarFotosOcorrencia,
 } from "../services/ocorrenciasSupabase";
 
 describe("integração pública de ocorrências", () => {
+  it("valida tipo e tamanho das fotos antes do envio", () => {
+    expect(validarFotosOcorrencia([{ uri: "file:///foto.jpg", mimeType: "image/jpeg", fileSize: 1024, fileName: "foto.jpg" }])).toBeNull();
+    expect(validarFotosOcorrencia([{ uri: "file:///arquivo.gif", mimeType: "image/gif", fileSize: 1024, fileName: "arquivo.gif" }])).toContain("JPG, PNG ou WebP");
+    expect(validarFotosOcorrencia([{ uri: "file:///foto.jpg", mimeType: "image/jpeg", fileSize: 6 * 1024 * 1024, fileName: "foto.jpg" }])).toContain("até 5 MB");
+  });
+
+  it("vincula cada arquivo ao id da ocorrência ao inserir os metadados", async () => {
+    const dadosOcorrencia = {
+      id: "ocorrencia-1",
+      titulo: "Buraco na rua",
+      descricao: "Cratera na esquina da rua principal.",
+      categoria: "buraco" as const,
+      bairro: "Centro",
+      status: "aberta" as const,
+      criado_em: "2026-10-28T15:00:00.000Z",
+      nome_publico: null,
+    };
+    const inserirFoto = jest.fn(async (_linhas: { ocorrencia_id: string; caminho_arquivo: string; ordem: number }[]) => ({ error: null }));
+    const ordemFotos = jest.fn(async (_campo: string, _opcoes: { ascending: boolean }) => ({ data: [], error: null }));
+    const filtrarFotos = jest.fn(() => ({ order: ordemFotos }));
+    const buscarOrdemFotos = jest.fn(() => ({ eq: filtrarFotos }));
+    const inserirOcorrencia = jest.fn(() => ({
+      select: jest.fn(() => ({ single: jest.fn(async () => ({ data: dadosOcorrencia, error: null })) })),
+    }));
+    const cliente = {
+      auth: { getUser: jest.fn(async () => ({ data: { user: { id: "usuario-1" } }, error: null })) },
+      from: jest.fn((tabela: string) => tabela === "ocorrencias"
+        ? { insert: inserirOcorrencia }
+        : { select: buscarOrdemFotos, insert: inserirFoto }),
+      storage: { from: jest.fn(() => ({ upload: jest.fn(async () => ({ error: null })) })) },
+    } as never;
+    const buscarArquivo = jest.spyOn(globalThis, "fetch").mockResolvedValue({
+      ok: true,
+      arrayBuffer: async () => new ArrayBuffer(4),
+    } as Response);
+
+    try {
+      await cadastrarOcorrencia(
+        { titulo: "Buraco na rua", descricao: "Cratera na esquina da rua principal.", categoria: "buraco", bairro: "Centro", nomePublico: null },
+        cliente,
+        [{ uri: "file:///foto.jpg", mimeType: "image/jpeg", fileSize: 1024, fileName: "foto.jpg" }],
+      );
+    } finally {
+      buscarArquivo.mockRestore();
+    }
+
+    expect(inserirFoto).toHaveBeenCalledWith([
+      expect.objectContaining({ ocorrencia_id: "ocorrencia-1", ordem: 0 }),
+    ]);
+  });
+
   it("converte os campos públicos e os estados do banco", () => {
     expect(
       converterOcorrencia({
@@ -53,9 +106,45 @@ describe("integração pública de ocorrências", () => {
 
     expect(tabela).toHaveBeenCalledWith("ocorrencias");
     expect(selecionar).toHaveBeenCalledWith(
-      "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico,total_apoios",
+      "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico,total_apoios,fotos_ocorrencias(caminho_arquivo,ordem)",
     );
     expect(ordenar).toHaveBeenCalledWith("criado_em", { ascending: false });
+  });
+
+  it("assina a primeira foto vinculada para exibição no cartão da listagem", async () => {
+    const caminhoPrimeira = "ocorrencia-1/primeira.jpg";
+    const ordenar = jest.fn().mockResolvedValue({
+      data: [{
+        id: "ocorrencia-1",
+        titulo: "Buraco na rua",
+        descricao: "Cratera na esquina da rua principal.",
+        categoria: "buraco",
+        bairro: "Centro",
+        status: "aberta",
+        criado_em: "2026-10-28T15:00:00.000Z",
+        nome_publico: null,
+        fotos_ocorrencias: [
+          { caminho_arquivo: caminhoPrimeira, ordem: 0 },
+          { caminho_arquivo: "ocorrencia-1/segunda.jpg", ordem: 1 },
+        ],
+      }],
+      error: null,
+    } as never);
+    const selecionar = jest.fn().mockReturnValue({ order: ordenar });
+    const tabela = jest.fn().mockReturnValue({ select: selecionar });
+    const assinar = jest.fn().mockResolvedValue({
+      data: [{ path: caminhoPrimeira, signedUrl: "https://exemplo.invalid/primeira-assinada.jpg" }],
+      error: null,
+    } as never);
+    const cliente = {
+      from: tabela,
+      storage: { from: jest.fn(() => ({ createSignedUrls: assinar })) },
+    } as never;
+
+    const resultado = await listarOcorrencias({}, cliente);
+
+    expect(assinar).toHaveBeenCalledWith([caminhoPrimeira], 3600);
+    expect(resultado[0]?.imagemUrl).toBe("https://exemplo.invalid/primeira-assinada.jpg");
   });
 
   it("mantém a listagem vazia sem falhar", async () => {

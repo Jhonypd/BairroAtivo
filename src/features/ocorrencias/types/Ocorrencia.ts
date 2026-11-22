@@ -10,6 +10,7 @@ export type Ocorrencia = {
   registradaEm: string;
   nomeAutorPublico?: string;
   imagemUrl?: string | null;
+  imagensUrl?: string[];
   latitude?: number;
   longitude?: number;
   totalApoios?: number;

@@ -1,4 +1,5 @@
 import { supabase } from "@/configs/supabase";
+import type { ImagePickerAsset } from "expo-image-picker";
 import { rotuloCategoriaBanco } from "../data/opcoesOcorrencia";
 import type { Ocorrencia } from "../types/Ocorrencia";
 import type {
@@ -62,11 +63,118 @@ function exigirCliente(cliente: ClienteOcorrencias | null): ClienteOcorrencias {
 
 const camposPublicos =
   "id,titulo,descricao,categoria,bairro,status,criado_em,nome_publico,total_apoios";
+const camposLista = `${camposPublicos},fotos_ocorrencias(caminho_arquivo,ordem)`;
 const camposDetalhe = `${camposPublicos},latitude,longitude,fotos_ocorrencias(caminho_arquivo,ordem)`;
+const bucketFotos = "fotos-ocorrencias";
+const limiteFotosPorEnvio = 5;
+const limiteTamanhoFoto = 5 * 1024 * 1024;
+
+async function adicionarPrimeirasFotosAssinadas(
+  registros: OcorrenciaBanco[],
+  cliente: ClienteOcorrencias,
+): Promise<Ocorrencia[]> {
+  const primeirasFotos = registros.map((registro) =>
+    registro.fotos_ocorrencias?.slice().sort((a, b) => a.ordem - b.ordem)[0]?.caminho_arquivo.trim(),
+  );
+  const caminhosPrivados = primeirasFotos
+    .filter((caminho): caminho is string => Boolean(caminho && !/^https:\/\//i.test(caminho)));
+  const urlsPorCaminho = new Map<string, string>();
+
+  if (caminhosPrivados.length > 0) {
+    const { data, error } = await cliente.storage.from(bucketFotos).createSignedUrls(caminhosPrivados, 3600);
+    if (error) throw new Error("Não foi possível carregar as fotos das ocorrências.");
+    for (const arquivo of data) {
+      if (arquivo.path && arquivo.signedUrl) urlsPorCaminho.set(arquivo.path, arquivo.signedUrl);
+    }
+  }
+
+  return registros.map((registro, indice) => {
+    const ocorrencia = converterOcorrencia(registro);
+    const caminho = primeirasFotos[indice];
+    const imagemUrl = caminho
+      ? /^https:\/\//i.test(caminho) ? caminho : urlsPorCaminho.get(caminho)
+      : undefined;
+    return imagemUrl ? { ...ocorrencia, imagemUrl } : ocorrencia;
+  });
+}
+
+export type FotoOcorrenciaSelecionada = Pick<ImagePickerAsset, "uri" | "mimeType" | "fileSize" | "fileName">;
+
+export function validarFotosOcorrencia(fotos: FotoOcorrenciaSelecionada[]): string | null {
+  if (fotos.length > limiteFotosPorEnvio) return "Você pode anexar até 5 fotos por vez.";
+  const mimePermitidos = new Set(["image/jpeg", "image/png", "image/webp"]);
+  for (const foto of fotos) {
+    const extensao = foto.fileName?.split(".").pop()?.toLowerCase();
+    const mime = foto.mimeType ?? (extensao === "png" ? "image/png" : extensao === "webp" ? "image/webp" : extensao === "jpg" || extensao === "jpeg" ? "image/jpeg" : null);
+    if (!mime || !mimePermitidos.has(mime)) return "Use imagens nos formatos JPG, PNG ou WebP.";
+    if (typeof foto.fileSize !== "number" || foto.fileSize <= 0 || foto.fileSize > limiteTamanhoFoto) {
+      return "Cada foto deve ter até 5 MB e tamanho identificável.";
+    }
+  }
+  return null;
+}
+
+function extensaoFoto(foto: FotoOcorrenciaSelecionada): string {
+  const mime = foto.mimeType ?? (foto.fileName?.toLowerCase().endsWith(".png") ? "image/png" : foto.fileName?.toLowerCase().endsWith(".webp") ? "image/webp" : "image/jpeg");
+  return mime === "image/png" ? "png" : mime === "image/webp" ? "webp" : "jpg";
+}
+
+async function enviarFotosOcorrencia(
+  ocorrenciaId: string,
+  fotos: FotoOcorrenciaSelecionada[],
+  cliente: ClienteOcorrencias,
+): Promise<void> {
+  if (fotos.length === 0) return;
+  const validacao = validarFotosOcorrencia(fotos);
+  if (validacao) throw new Error(validacao);
+  const { data: existentes, error: erroConsulta } = await cliente
+    .from("fotos_ocorrencias").select("ordem").eq("ocorrencia_id", ocorrenciaId).order("ordem", { ascending: true });
+  if (erroConsulta) throw new Error("Não foi possível preparar as fotos da ocorrência.");
+  const caminhosEnviados: string[] = [];
+  try {
+    const caminhos: { ocorrencia_id: string; caminho_arquivo: string; ordem: number }[] = [];
+    for (const [indice, foto] of fotos.entries()) {
+      const resposta = await fetch(foto.uri);
+      if (!resposta.ok) throw new Error("Não foi possível ler uma das fotos selecionadas.");
+      const conteudo = await resposta.arrayBuffer();
+      const extensao = extensaoFoto(foto);
+      const caminho = `${ocorrenciaId}/${Date.now()}-${indice}-${Math.random().toString(36).slice(2)}.${extensao}`;
+      const mimeType = foto.mimeType ?? (extensao === "png" ? "image/png" : extensao === "webp" ? "image/webp" : "image/jpeg");
+      const { error } = await cliente.storage.from(bucketFotos).upload(caminho, conteudo, { contentType: mimeType, upsert: false });
+      if (error) throw new Error("Não foi possível enviar uma das fotos. Tente novamente.");
+      caminhosEnviados.push(caminho);
+      caminhos.push({
+        ocorrencia_id: ocorrenciaId,
+        caminho_arquivo: caminho,
+        ordem: (existentes?.length ?? 0) + indice,
+      });
+    }
+    const { error } = await cliente.from("fotos_ocorrencias").insert(caminhos);
+    if (error) throw new Error("As fotos foram enviadas, mas não puderam ser vinculadas à ocorrência.");
+  } catch (erro) {
+    if (caminhosEnviados.length > 0) {
+      const { error } = await cliente.storage.from(bucketFotos).remove(caminhosEnviados);
+      if (error) console.error("Não foi possível limpar arquivos após falha no vínculo das fotos.", error.message);
+    }
+    throw erro;
+  }
+}
+
+async function adicionarUrlsAssinadas(ocorrencia: Ocorrencia, dado: OcorrenciaBanco, cliente: ClienteOcorrencias): Promise<Ocorrencia> {
+  const arquivos = dado.fotos_ocorrencias?.slice().sort((a, b) => a.ordem - b.ordem).map((foto) => foto.caminho_arquivo.trim()) ?? [];
+  const urlsLegadas = arquivos.filter((caminho) => /^https:\/\//i.test(caminho));
+  const caminhos = arquivos.filter((caminho) => !/^https:\/\//i.test(caminho));
+  if (caminhos.length === 0) return ocorrencia;
+  const { data, error } = await cliente.storage.from(bucketFotos).createSignedUrls(caminhos, 3600);
+  if (error) throw new Error("Não foi possível carregar as fotos desta ocorrência.");
+  const urls = [...urlsLegadas, ...data.map((arquivo) => arquivo.signedUrl).filter((url): url is string => Boolean(url))];
+  return { ...ocorrencia, imagensUrl: urls, ...(urls[0] ? { imagemUrl: urls[0] } : {}) };
+}
 
 export async function cadastrarOcorrencia(
   dados: DadosCadastroOcorrencia,
   cliente: ClienteOcorrencias | null = supabase,
+  fotos: FotoOcorrenciaSelecionada[] = [],
 ): Promise<Ocorrencia> {
   const clienteConfigurado = exigirCliente(cliente);
   const { data: autenticacao, error: erroAutenticacao } =
@@ -95,7 +203,17 @@ export async function cadastrarOcorrencia(
     throw new Error("Não foi possível cadastrar a ocorrência. Tente novamente.");
   }
 
-  return converterOcorrencia(data as unknown as OcorrenciaBanco);
+  const ocorrencia = converterOcorrencia(data as unknown as OcorrenciaBanco);
+  try {
+    await enviarFotosOcorrencia(ocorrencia.id, fotos, clienteConfigurado);
+  } catch (erro) {
+    const { error: erroAoDesfazer } = await clienteConfigurado.from("ocorrencias").delete().eq("id", ocorrencia.id);
+    if (erroAoDesfazer) {
+      throw new Error("A ocorrência foi cadastrada, mas as fotos falharam e não foi possível desfazer o cadastro. Edite a ocorrência para tentar novamente.");
+    }
+    throw erro;
+  }
+  return ocorrencia;
 }
 
 export async function listarOcorrencias(
@@ -104,7 +222,7 @@ export async function listarOcorrencias(
 ): Promise<Ocorrencia[]> {
   let consulta = exigirCliente(cliente)
     .from("ocorrencias")
-    .select(camposPublicos)
+    .select(camposLista)
     .order("criado_em", { ascending: false });
 
   if (filtros.titulo?.trim()) {
@@ -125,7 +243,7 @@ export async function listarOcorrencias(
     throw new Error("Não foi possível carregar as ocorrências.");
   }
 
-  return (data as unknown as OcorrenciaBanco[]).map(converterOcorrencia);
+  return adicionarPrimeirasFotosAssinadas(data as unknown as OcorrenciaBanco[], exigirCliente(cliente));
 }
 
 export async function buscarOcorrenciaPorId(
@@ -141,7 +259,9 @@ export async function buscarOcorrenciaPorId(
   if (error) {
     throw new Error("Não foi possível carregar os detalhes da ocorrência.");
   }
-  return data ? converterOcorrencia(data as unknown as OcorrenciaBanco) : null;
+  if (!data) return null;
+  const registro = data as unknown as OcorrenciaBanco;
+  return adicionarUrlsAssinadas(converterOcorrencia(registro), registro, exigirCliente(cliente));
 }
 
 async function obterUsuarioApoio(cliente: ClienteOcorrencias) {
@@ -221,6 +341,7 @@ export async function atualizarOcorrencia(
   id: string,
   dados: DadosCadastroOcorrencia,
   cliente: ClienteOcorrencias | null = supabase,
+  fotos: FotoOcorrenciaSelecionada[] = [],
 ): Promise<Ocorrencia> {
   const clienteConfigurado = exigirCliente(cliente);
   const { data: autenticacao, error: erroAutenticacao } = await clienteConfigurado.auth.getUser();
@@ -235,7 +356,9 @@ export async function atualizarOcorrencia(
   }).eq("id", id).select(camposPublicos).single();
 
   if (error || !data) throw new Error("Não foi possível atualizar a ocorrência. Verifique sua conexão e suas permissões.");
-  return converterOcorrencia(data as unknown as OcorrenciaBanco);
+  if (fotos.length === 0) return converterOcorrencia(data as unknown as OcorrenciaBanco);
+  await enviarFotosOcorrencia(id, fotos, clienteConfigurado);
+  return await buscarOcorrenciaPorId(id, clienteConfigurado) ?? converterOcorrencia(data as unknown as OcorrenciaBanco);
 }
 
 export async function excluirOcorrencia(

@@ -130,6 +130,30 @@ describe("detalhes da ocorrência", () => {
     expect(await screen.findByLabelText("Foto não disponível")).toBeOnTheScreen();
   });
 
+  it("navega pelas fotos com controles de carrossel e indicador de posição", async () => {
+    parametrosMock.mockReturnValue({ id: detalhe.id } as never);
+    buscarMock.mockResolvedValue({
+      ...detalhe,
+      imagensUrl: ["https://exemplo.invalid/foto-1.jpg", "https://exemplo.invalid/foto-2.jpg"],
+    });
+
+    await renderDetalhes();
+
+    expect(await screen.findByText("1 de 2")).toBeOnTheScreen();
+    const carrossel = screen.getByTestId("carrossel-fotos");
+    expect(carrossel.props.horizontal).toBe(true);
+    expect(carrossel.props.pagingEnabled).toBe(true);
+    expect(carrossel.props.style).toEqual(expect.objectContaining({ width: expect.any(Number) }));
+    await fireEvent.press(screen.getByLabelText("Próxima foto"));
+
+    expect(await screen.findByText("2 de 2")).toBeOnTheScreen();
+    expect(screen.getByLabelText("Foto 2 de Buraco na via").props.source).toEqual({
+      uri: "https://exemplo.invalid/foto-2.jpg",
+    });
+    expect(screen.getByLabelText("Foto anterior")).toBeEnabled();
+    expect(screen.getByLabelText("Próxima foto")).toBeDisabled();
+  });
+
   it("pede para abrir a lista quando o identificador está ausente", async () => {
     parametrosMock.mockReturnValue({} as never);
 

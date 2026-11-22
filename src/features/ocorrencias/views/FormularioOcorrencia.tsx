@@ -1,6 +1,7 @@
 import { useRef, useState } from "react";
 import { router } from "expo-router";
-import { ScrollView, Switch, Text, TextInput, View } from "react-native";
+import { Image, Pressable, ScrollView, Switch, Text, TextInput, View } from "react-native";
+import * as ImagePicker from "expo-image-picker";
 import { Botao } from "@/shared/components/ui/Botao";
 import { NavegacaoInferior } from "@/shared/components/NavegacaoInferior";
 import { useCarregamentoGlobal } from "@/shared/components/ui/CarregamentoGlobal";
@@ -8,7 +9,8 @@ import { useAutenticacao } from "@/features/autenticacao/contexto/AutenticacaoPr
 import { cores } from "@/configs/tema";
 import { CampoSelecao } from "../components/CampoSelecao";
 import { bairros, categoriaBancoPorRotulo, categoriasOcorrencia } from "../data/opcoesOcorrencia";
-import { atualizarOcorrencia, cadastrarOcorrencia } from "../services/ocorrenciasSupabase";
+import { atualizarOcorrencia, cadastrarOcorrencia, validarFotosOcorrencia } from "../services/ocorrenciasSupabase";
+import type { FotoOcorrenciaSelecionada } from "../services/ocorrenciasSupabase";
 import type { Ocorrencia } from "../types/Ocorrencia";
 import { validarCadastroOcorrencia } from "../validacoes/cadastroOcorrencia";
 import type { DadosCadastroOcorrencia, ErrosCadastroOcorrencia } from "../validacoes/cadastroOcorrencia";
@@ -26,6 +28,8 @@ export default function FormularioOcorrencia({ ocorrenciaInicial }: { ocorrencia
   const [erros, definirErros] = useState<ErrosCadastroOcorrencia>({});
   const [erroEnvio, definirErroEnvio] = useState<string | null>(null);
   const [salvando, definirSalvando] = useState(false);
+  const [fotos, definirFotos] = useState<FotoOcorrenciaSelecionada[]>([]);
+  const [erroFotos, definirErroFotos] = useState<string | null>(null);
   const envioEmAndamento = useRef(false);
 
   const nomePerfil = typeof usuario?.user_metadata.full_name === "string"
@@ -41,11 +45,60 @@ export default function FormularioOcorrencia({ ocorrenciaInicial }: { ocorrencia
     nomePublico: exibirNomePublico ? nomePerfil : null,
   };
 
+  function adicionarFotosSelecionadas(assets: ImagePicker.ImagePickerAsset[]) {
+    const selecionadas = assets.map(({ uri, mimeType, fileSize, fileName }) => ({ uri, mimeType, fileSize, fileName }));
+    const proximas = [...fotos, ...selecionadas];
+    const erro = validarFotosOcorrencia(proximas);
+    if (erro) {
+      definirErroFotos(erro);
+      return;
+    }
+    definirErroFotos(null);
+    definirFotos(proximas);
+  }
+
+  async function selecionarFotos() {
+    try {
+      const permissao = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (!permissao.granted) {
+        definirErroFotos("Permita o acesso à galeria para anexar fotos.");
+        return;
+      }
+      const resultado = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ["images"],
+        allowsMultipleSelection: true,
+        selectionLimit: Math.max(1, 5 - fotos.length),
+        quality: 0.8,
+        exif: false,
+      });
+      if (!resultado.canceled) adicionarFotosSelecionadas(resultado.assets);
+    } catch {
+      definirErroFotos("Não foi possível abrir a galeria. Tente novamente.");
+    }
+  }
+
+  async function fotografar() {
+    try {
+      const permissao = await ImagePicker.requestCameraPermissionsAsync();
+      if (!permissao.granted) {
+        definirErroFotos("Permita o acesso à câmera para fotografar a ocorrência.");
+        return;
+      }
+      const resultado = await ImagePicker.launchCameraAsync({ quality: 0.8, exif: false });
+      if (!resultado.canceled) adicionarFotosSelecionadas(resultado.assets);
+    } catch {
+      definirErroFotos("Não foi possível abrir a câmera. Tente novamente.");
+    }
+  }
+
   async function enviarCadastro() {
     if (envioEmAndamento.current) return;
     const errosValidacao = validarCadastroOcorrencia(dados);
     definirErros(errosValidacao);
     definirErroEnvio(null);
+    const erroValidacaoFotos = validarFotosOcorrencia(fotos);
+    definirErroFotos(erroValidacaoFotos);
+    if (erroValidacaoFotos) return;
     if (Object.keys(errosValidacao).length > 0) return;
 
     envioEmAndamento.current = true;
@@ -53,8 +106,8 @@ export default function FormularioOcorrencia({ ocorrenciaInicial }: { ocorrencia
     try {
       const resultado = await executarComCarregamento(
         () => ocorrenciaInicial
-          ? atualizarOcorrencia(ocorrenciaInicial.id, dados)
-          : cadastrarOcorrencia(dados),
+          ? atualizarOcorrencia(ocorrenciaInicial.id, dados, undefined, fotos)
+          : cadastrarOcorrencia(dados, undefined, fotos),
         ocorrenciaInicial ? "Salvando alterações" : "Cadastrando ocorrência",
       );
       if (ocorrenciaInicial) {
@@ -144,6 +197,32 @@ export default function FormularioOcorrencia({ ocorrenciaInicial }: { ocorrencia
               aoAlternar={() => definirCampoAberto((atual) => atual === "bairro" ? null : "bairro")}
             />
             {erros.bairro ? <Text style={styles.fieldError}>{erros.bairro}</Text> : null}
+          </View>
+
+          <View style={styles.field}>
+            <Text style={styles.label}>Fotos (opcional)</Text>
+            <Text style={styles.fotosAjuda}>Até 5 imagens JPG, PNG ou WebP, com no máximo 5 MB cada.</Text>
+            <View style={styles.acoesFotos}>
+              <Pressable accessibilityRole="button" accessibilityLabel="Selecionar fotos da galeria" onPress={() => void selecionarFotos()} disabled={salvando} style={styles.botaoFoto}>
+                <Text style={styles.botaoFotoTexto}>Escolher da galeria</Text>
+              </Pressable>
+              <Pressable accessibilityRole="button" accessibilityLabel="Fotografar ocorrência" onPress={() => void fotografar()} disabled={salvando} style={styles.botaoFoto}>
+                <Text style={styles.botaoFotoTexto}>Tirar foto</Text>
+              </Pressable>
+            </View>
+            {fotos.length > 0 ? (
+              <ScrollView horizontal contentContainerStyle={styles.listaFotos} showsHorizontalScrollIndicator={false}>
+                {fotos.map((foto, indice) => (
+                  <View key={`${foto.uri}-${indice}`} style={styles.fotoSelecionada}>
+                    <Image source={{ uri: foto.uri }} style={styles.fotoMiniatura} accessibilityLabel={`Foto selecionada ${indice + 1}`} />
+                    <Pressable accessibilityRole="button" accessibilityLabel={`Remover foto ${indice + 1}`} onPress={() => definirFotos((atuais) => atuais.filter((_, posicao) => posicao !== indice))} style={styles.removerFoto}>
+                      <Text style={styles.removerFotoTexto}>×</Text>
+                    </Pressable>
+                  </View>
+                ))}
+              </ScrollView>
+            ) : null}
+            {erroFotos ? <Text accessibilityRole="alert" style={styles.fieldError}>{erroFotos}</Text> : null}
           </View>
 
           <View style={styles.privacidade}>

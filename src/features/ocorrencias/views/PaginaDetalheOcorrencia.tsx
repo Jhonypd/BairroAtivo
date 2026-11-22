@@ -2,6 +2,7 @@ import { Stack, router, useLocalSearchParams } from "expo-router";
 import { useEffect, useRef, useState } from "react";
 import {
   ActivityIndicator,
+  FlatList,
   Image,
   Linking,
   Modal,
@@ -10,6 +11,7 @@ import {
   Share,
   Text,
   View,
+  useWindowDimensions,
 } from "react-native";
 import { useSafeAreaInsets } from "react-native-safe-area-context";
 import type { ComponentType } from "react";
@@ -67,6 +69,11 @@ export default function PaginaDetalheOcorrencia() {
   const [carregandoApoio, definirCarregandoApoio] = useState(Boolean(usuarioId && !carregandoAuth));
   const [erroApoio, definirErroApoio] = useState<string | null>(null);
   const consultaApoioPendente = useRef(false);
+  const listaImagens = useRef<FlatList<string>>(null);
+  const [posicaoImagem, definirPosicaoImagem] = useState<{ ocorrenciaId: string; indice: number } | null>(null);
+  const indiceImagem = posicaoImagem && posicaoImagem.ocorrenciaId === id ? posicaoImagem.indice : 0;
+  const { width: larguraTela } = useWindowDimensions();
+  const larguraCarrossel = Math.max(220, Math.min(larguraTela - 32, 568));
   const insets = useSafeAreaInsets();
   const { executarComCarregamento } = useCarregamentoGlobal();
   const apoiando = Boolean(usuarioId && apoioAtual?.usuarioId === usuarioId && apoioAtual.apoiando);
@@ -187,6 +194,16 @@ export default function PaginaDetalheOcorrencia() {
   }
 
   const statusAtual = estilosStatus[ocorrencia.status];
+  const urlsImagens = ocorrencia.imagensUrl?.length
+    ? ocorrencia.imagensUrl
+    : ocorrencia.imagemUrl
+      ? [ocorrencia.imagemUrl]
+      : [];
+  function irParaImagem(indice: number) {
+    if (indice < 0 || indice >= urlsImagens.length) return;
+    definirPosicaoImagem({ ocorrenciaId: id ?? "", indice });
+    listaImagens.current?.scrollToIndex({ index: indice, animated: true });
+  }
   const temCoordenadas = typeof ocorrencia.latitude === "number" && typeof ocorrencia.longitude === "number";
   const conteudoLocalizacao = (
     <>
@@ -204,8 +221,57 @@ export default function PaginaDetalheOcorrencia() {
       <Stack.Screen options={{ headerShown: false }} />
       {cabecalho}
       <ScrollView contentContainerStyle={styles.container}>
-        {ocorrencia.imagemUrl ? (
-          <Image source={{ uri: ocorrencia.imagemUrl }} style={styles.imagem} resizeMode="cover" accessibilityLabel={`Foto de ${ocorrencia.titulo}`} />
+        {urlsImagens.length > 0 ? (
+          <View style={styles.carrossel}>
+            <FlatList
+              testID="carrossel-fotos"
+              ref={listaImagens}
+              key={`${id}-${urlsImagens.length}`}
+              style={{ width: larguraCarrossel, alignSelf: "center" }}
+              horizontal
+              pagingEnabled
+              data={urlsImagens}
+              keyExtractor={(url, indice) => `${indice}-${url}`}
+              showsHorizontalScrollIndicator={false}
+              getItemLayout={(_, indice) => ({ length: larguraCarrossel, offset: larguraCarrossel * indice, index: indice })}
+              onMomentumScrollEnd={({ nativeEvent }) => definirPosicaoImagem({ ocorrenciaId: id ?? "", indice: Math.round(nativeEvent.contentOffset.x / larguraCarrossel) })}
+              renderItem={({ item: url, index: indice }) => (
+                <View style={{ width: larguraCarrossel }}>
+                  <Image
+                    source={{ uri: url }}
+                    style={[styles.imagem, { width: larguraCarrossel }]}
+                    resizeMode="cover"
+                    accessibilityLabel={urlsImagens.length === 1 ? `Foto de ${ocorrencia.titulo}` : `Foto ${indice + 1} de ${ocorrencia.titulo}`}
+                  />
+                </View>
+              )}
+            />
+            {urlsImagens.length > 1 ? (
+              <View style={styles.controlesCarrossel}>
+                <Pressable accessibilityRole="button" accessibilityLabel="Foto anterior" onPress={() => irParaImagem(indiceImagem - 1)} disabled={indiceImagem === 0} style={[styles.setaCarrossel, indiceImagem === 0 && styles.controleDesabilitado]}>
+                  <Text style={styles.setaCarrosselTexto}>‹</Text>
+                </Pressable>
+                <View style={styles.paginacaoCarrossel}>
+                  <Text accessibilityLiveRegion="polite" style={styles.indicadorCarrossel}>{indiceImagem + 1} de {urlsImagens.length}</Text>
+                  <View style={styles.pontosCarrossel}>
+                    {urlsImagens.map((url, indice) => (
+                      <Pressable
+                        key={`${indice}-${url}`}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Exibir foto ${indice + 1}`}
+                        accessibilityState={{ selected: indiceImagem === indice }}
+                        onPress={() => irParaImagem(indice)}
+                        style={[styles.pontoCarrossel, indiceImagem === indice && styles.pontoCarrosselAtivo]}
+                      />
+                    ))}
+                  </View>
+                </View>
+                <Pressable accessibilityRole="button" accessibilityLabel="Próxima foto" onPress={() => irParaImagem(indiceImagem + 1)} disabled={indiceImagem === urlsImagens.length - 1} style={[styles.setaCarrossel, indiceImagem === urlsImagens.length - 1 && styles.controleDesabilitado]}>
+                  <Text style={styles.setaCarrosselTexto}>›</Text>
+                </Pressable>
+              </View>
+            ) : null}
+          </View>
         ) : (
           <View style={styles.imagemVazia} accessible accessibilityLabel="Foto não disponível">
             <IconeFoto width={36} height={36} fill={cores.textSubtle} />
