@@ -1,4 +1,4 @@
--- PROPOSTA INCREMENTAL PARA REVISÃO. NÃO EXECUTAR sem validar primeiro em teste.
+-- MIGRAÇÃO INCREMENTAL PB13 — total_apoios na RPC pessoal. Aplicada em 22/11/2026 ao Supabase ADS-UNIVALI (versão 20261122132655).
 -- A RPC existente possui oito colunas de saída. PostgreSQL não permite mudar
 -- sua tabela de retorno com CREATE OR REPLACE; esta transação remove e recria
 -- somente a função sem argumentos. Não usa CASCADE e não altera políticas RLS.

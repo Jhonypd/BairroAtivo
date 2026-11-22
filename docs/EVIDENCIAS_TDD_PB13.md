@@ -37,4 +37,27 @@ Os registros mais antigos de grants e políticas foram removidos deste relatóri
 
 O PR #9 está aberto, direcionado a `1.0.0.0/1.0.0.0`. O GitHub informou que o branch era mergeável antes destas correções. A revisão apontou um teste dentro de `src/app`; ele foi movido para `src/features/ocorrencias/__tests__`. Também apontou que a tela permitia alternar apoio antes da consulta inicial terminar e não atualizava a contagem após a operação. A tela agora bloqueia o botão durante a consulta, ignora respostas obsoletas após desmontagem e atualiza a contagem local após operações bem-sucedidas. Os testes cobrem carregamento e contagem.
 
-O relatório do Expo Doctor continua com uma verificação reprovada por dependências fora das versões recomendadas. A dependência incremental da RPC também precisa ser aplicada e validada em ambiente de teste antes de o aplicativo exibir a contagem correta nas ocorrências pessoais. Como SQL e Supabase não foram alterados nesta revisão, o PR não fica pronto para merge até essa validação e a atualização correspondente da RPC.
+O relatório do Expo Doctor continua com uma verificação reprovada por dependências fora das versões recomendadas. Na revisão original, a dependência incremental da RPC ainda estava pendente; ela foi aplicada e validada em 22/11/2026, conforme registrado abaixo. Nenhum merge foi realizado nesta sessão.
+
+## Validação adicional — 22/11/2026
+
+| Verificação | Resultado |
+|---|---|
+| `npm test -- --runInBand` | Passou: 19 suítes, 103 testes. |
+| `npm run lint` | Passou, sem erros nem alertas. |
+| `npm run typecheck` | Passou (`tsc --noEmit`). |
+| `git diff --check` | Passou. |
+| Supabase: metadados da tabela | `howviii.ocorrencias.total_apoios` continua `integer`, padrão `0`; RLS está ativa. |
+| Supabase: RPC PB13 instalada | A função ainda retorna oito colunas, sem `total_apoios`. A role proprietária é sem login, `NOINHERIT` e sem `BYPASSRLS`; `search_path` está vazio. `authenticated` pode executar e `anon` não. Não foram encontradas dependências registradas. |
+| Supabase: policy PB13 | A policy de leitura da role proprietária está ativa e compara a identidade usando `request.jwt.claim.sub` ou `request.jwt.claims`. |
+| Supabase: ensaio somente de leitura | Passaram as verificações dos dois formatos de claim, identidade sem ocorrências, chamada sem identidade e bloqueio de `anon`. A transação terminou com `ROLLBACK`; nenhum registro foi alterado. |
+| Supabase: duas contas distintas | Validado após o cadastro da segunda ocorrência: três ocorrências, dois autores distintos. O ensaio autenticado confirmou que cada conta recebe a própria ocorrência e não recebe a ocorrência alheia. |
+| Migração de `total_apoios` | Aplicada ao Supabase ADS-UNIVALI e registrada como versão `20261122132655`. A RPC retorna nove colunas; a role proprietária tem `SELECT` em `total_apoios`, sem manter `CREATE` no schema. RLS e policy foram preservadas. |
+
+A aplicação cliente e os testes existentes já incluem o mapeamento de `total_apoios`; a RPC agora também devolve essa contagem. Não usar a migração de instalação inicial nem a correção antiga de claims para substituir a RPC instalada.
+
+## Observações do ensaio final — 22/11/2026
+
+O roteiro completo `docs/sql/PB13_verificacoes_identidade.sql` não concluiu a etapa de teste direto da policy: o `postgres` gerenciado pelo Supabase não permite `SET SESSION AUTHORIZATION` para a role proprietária. O ensaio equivalente pela RPC, como `authenticated`, passou para as duas contas, incluindo conferência de `total_apoios`; a policy e suas permissões foram confirmadas por metadados. Todas as verificações comportamentais terminaram em transação com `ROLLBACK`, sem alterar ocorrências.
+
+O advisor de segurança continua sinalizando que a RPC `SECURITY DEFINER` pode ser chamada por `authenticated`. Esse acesso é intencional para a lista pessoal, está limitado à role proprietária sem `BYPASSRLS`, usa policy de identidade e permanece negado a `anon`.
