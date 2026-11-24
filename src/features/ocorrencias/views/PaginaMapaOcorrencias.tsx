@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { useLocalSearchParams } from "expo-router";
 import { Text, View } from "react-native";
 import { listarOcorrencias } from "../services/ocorrenciasSupabase";
 import type { Ocorrencia } from "../types/Ocorrencia";
@@ -8,6 +9,27 @@ import { useAutenticacao } from "@/features/autenticacao/contexto/AutenticacaoPr
 import { buscarCidadeDoUsuario, ehSchemaCidadeIndisponivel, obterCidadePublicaPadrao } from "@/shared/services/cidadesSupabase";
 
 export default function PaginaMapaOcorrencias() {
+  const parametros = useLocalSearchParams<{
+    focoOcorrenciaId?: string | string[];
+    focoLat?: string | string[];
+    focoLon?: string | string[];
+    focoTitulo?: string | string[];
+    focoBairro?: string | string[];
+  }>();
+  const valorParametro = (valor?: string | string[]) => Array.isArray(valor) ? valor[0] : valor;
+  const focoId = valorParametro(parametros.focoOcorrenciaId);
+  const focoLatitude = Number(valorParametro(parametros.focoLat));
+  const focoLongitude = Number(valorParametro(parametros.focoLon));
+  const foco = Number.isFinite(focoLatitude) && focoLatitude >= -90 && focoLatitude <= 90
+    && Number.isFinite(focoLongitude) && focoLongitude >= -180 && focoLongitude <= 180
+    ? {
+        id: focoId,
+        latitude: focoLatitude,
+        longitude: focoLongitude,
+        titulo: valorParametro(parametros.focoTitulo),
+        bairro: valorParametro(parametros.focoBairro),
+      }
+    : undefined;
   const [ocorrencias, definirOcorrencias] = useState<Ocorrencia[]>([]);
   const [carregando, definirCarregando] = useState(true);
   const [erro, definirErro] = useState(false);
@@ -29,5 +51,5 @@ export default function PaginaMapaOcorrencias() {
   if (carregando) return <View style={{ flex: 1, padding: 20, backgroundColor: cores.background }}><Text style={{ color: cores.primaryDark }}>Carregando ocorrências...</Text></View>;
   if (erro) return <View style={{ flex: 1, padding: 20, backgroundColor: cores.background }}><Text style={{ color: cores.error }}>Não foi possível carregar as ocorrências. Volte à lista e tente novamente.</Text></View>;
   const comLocalizacao = ocorrencias.filter((item) => typeof item.latitude === "number" && Number.isFinite(item.latitude) && item.latitude >= -90 && item.latitude <= 90 && typeof item.longitude === "number" && Number.isFinite(item.longitude) && item.longitude >= -180 && item.longitude <= 180);
-  return <MapaOcorrencias ocorrencias={comLocalizacao} />;
+  return <MapaOcorrencias ocorrencias={comLocalizacao} foco={foco} />;
 }

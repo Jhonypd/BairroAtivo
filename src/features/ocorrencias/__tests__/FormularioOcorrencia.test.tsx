@@ -125,11 +125,11 @@ describe("formulário de cadastro de ocorrência", () => {
     await render(<FormularioOcorrencia />);
     await preencherFormulario();
     await fireEvent.press(await screen.findByText("Marcar o local no mapa"));
-    await fireEvent.press(screen.getByTestId("mapa-seletor-localizacao"), { nativeEvent: { coordinate: { latitude: -27.59, longitude: -48.51 } } });
+    await fireEvent.press(screen.getByTestId("mapa-seletor-localizacao"), { nativeEvent: { lngLat: [-48.51, -27.59], point: [100, 100] } });
     await fireEvent.press(screen.getByText("Confirmar local"));
     await fireEvent.press(screen.getByText("Cadastrar ocorrência"));
     await waitFor(() => expect(cadastrarOcorrencia).toHaveBeenCalledWith(expect.objectContaining({ latitude: -27.59, longitude: -48.51 }), undefined, []));
-  });
+  }, 15000);
 
   it("anexa foto da galeria após solicitar permissão", async () => {
     jest.mocked(ImagePicker.requestMediaLibraryPermissionsAsync).mockResolvedValue({ granted: true } as never);

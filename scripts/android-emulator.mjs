@@ -1,6 +1,6 @@
 import { spawnSync } from "node:child_process";
 import { existsSync, readFileSync, writeFileSync } from "node:fs";
-import { basename, dirname, join, resolve } from "node:path";
+import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 
 const projectRoot = resolve(dirname(fileURLToPath(import.meta.url)), "..");
@@ -34,135 +34,95 @@ function configureShortCmakePaths(gradleFile) {
   }
 
   if (!contents.includes("bairroativo-cmake")) {
-    const androidBlockEnd = "\n}\n\n// Apply static values from 'android.packagingOptions'";
-    const markerIndex = contents.indexOf(androidBlockEnd);
-    if (markerIndex < 0) {
-      throw new Error("Não encontrei o final do bloco android em android/app/build.gradle.");
+    const androidBlock = /^android\s*\{\s*$/m;
+    if (!androidBlock.test(contents)) {
+      throw new Error("Não encontrei o início do bloco android em android/app/build.gradle.");
     }
 
-    contents =
-      contents.slice(0, markerIndex) +
-      "\n    externalNativeBuild {\n        cmake {\n            buildStagingDirectory new File(System.getProperty('java.io.tmpdir'), 'bairroativo-cmake')\n        }\n    }" +
-      contents.slice(markerIndex);
+    contents = contents.replace(
+      androidBlock,
+      (match) => match + "\n    externalNativeBuild {\n        cmake {\n            buildStagingDirectory new File(System.getProperty('java.io.tmpdir'), 'bairroativo-cmake')\n        }\n    }",
+    );
   }
-
   writeFileSync(gradleFile, contents);
 }
 
-function hasGoogleMapsApiKey() {
-  if (process.env.GOOGLE_MAPS_API_KEY?.trim()) return true;
+function verificarDispositivo(deviceId) {
+  const androidSdk = process.env.ANDROID_HOME ?? process.env.ANDROID_SDK_ROOT;
+  const adbDoSdk = androidSdk
+    ? join(androidSdk, "platform-tools", process.platform === "win32" ? "adb.exe" : "adb")
+    : "adb";
+  const adbCommand = existsSync(adbDoSdk) ? adbDoSdk : "adb";
+  const result = spawnSync(adbCommand, ["devices"], { encoding: "utf8" });
 
-  const envFile = join(projectRoot, ".env");
-  if (!existsSync(envFile)) return false;
+  if (result.error || result.status !== 0) {
+    console.error("Não consegui consultar o ADB. Confira ANDROID_HOME e platform-tools no PATH.");
+    if (result.error) console.error(result.error.message);
+    return false;
+  }
 
-  return readFileSync(envFile, "utf8").split(/\r?\n/).some((line) => {
-    const match = line.match(/^\s*(?:export\s+)?GOOGLE_MAPS_API_KEY\s*=\s*(.*?)\s*$/);
-    if (!match) return false;
+  const linhas = (result.stdout ?? "").split(/\r?\n/).map((linha) => linha.trim()).filter(Boolean);
+  const estadoAlvo = linhas
+    .filter((linha) => !linha.startsWith("List of devices"))
+    .map((linha) => linha.split(/\s+/))
+    .find(([id]) => id === deviceId)?.[1];
 
-    const value = match[1].replace(/^(['"])(.*)\1$/, "$2").trim();
-    return value.length > 0 && !value.startsWith("#");
-  });
+  if (estadoAlvo === "device") return true;
+
+  console.error("O dispositivo \"" + deviceId + "\" não está disponível no ADB" + (estadoAlvo ? " (estado: " + estadoAlvo + ")" : "") + ".");
+  console.error("Abra o Android Studio > Device Manager, inicie o emulador e aguarde a tela inicial.");
+  console.error("Depois confirme no terminal com: adb devices -l");
+  console.error("Se o aparelho tiver outro ID, defina ANDROID_EMULATOR_ID com esse ID e tente novamente.");
+  return false;
 }
 
-if (!hasGoogleMapsApiKey()) {
-  console.error(
-    "GOOGLE_MAPS_API_KEY não está definido. Adicione a chave do Maps SDK for Android ao .env para compilar o mapa.",
-  );
+if (!verificarDispositivo(deviceId)) {
   process.exitCode = 1;
 } else if (process.platform !== "win32") {
   process.exitCode = run("npx", ["expo", "run:android", "--device", deviceId], {
     cwd: projectRoot,
   });
+} else if (!existsSync(join(javaHome, "bin", "java.exe"))) {
+  console.error("Java não encontrado em " + join(javaHome, "bin", "java.exe") + ".");
+  console.error("Defina JAVA_HOME para a pasta do JDK instalado e tente novamente.");
+  process.exitCode = 1;
 } else {
-  const driveLetters = [
-    "Z",
-    "Y",
-    "X",
-    "W",
-    "V",
-    "U",
-    "T",
-    "S",
-    "R",
-    "Q",
-    "P",
-    "O",
-    "N",
-    "M",
-    "L",
-    "K",
-    "J",
-    "I",
-    "H",
-    "G",
-    "F",
-    "E",
-  ];
-  const freeLetter = driveLetters.find((letter) => !existsSync(letter + ":\\"));
+  const expoCli = join(projectRoot, "node_modules", "expo", "bin", "cli");
+  const javaPath = join(javaHome, "bin");
+  const env = {
+    ...process.env,
+    JAVA_HOME: javaHome,
+    ComSpec: join(
+      process.env.SystemRoot ?? "C:\\Windows",
+      "System32",
+      "cmd.exe",
+    ),
+    PATH: [
+      dirname(process.execPath),
+      join(process.env.SystemRoot ?? "C:\\Windows", "System32"),
+      javaPath,
+      process.env.PATH ?? "",
+    ].join(";"),
+    GRADLE_OPTS: [process.env.GRADLE_OPTS, "-Dorg.gradle.daemon=false"]
+      .filter(Boolean)
+      .join(" "),
+  };
+  const gradleFile = join(projectRoot, "android", "app", "build.gradle");
 
-  if (!freeLetter) {
-    console.error(
-      "Não encontrei uma unidade livre para encurtar o caminho do projeto.",
-    );
-    process.exitCode = 1;
-  } else if (!existsSync(join(javaHome, "bin", "java.exe"))) {
-    console.error(
-      "Java não encontrado em " + join(javaHome, "bin", "java.exe") + ".",
-    );
-    console.error(
-      "Defina JAVA_HOME para a pasta do JDK instalado e tente novamente.",
-    );
-    process.exitCode = 1;
+  const prebuildStatus = run(
+    process.execPath,
+    [expoCli, "prebuild", "--platform", "android", "--no-install"],
+    { cwd: projectRoot, env },
+  );
+
+  if (prebuildStatus !== 0) {
+    process.exitCode = prebuildStatus;
   } else {
-    const drive = freeLetter + ":";
-    const shortRoot = join(drive + "\\", basename(projectRoot));
-    const mapStatus = run("subst", [drive, dirname(projectRoot)]);
-
-    if (mapStatus !== 0) {
-      process.exitCode = mapStatus;
-    } else {
-      try {
-        const expoCli = join(shortRoot, "node_modules", "expo", "bin", "cli");
-        const javaPath = join(javaHome, "bin");
-        const env = {
-          ...process.env,
-          JAVA_HOME: javaHome,
-          ComSpec: join(
-            process.env.SystemRoot ?? "C:\\Windows",
-            "System32",
-            "cmd.exe",
-          ),
-          PATH: [
-            dirname(process.execPath),
-            join(process.env.SystemRoot ?? "C:\\Windows", "System32"),
-            javaPath,
-            process.env.PATH ?? "",
-          ].join(";"),
-          GRADLE_OPTS: [process.env.GRADLE_OPTS, "-Dorg.gradle.daemon=false"]
-            .filter(Boolean)
-            .join(" "),
-        };
-        const gradleFile = join(shortRoot, "android", "app", "build.gradle");
-
-        const prebuildStatus = run(
-          process.execPath,
-          [expoCli, "prebuild", "--platform", "android", "--no-install"],
-          { cwd: shortRoot, env },
-        );
-
-        if (prebuildStatus !== 0) {
-          process.exitCode = prebuildStatus;
-        } else {
-          configureShortCmakePaths(gradleFile);
-          process.exitCode = run(
-            process.execPath,
-            [expoCli, "run:android", "--device", deviceId],
-            { cwd: shortRoot, env },
-          );
-        }
-      } finally {
-        run("subst", ["/d", drive]);
-      }
-    }
+    configureShortCmakePaths(gradleFile);
+    process.exitCode = run(
+      process.execPath,
+      [expoCli, "run:android", "--device", deviceId],
+      { cwd: projectRoot, env },
+    );
   }
 }

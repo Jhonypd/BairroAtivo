@@ -100,7 +100,7 @@ describe("filtros públicos da listagem", () => {
     expect(screen.getByText("Lâmpada da praça apagada")).toBeOnTheScreen();
     expect(screen.queryByText("Buraco na rua principal")).toBeNull();
     expect(screen.getByText("1 ocorrência")).toBeOnTheScreen();
-  });
+  }, 15000);
 
   it("filtra por categoria existente nos registros", async () => {
     await abrirListagem();

@@ -189,3 +189,8 @@ O desenvolvimento é acompanhado por cartões, sprints e tarefas no Trello. O re
 ---
 
 Desenvolvido por **Jhony Pereira Duarte** — Análise e Desenvolvimento de Sistemas, **UNIVALI**.
+
+
+### Mapa no Android
+
+O app usa MapLibre com o serviço público do [OpenFreeMap](https://openfreemap.org/). Não é necessário criar conta, gerar chave de API ou cadastrar forma de pagamento. O serviço é gratuito e sem limite publicado de requisições, mas é oferecido sem garantia de disponibilidade.

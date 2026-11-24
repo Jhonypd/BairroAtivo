@@ -275,7 +275,7 @@ export default function FormularioOcorrencia({ ocorrenciaInicial }: { ocorrencia
                 <InfoIcon width={18} height={18} fill={cores.primary} />
               </Pressable>
             </View>
-            <SeletorLocalizacao latitude={localizacao?.latitude ?? null} longitude={localizacao?.longitude ?? null} onChange={alterarLocalizacao} disabled={salvando} status={statusLocalizacao} />
+            <SeletorLocalizacao latitude={localizacao?.latitude ?? null} longitude={localizacao?.longitude ?? null} onChange={alterarLocalizacao} disabled={salvando} status={statusLocalizacao} bairro={bairro === "__bairro_sugerido__" ? bairroSugerido : bairro} cidade={cidade ? `${cidade.nome}, ${cidade.uf}` : undefined} />
             {erros.localizacao ? <Text style={styles.fieldError}>{erros.localizacao}</Text> : null}
           </View>
 

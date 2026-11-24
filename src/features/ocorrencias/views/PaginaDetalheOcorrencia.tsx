@@ -6,6 +6,7 @@ import {
   Image,
   Linking,
   Modal,
+  Platform,
   Pressable,
   ScrollView,
   Share,
@@ -152,8 +153,22 @@ export default function PaginaDetalheOcorrencia() {
 
   async function abrirMapa() {
     if (!ocorrencia || typeof ocorrencia.latitude !== "number" || typeof ocorrencia.longitude !== "number") return;
+    if (Platform.OS !== "web") {
+      router.push({
+        pathname: "/ocorrencias/mapa",
+        params: {
+          focoOcorrenciaId: ocorrencia.id,
+          focoLat: String(ocorrencia.latitude),
+          focoLon: String(ocorrencia.longitude),
+          focoTitulo: ocorrencia.titulo,
+          focoBairro: ocorrencia.bairro,
+        },
+      });
+      return;
+    }
     try {
-      await Linking.openURL(`https://www.google.com/maps/search/?api=1&query=${ocorrencia.latitude},${ocorrencia.longitude}`);
+      const url = "https://www.openstreetmap.org/?mlat=" + ocorrencia.latitude + "&mlon=" + ocorrencia.longitude + "#map=17/" + ocorrencia.latitude + "/" + ocorrencia.longitude;
+      await Linking.openURL(url);
     } catch {
       definirErroApoio("Não foi possível abrir o mapa neste dispositivo.");
     }
